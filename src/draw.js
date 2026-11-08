@@ -20,6 +20,18 @@ const STYLES = {
   scout: { gi: '#5b6170', under: '#2c2f38', belt: '#c0392b', pants: '#3a3f4b', boots: '#22252c', arm: '#5b6170', skin: '#8fc28a', band: '#c0392b', hair: 'helmet', hairColor: '#c0392b', visor: '#55e6ff' },
   gunner: { gi: '#6b4f8a', under: '#2c2238', belt: '#e67e22', pants: '#3d2e52', boots: '#22202c', arm: '#6b4f8a', skin: '#9ad0c2', band: '#e67e22', hair: 'helmet', hairColor: '#e67e22', visor: '#ffe14d' },
   boss: { gi: '#3b2a5c', under: '#c9c9d9', belt: '#c8a640', pants: '#2a1f40', boots: '#c9c9d9', arm: '#3b2a5c', skin: '#b9d7e8', band: '#c8a640', hair: 'long', hairColor: '#e8e8f0', sword: true },
+  heroStorm: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'storm', hairColor: '#ffe94d' },
+  heroSky: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'flame', hairColor: '#4fb3ff' },
+  heroStar: { gi: '#e8e8f8', under: '#5a5aa8', belt: '#5a5aa8', pants: '#d6332e', boots: '#5a5aa8', arm: '#f2c29b', skin: '#f2c29b', band: '#5a5aa8', hair: 'storm', hairColor: '#eef0ff' },
+  armored: { gi: '#3a6a9a', under: '#1a2a3a', belt: '#d0d0d0', pants: '#2a4a6a', boots: '#1a2a3a', arm: '#3a6a9a', skin: '#9ab0c8', band: '#d0d0d0', hair: 'helmet', hairColor: '#d0e0f0', visor: '#40ffd0', shield: true },
+  brute: { gi: '#3a2a22', under: '#ff6a1a', belt: '#ff6a1a', pants: '#2a1a12', boots: '#1a1008', arm: '#c8501a', skin: '#c8501a', band: '#ff6a1a', hair: 'horns', hairColor: '#2a1a12' },
+  elite: { gi: '#1f1f26', under: '#c8a640', belt: '#c8a640', pants: '#15151a', boots: '#c8a640', arm: '#1f1f26', skin: '#c0a0d8', band: '#c8a640', hair: 'helmet', hairColor: '#c8a640', visor: '#ff3040' },
+  twinRed: { gi: '#8b1e1e', under: '#222222', belt: '#e0b030', pants: '#3a1010', boots: '#222222', arm: '#e8b0a0', skin: '#e8b0a0', band: '#e0b030', hair: 'mohawk', hairColor: '#ff5a3a' },
+  twinBlue: { gi: '#1e3a8b', under: '#222222', belt: '#e0b030', pants: '#10183a', boots: '#222222', arm: '#a0c8e8', skin: '#a0c8e8', band: '#e0b030', hair: 'mohawk', hairColor: '#3ab0ff' },
+  krag: { gi: '#4a5a6a', under: '#2a2f38', belt: '#8a6a2a', pants: '#2a3038', boots: '#1a1a1a', arm: '#4a5a6a', skin: '#7a8f6a', band: '#8a6a2a', hair: 'helmet', hairColor: '#3a4a5a', visor: '#ff4040', shield: true },
+  nyx: { gi: '#2a1a3a', under: '#d040a0', belt: '#d040a0', pants: '#1a1028', boots: '#d040a0', arm: '#d8c8f0', skin: '#d8c8f0', band: '#d040a0', hair: 'long', hairColor: '#8a2be2' },
+  vorg: { gi: '#e8e0f0', under: '#5a2a8a', belt: '#5a2a8a', pants: '#5a2a8a', boots: '#e8e0f0', arm: '#c8a8e8', skin: '#c8a8e8', band: '#5a2a8a', hair: 'horns', hairColor: '#5a2a8a' },
+  vorg2: { gi: '#2a0a22', under: '#ff3060', belt: '#ffd040', pants: '#1a0614', boots: '#ffd040', arm: '#e05a8a', skin: '#e05a8a', band: '#ffd040', hair: 'horns', hairColor: '#ffd040' },
   flash: { gi: '#ffffff', under: '#ffffff', belt: '#ffffff', pants: '#ffffff', boots: '#ffffff', arm: '#ffffff', skin: '#ffffff', band: '#ffffff', hair: null, hairColor: '#ffffff', visor: '#ffffff' },
 };
 
@@ -111,6 +123,9 @@ function drawTorso(ctx, st) {
 const HAIR = {
   spiky: [[8, -4], [10, -10], [5, -9], [6, -16], [0, -11], [-3, -19], [-5, -11], [-12, -15], [-9, -6], [-15, -6], [-9, -1], [-13, 3], [-8, 4], [-6, 8]],
   flame: [[8, -3], [13, -11], [6, -10], [9, -21], [2, -13], [1, -26], [-4, -13], [-10, -23], [-8, -10], [-17, -15], [-10, -4], [-17, 0], [-9, 2], [-6, 8]],
+  storm: [[8, -3], [15, -12], [6, -11], [11, -24], [2, -14], [2, -30], [-4, -14], [-12, -27], [-8, -10], [-21, -18], [-10, -4], [-22, -2], [-10, 2], [-18, 8], [-6, 8]],
+  mohawk: [[6, -6], [8, -14], [3, -10], [2, -19], [-3, -11], [-6, -18], [-8, -8], [-13, -12], [-9, -2], [-4, -6]],
+  horns: [[8, -5], [12, -18], [4, -9], [-4, -9], [-10, -22], [-8, -6], [-9, 0], [-5, -6], [4, -6]],
   long: [[9, -4], [9, -11], [2, -12], [-6, -10], [-10, -5], [-20, 2], [-30, 12], [-18, 7], [-12, 9], [-6, 8]],
 };
 
@@ -192,8 +207,49 @@ function drawHumanoid(ctx, f) {
   drawHead(ctx, st, P, t);
   const hand = drawArm(ctx, 2, -23, P.fa, st, false);
   if (f.style.sword) drawSword(ctx, hand);
+  if (f.style.shield) {
+    ctx.fillStyle = f.flash ? '#ffffff' : shade(f.style.hairColor, 0.9);
+    ctx.strokeStyle = f.flash ? '#ffffff' : f.style.visor;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(hand.x - 2, hand.y - 30, 9, 48, 4); ctx.fill(); ctx.stroke();
+  }
   ctx.restore();
   ctx.restore();
+}
+
+// Skraidantis dronas
+function drawDrone(ctx, x, y, facing, t, flash) {
+  ctx.save();
+  ctx.translate(x, y - 14);
+  ctx.scale(facing, 1);
+  const body = flash ? '#ffffff' : '#5a6474';
+  ctx.strokeStyle = flash ? '#fff' : '#2a2f38'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(-18, -10); ctx.lineTo(18, -10); ctx.stroke();
+  ctx.fillStyle = 'rgba(200,220,255,0.5)';
+  const r = 10 * Math.abs(Math.sin(t * 40));
+  ctx.fillRect(-18 - r, -13, r * 2, 3); ctx.fillRect(18 - r, -13, r * 2, 3);
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.ellipse(0, 0, 17, 11, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = flash ? '#fff' : '#ff3a3a';
+  ctx.beginPath(); ctx.arc(7, 1, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(8, -1, 2, 2);
+  ctx.fillStyle = flash ? '#fff' : '#2a2f38'; ctx.fillRect(-6, 9, 12, 4);
+  ctx.restore();
+}
+
+// Riedantis sprogstantis robotas
+function drawBomber(ctx, x, y, facing, t, flash, fuse) {
+  ctx.save();
+  ctx.translate(x, y - 15);
+  ctx.rotate(t * 8 * facing * (fuse ? 0 : 1));
+  ctx.fillStyle = flash ? '#ffffff' : '#3a3a42';
+  ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-15, 0); ctx.lineTo(15, 0); ctx.moveTo(0, -15); ctx.lineTo(0, 15); ctx.stroke();
+  ctx.restore();
+  const blink = fuse ? Math.floor(t * 20) % 2 === 0 : Math.floor(t * 3) % 2 === 0;
+  ctx.fillStyle = blink ? '#ff2020' : '#661010';
+  ctx.beginPath(); ctx.arc(x, y - 33, 4, 0, Math.PI * 2); ctx.fill();
 }
 
 // Priekinės rankos plaštakos padėtis pasaulio koordinatėse.
@@ -251,7 +307,11 @@ function drawEnergyBall(ctx, x, y, r, inner, outer, t) {
 const BEAM_COLORS = {
   base: ['rgba(40,140,255,A)', 'rgba(140,215,255,A)'],
   flame: ['rgba(255,170,0,A)', 'rgba(255,235,140,A)'],
+  storm: ['rgba(255,215,30,A)', 'rgba(255,250,190,A)'],
+  sky: ['rgba(30,110,255,A)', 'rgba(170,230,255,A)'],
+  star: ['rgba(190,190,255,A)', 'rgba(255,255,255,A)'],
   boss: ['rgba(160,60,255,A)', 'rgba(220,170,255,A)'],
+  red: ['rgba(255,40,60,A)', 'rgba(255,170,170,A)'],
 };
 
 function drawBeam(ctx, b) {
@@ -295,108 +355,266 @@ function drawProjectile(ctx, p) {
     ctx.restore();
     return;
   }
+  if (p.type === 'groundwave') {
+    ctx.save();
+    ctx.translate(p.x, GROUND);
+    ctx.scale(sign(p.vx), 1);
+    ctx.fillStyle = '#8a7a6a';
+    for (let i = 0; i < 4; i++) {
+      const hh = 14 + ((i * 7 + Math.floor(Game.time * 30)) % 3) * 6;
+      ctx.beginPath(); ctx.moveTo(-i * 12 - 8, 0); ctx.lineTo(-i * 12, -hh + i * 3); ctx.lineTo(-i * 12 + 8, 0); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(0, -26); ctx.lineTo(3, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    return;
+  }
   drawEnergyBall(ctx, p.x, p.y, p.r, p.inner, p.outer, Game.time + p.x * 0.01);
 }
 
-// ---------- Fonas ----------
-let _bgCanvas = null;
-function buildBackground() {
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const g = c.getContext('2d');
+// ---------- Fonai ----------
+const _bgCache = {};
 
+function bgSky(g, stops) {
   const sky = g.createLinearGradient(0, 0, 0, GROUND);
-  sky.addColorStop(0, '#24325e');
-  sky.addColorStop(0.55, '#c86b6b');
-  sky.addColorStop(0.85, '#f7a35c');
-  sky.addColorStop(1, '#ffd59e');
+  stops.forEach(([t, c]) => sky.addColorStop(t, c));
   g.fillStyle = sky; g.fillRect(0, 0, W, GROUND);
-
-  // saulė
-  const sun = g.createRadialGradient(700, 300, 10, 700, 300, 140);
-  sun.addColorStop(0, 'rgba(255,245,210,1)');
-  sun.addColorStop(0.35, 'rgba(255,230,170,0.7)');
-  sun.addColorStop(1, 'rgba(255,200,120,0)');
-  g.fillStyle = sun; g.beginPath(); g.arc(700, 300, 140, 0, Math.PI * 2); g.fill();
-
-  // žvaigždės viršuje
-  g.fillStyle = 'rgba(255,255,255,0.6)';
-  for (let i = 0; i < 40; i++) { g.fillRect((i * 137) % W, (i * 71) % 140, 1.5, 1.5); }
-
-  // debesys
-  g.fillStyle = 'rgba(255,220,200,0.25)';
-  [[150, 120, 90], [420, 90, 120], [820, 150, 100], [600, 200, 70]].forEach(([x, y, r]) => {
+}
+function bgGlow(g, x, y, r, inner, outer) {
+  const sun = g.createRadialGradient(x, y, 4, x, y, r);
+  sun.addColorStop(0, inner);
+  sun.addColorStop(0.35, outer);
+  sun.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = sun; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+}
+function bgPeaks(g, color, peaks) {
+  g.fillStyle = color;
+  g.beginPath(); g.moveTo(0, GROUND);
+  peaks.forEach(([x, y]) => g.lineTo(x, y));
+  g.lineTo(W, GROUND); g.closePath(); g.fill();
+}
+function bgStars(g, n, maxY, alpha = 0.6) {
+  g.fillStyle = `rgba(255,255,255,${alpha})`;
+  for (let i = 0; i < n; i++) { const s = (i % 3) * 0.7 + 1; g.fillRect((i * 137.7) % W, (i * 71.3) % maxY, s, s); }
+}
+function bgClouds(g, color, list) {
+  g.fillStyle = color;
+  list.forEach(([x, y, r]) => {
     g.beginPath(); g.ellipse(x, y, r, r * 0.25, 0, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.ellipse(x + r * 0.4, y - 8, r * 0.6, r * 0.2, 0, 0, Math.PI * 2); g.fill();
   });
-
-  // tolimi kalnai
-  function mountains(color, base, peaks) {
-    g.fillStyle = color;
-    g.beginPath(); g.moveTo(0, GROUND);
-    peaks.forEach(([x, y]) => g.lineTo(x, y));
-    g.lineTo(W, GROUND); g.closePath(); g.fill();
-    void base;
-  }
-  mountains('#7a5f8f', 0, [[0, 300], [90, 230], [170, 280], [260, 190], [360, 270], [470, 210], [560, 290], [650, 240], [760, 300], [860, 220], [960, 280]]);
-  mountains('#4f3d6b', 0, [[0, 360], [120, 300], [210, 350], [330, 280], [440, 360], [560, 320], [680, 370], [800, 300], [900, 350], [960, 330]]);
-
-  // uola su krioklio
-  g.fillStyle = '#3a2d52';
-  g.beginPath(); g.moveTo(820, GROUND); g.lineTo(830, 250); g.lineTo(900, 230); g.lineTo(960, 240); g.lineTo(960, GROUND); g.closePath(); g.fill();
-  const fall = g.createLinearGradient(0, 245, 0, GROUND);
-  fall.addColorStop(0, 'rgba(200,230,255,0.9)'); fall.addColorStop(1, 'rgba(200,230,255,0.4)');
-  g.fillStyle = fall; g.fillRect(860, 245, 34, GROUND - 245);
-
-  // pagoda kairėje
-  g.fillStyle = '#2b2140';
-  g.fillRect(70, 290, 150, GROUND - 290);
-  function roof(cx, y, w) {
-    g.beginPath(); g.moveTo(cx - w / 2 - 18, y + 4); g.quadraticCurveTo(cx, y - 8, cx + w / 2 + 18, y + 4);
-    g.lineTo(cx + w / 2, y - 14); g.lineTo(cx - w / 2, y - 14); g.closePath(); g.fill();
-  }
-  g.fillStyle = '#2b2140';
-  g.fillRect(95, 220, 100, 70); g.fillRect(115, 160, 60, 60);
-  g.fillStyle = '#1e1630';
-  roof(145, 296, 160); roof(145, 226, 112); roof(145, 166, 72);
-  g.fillRect(142, 120, 6, 32);
-  g.fillStyle = 'rgba(255,190,90,0.8)';
-  g.fillRect(132, 330, 26, 34); g.fillRect(122, 245, 14, 18); g.fillRect(154, 245, 14, 18);
-
-  // pušys
-  function pine(x, h) {
-    g.fillStyle = '#1d2a2a';
-    g.fillRect(x - 3, GROUND - h * 0.25, 6, h * 0.25);
-    for (let i = 0; i < 3; i++) {
-      const y = GROUND - h * 0.25 - i * h * 0.22;
-      g.beginPath(); g.moveTo(x - h * 0.28 + i * 6, y); g.lineTo(x, y - h * 0.38); g.lineTo(x + h * 0.28 - i * 6, y); g.closePath(); g.fill();
-    }
-  }
-  pine(280, 150); pine(320, 110); pine(760, 140); pine(720, 100);
-
-  // kiemas
+}
+function bgGround(g, top, bottom, edge, line, tiles = true) {
   const ground = g.createLinearGradient(0, GROUND, 0, H);
-  ground.addColorStop(0, '#8a6a4c'); ground.addColorStop(1, '#4e3826');
+  ground.addColorStop(0, top); ground.addColorStop(1, bottom);
   g.fillStyle = ground; g.fillRect(0, GROUND, W, H - GROUND);
-  g.fillStyle = '#b08a62'; g.fillRect(0, GROUND, W, 4);
-  g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2;
+  g.fillStyle = edge; g.fillRect(0, GROUND, W, 4);
+  if (!tiles) return;
+  g.strokeStyle = line; g.lineWidth = 2;
   for (let row = 0; row < 3; row++) {
     const y = GROUND + 4 + row * 26;
     g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
     for (let x = (row % 2) * 40; x < W; x += 80) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 26); g.stroke(); }
   }
-  _bgCanvas = c;
 }
 
+const BG_BUILDERS = {
+  monastery(g) {
+    bgSky(g, [[0, '#24325e'], [0.55, '#c86b6b'], [0.85, '#f7a35c'], [1, '#ffd59e']]);
+    bgGlow(g, 700, 300, 140, 'rgba(255,245,210,1)', 'rgba(255,230,170,0.7)');
+    bgStars(g, 40, 140);
+    bgClouds(g, 'rgba(255,220,200,0.25)', [[150, 120, 90], [420, 90, 120], [820, 150, 100], [600, 200, 70]]);
+    bgPeaks(g, '#7a5f8f', [[0, 300], [90, 230], [170, 280], [260, 190], [360, 270], [470, 210], [560, 290], [650, 240], [760, 300], [860, 220], [960, 280]]);
+    bgPeaks(g, '#4f3d6b', [[0, 360], [120, 300], [210, 350], [330, 280], [440, 360], [560, 320], [680, 370], [800, 300], [900, 350], [960, 330]]);
+    g.fillStyle = '#3a2d52';
+    g.beginPath(); g.moveTo(820, GROUND); g.lineTo(830, 250); g.lineTo(900, 230); g.lineTo(960, 240); g.lineTo(960, GROUND); g.closePath(); g.fill();
+    const fall = g.createLinearGradient(0, 245, 0, GROUND);
+    fall.addColorStop(0, 'rgba(200,230,255,0.9)'); fall.addColorStop(1, 'rgba(200,230,255,0.4)');
+    g.fillStyle = fall; g.fillRect(860, 245, 34, GROUND - 245);
+    // pagoda
+    g.fillStyle = '#2b2140';
+    g.fillRect(70, 290, 150, GROUND - 290);
+    g.fillRect(95, 220, 100, 70); g.fillRect(115, 160, 60, 60);
+    const roof = (cx, y, w) => {
+      g.beginPath(); g.moveTo(cx - w / 2 - 18, y + 4); g.quadraticCurveTo(cx, y - 8, cx + w / 2 + 18, y + 4);
+      g.lineTo(cx + w / 2, y - 14); g.lineTo(cx - w / 2, y - 14); g.closePath(); g.fill();
+    };
+    g.fillStyle = '#1e1630';
+    roof(145, 296, 160); roof(145, 226, 112); roof(145, 166, 72);
+    g.fillRect(142, 120, 6, 32);
+    g.fillStyle = 'rgba(255,190,90,0.8)';
+    g.fillRect(132, 330, 26, 34); g.fillRect(122, 245, 14, 18); g.fillRect(154, 245, 14, 18);
+    const pine = (x, h) => {
+      g.fillStyle = '#1d2a2a';
+      g.fillRect(x - 3, GROUND - h * 0.25, 6, h * 0.25);
+      for (let i = 0; i < 3; i++) {
+        const y = GROUND - h * 0.25 - i * h * 0.22;
+        g.beginPath(); g.moveTo(x - h * 0.28 + i * 6, y); g.lineTo(x, y - h * 0.38); g.lineTo(x + h * 0.28 - i * 6, y); g.closePath(); g.fill();
+      }
+    };
+    pine(280, 150); pine(320, 110); pine(760, 140); pine(720, 100);
+    bgGround(g, '#8a6a4c', '#4e3826', '#b08a62', 'rgba(0,0,0,0.25)');
+  },
+
+  desert(g) {
+    bgSky(g, [[0, '#3a7bd5'], [0.6, '#9fc8f0'], [0.9, '#ffd9a0'], [1, '#ffc07a']]);
+    bgGlow(g, 220, 110, 120, 'rgba(255,255,230,1)', 'rgba(255,240,180,0.6)');
+    bgClouds(g, 'rgba(255,255,255,0.45)', [[520, 90, 110], [820, 140, 80]]);
+    bgPeaks(g, '#e0a46a', [[0, 330], [140, 320], [200, 300], [330, 310], [420, 290], [560, 320], [700, 300], [820, 315], [960, 305]]);
+    // mezos (plokščiakalniai)
+    const mesa = (x, w, top, color) => {
+      g.fillStyle = color;
+      g.beginPath(); g.moveTo(x - 20, GROUND); g.lineTo(x, top + 10); g.lineTo(x + 8, top); g.lineTo(x + w - 8, top); g.lineTo(x + w, top + 10); g.lineTo(x + w + 20, GROUND); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.12)';
+      for (let i = 1; i < 4; i++) g.fillRect(x + 4, top + i * ((GROUND - top) / 4), w - 8, 4);
+    };
+    mesa(40, 200, 220, '#b5562e');
+    mesa(620, 150, 260, '#a24a28');
+    mesa(800, 180, 200, '#c2643a');
+    // kaktusai
+    const cactus = (x, h) => {
+      g.fillStyle = '#2f6b3a';
+      g.beginPath(); g.roundRect(x - 6, GROUND - h, 12, h, 6); g.fill();
+      g.beginPath(); g.roundRect(x - 22, GROUND - h * 0.7, 10, h * 0.35, 5); g.fill();
+      g.fillRect(x - 18, GROUND - h * 0.42, 14, 8);
+      g.beginPath(); g.roundRect(x + 12, GROUND - h * 0.8, 10, h * 0.3, 5); g.fill();
+      g.fillRect(x + 4, GROUND - h * 0.55, 14, 8);
+    };
+    cactus(330, 90); cactus(520, 70); cactus(930, 60);
+    bgGround(g, '#e8b878', '#b07a40', '#f5d098', 'rgba(120,70,20,0.15)', false);
+    g.fillStyle = 'rgba(150,90,40,0.25)';
+    for (let i = 0; i < 30; i++) g.fillRect((i * 97) % W, GROUND + 10 + (i * 37) % 60, 18, 3);
+  },
+
+  ice(g) {
+    bgSky(g, [[0, '#0b1a3a'], [0.5, '#2a5a8a'], [1, '#bfe6ff']]);
+    bgStars(g, 60, 220, 0.7);
+    // šiaurės pašvaistė
+    for (let k = 0; k < 3; k++) {
+      g.strokeStyle = ['rgba(80,255,180,0.18)', 'rgba(120,200,255,0.15)', 'rgba(200,120,255,0.12)'][k];
+      g.lineWidth = 26 - k * 6;
+      g.beginPath();
+      for (let x = 0; x <= W; x += 20) g.lineTo(x, 90 + k * 30 + Math.sin(x * 0.012 + k) * 30);
+      g.stroke();
+    }
+    bgPeaks(g, '#d6ecff', [[0, 300], [100, 200], [180, 260], [300, 170], [420, 270], [520, 210], [640, 280], [760, 190], [880, 260], [960, 220]]);
+    bgPeaks(g, '#9fc8e8', [[0, 360], [150, 310], [260, 350], [400, 300], [520, 360], [650, 320], [780, 360], [900, 310], [960, 340]]);
+    // ledo miestas
+    const tower = (x, w, h) => {
+      g.fillStyle = '#6fa8d0'; g.fillRect(x, GROUND - h, w, h);
+      g.fillStyle = '#4f88b8'; g.fillRect(x + w * 0.6, GROUND - h, w * 0.4, h);
+      g.fillStyle = '#e8f6ff';
+      g.beginPath(); g.moveTo(x - 4, GROUND - h); g.lineTo(x + w / 2, GROUND - h - w * 0.9); g.lineTo(x + w + 4, GROUND - h); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,255,200,0.75)';
+      for (let yy = GROUND - h + 16; yy < GROUND - 20; yy += 28) g.fillRect(x + w / 2 - 4, yy, 8, 12);
+    };
+    const dome = (x, r) => {
+      g.fillStyle = '#8cc4e8'; g.beginPath(); g.arc(x, GROUND, r, Math.PI, 0); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.arc(x - r * 0.3, GROUND - r * 0.5, r * 0.25, 0, Math.PI * 2); g.fill();
+    };
+    tower(60, 50, 220); tower(130, 36, 150); dome(250, 70); tower(700, 44, 200); dome(820, 90); tower(900, 40, 170);
+    bgGround(g, '#e6f4ff', '#9cc4e0', '#ffffff', 'rgba(80,130,180,0.25)');
+  },
+
+  volcano(g) {
+    bgSky(g, [[0, '#1a0a0e'], [0.5, '#5a1414'], [0.85, '#c0401a'], [1, '#ff8a3a']]);
+    bgStars(g, 20, 120, 0.4);
+    // ugnikalnis
+    g.fillStyle = '#2a1414';
+    g.beginPath(); g.moveTo(260, GROUND); g.lineTo(450, 150); g.lineTo(530, 150); g.lineTo(740, GROUND); g.closePath(); g.fill();
+    bgGlow(g, 490, 150, 120, 'rgba(255,200,80,0.9)', 'rgba(255,90,20,0.5)');
+    g.strokeStyle = '#ff6a1a'; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(470, 155); g.quadraticCurveTo(440, 260, 400, 330); g.stroke();
+    g.beginPath(); g.moveTo(515, 155); g.quadraticCurveTo(560, 250, 610, 340); g.stroke();
+    // dūmai
+    g.fillStyle = 'rgba(40,20,20,0.6)';
+    [[490, 110, 50], [520, 70, 60], [470, 40, 70], [540, 20, 80]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); });
+    bgPeaks(g, '#1a0a0a', [[0, 360], [90, 320], [180, 370], [260, 380], [740, 380], [820, 330], [900, 360], [960, 320]]);
+    // lavos jūra
+    const lava = g.createLinearGradient(0, GROUND - 40, 0, GROUND);
+    lava.addColorStop(0, '#ff8a1a'); lava.addColorStop(1, '#c02a0a');
+    g.fillStyle = lava; g.fillRect(0, GROUND - 30, W, 30);
+    bgGround(g, '#3a2420', '#1a0e0c', '#5a3a30', 'rgba(0,0,0,0.35)');
+    g.strokeStyle = 'rgba(255,110,30,0.8)'; g.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+      const x = 60 + i * 120;
+      g.beginPath(); g.moveTo(x, GROUND + 8); g.lineTo(x + 18, GROUND + 26); g.lineTo(x + 8, GROUND + 44); g.lineTo(x + 30, GROUND + 70); g.stroke();
+    }
+  },
+
+  ship(g) {
+    g.fillStyle = '#05060f'; g.fillRect(0, 0, W, GROUND);
+    // langas į kosmosą
+    g.save();
+    g.beginPath(); g.roundRect(120, 70, 720, 250, 30); g.clip();
+    g.fillStyle = '#02030a'; g.fillRect(120, 70, 720, 250);
+    bgStars(g, 140, 330, 0.9);
+    const planet = g.createRadialGradient(600, 300, 20, 640, 330, 200);
+    planet.addColorStop(0, '#6fc0ff'); planet.addColorStop(0.6, '#2a6ab0'); planet.addColorStop(1, '#0a1a3a');
+    g.fillStyle = planet; g.beginPath(); g.arc(640, 360, 190, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(90,200,120,0.6)';
+    g.beginPath(); g.ellipse(600, 250, 50, 22, 0.3, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(700, 300, 40, 18, -0.2, 0, Math.PI * 2); g.fill();
+    g.restore();
+    // sienų plokštės
+    g.fillStyle = '#20202e';
+    g.fillRect(0, 0, W, 60); g.fillRect(0, 0, 110, GROUND); g.fillRect(850, 0, 110, GROUND); g.fillRect(0, 330, W, GROUND - 330);
+    g.strokeStyle = '#3a3a52'; g.lineWidth = 6;
+    g.beginPath(); g.roundRect(120, 70, 720, 250, 30); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.06)'; g.lineWidth = 2;
+    for (let x = 0; x < W; x += 80) { g.beginPath(); g.moveTo(x, 330); g.lineTo(x, GROUND); g.stroke(); }
+    for (let y = 80; y < GROUND; y += 90) { g.beginPath(); g.moveTo(0, y); g.lineTo(110, y); g.moveTo(850, y); g.lineTo(W, y); g.stroke(); }
+    // Vorgo ženklas
+    g.fillStyle = '#5a2a8a';
+    g.beginPath(); g.moveTo(480, 350); g.lineTo(510, 390); g.lineTo(480, 430); g.lineTo(450, 390); g.closePath(); g.fill();
+    g.fillStyle = '#d040a0'; g.beginPath(); g.arc(480, 390, 8, 0, Math.PI * 2); g.fill();
+    bgGround(g, '#3a3a4e', '#1a1a26', '#7a7aa0', 'rgba(0,0,0,0.4)');
+    g.fillStyle = 'rgba(120,200,255,0.5)';
+    for (let x = 30; x < W; x += 120) g.fillRect(x, GROUND + 14, 40, 3);
+  },
+};
+
 function drawBackground(ctx) {
-  if (!_bgCanvas) buildBackground();
-  ctx.drawImage(_bgCanvas, 0, 0);
-  // krioklio putos
+  const theme = Game.theme || 'monastery';
+  if (!_bgCache[theme]) {
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    BG_BUILDERS[theme](c.getContext('2d'));
+    _bgCache[theme] = c;
+  }
+  ctx.drawImage(_bgCache[theme], 0, 0);
+  const t = Game.time;
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  for (let i = 0; i < 6; i++) {
-    const y = 250 + ((Game.time * 160 + i * 37) % (GROUND - 250));
-    ctx.fillRect(864 + (i * 7) % 26, y, 3, 14);
+  if (theme === 'monastery') {
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    for (let i = 0; i < 6; i++) ctx.fillRect(864 + (i * 7) % 26, 250 + ((t * 160 + i * 37) % (GROUND - 250)), 3, 14);
+  } else if (theme === 'desert') {
+    ctx.fillStyle = 'rgba(230,190,130,0.35)';
+    for (let i = 0; i < 12; i++) ctx.fillRect(((t * 220 + i * 173) % (W + 100)) - 50, GROUND - 10 - (i * 13) % 50, 30, 2);
+  } else if (theme === 'ice') {
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let i = 0; i < 50; i++) {
+      const x = (i * 97 + Math.sin(t + i) * 20 + t * 15) % W;
+      const y = (i * 53 + t * (40 + (i % 5) * 10)) % GROUND;
+      ctx.fillRect(x, y, 2.5, 2.5);
+    }
+  } else if (theme === 'volcano') {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 30; i++) {
+      const x = (i * 131 + Math.sin(t * 2 + i) * 15) % W;
+      const y = GROUND - ((t * (50 + (i % 7) * 12) + i * 41) % GROUND);
+      ctx.fillStyle = i % 2 ? 'rgba(255,140,40,0.8)' : 'rgba(255,220,90,0.7)';
+      ctx.fillRect(x, y, 3, 3);
+    }
+    ctx.fillStyle = `rgba(255,120,30,${0.15 + Math.sin(t * 3) * 0.08})`;
+    ctx.fillRect(0, GROUND - 30, W, 30);
+  } else if (theme === 'ship') {
+    for (let i = 0; i < 6; i++) {
+      const on = Math.floor(t * 2 + i * 0.7) % 3 !== 0;
+      ctx.fillStyle = on ? (i % 2 ? '#ff4060' : '#40e0ff') : '#2a2a3a';
+      ctx.fillRect(30 + (i % 2) * 40, 100 + Math.floor(i / 2) * 90, 10, 10);
+      ctx.fillRect(880 + (i % 2) * 40, 100 + Math.floor(i / 2) * 90, 10, 10);
+    }
   }
   ctx.restore();
 }

@@ -126,8 +126,8 @@ src/
 
 ## 8. Kūrimo etapai
 
-1. **MVP (1 lygis):** herojus juda, šoka, muša; Ki banga su 3 krūvio lygiais; 1 priešų tipas; Liepsnos transformacija; paprastas bosas.
-2. **Turinys:** visi 5 lygiai, visos formos, bangų kova.
+1. ✅ **MVP (1 lygis):** herojus juda, šoka, muša; Ki banga su 3 krūvio lygiais; 1 priešų tipas; Liepsnos transformacija; paprastas bosas.
+2. ✅ **Turinys:** visi 5 lygiai, visos formos, bangų kova.
 3. **Šlifavimas:** garsai, dalelės, dialogai, treniruotės ekranas, mobilus valdymas.
 4. **Publikavimas:** GitHub Pages.
 

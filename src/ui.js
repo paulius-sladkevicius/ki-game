@@ -50,22 +50,29 @@ function drawHUD(ctx) {
   text(ctx, 'HP', 288, 46, 11, '#d0ffd8');
   text(ctx, 'KI', 288, 63, 11, '#bfe0ff');
   text(ctx, 'JĖGA', 288, 78, 11, '#fff2b0');
-  if (full && p.flameUnlocked && p.form === 0 && Math.floor(Game.time * 4) % 2 === 0) {
-    text(ctx, 'T – TRANSFORMACIJA!', 20, 100, 16, '#ffe14d');
+  const canUp = p.unlocked > p.form && p.form < 4 && (p.form === 0 ? full : p.power >= 50);
+  if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
+    text(ctx, 'T – ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 100, 16, FORMS[p.unlocked].auraP);
   }
 
   text(ctx, 'TAŠKAI ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
   text(ctx, 'REKORDAS ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, '#cfd8ff', 'right', '600');
+  text(ctx, `${Game.levelIndex + 1} LYGIS · ★ ${Game.crystals}/7`, W - 20, 66, 12, '#ffd34a', 'right', '600');
   if (Game.combo >= 3) {
     const s = 22 + Math.min(14, Game.combo);
-    text(ctx, Game.combo + ' KOMBO', W - 20, 84, s, '#ffd34a', 'right');
+    text(ctx, Game.combo + ' KOMBO', W - 20, 98, s, '#ffd34a', 'right');
   }
 
-  const b = Game.boss;
-  if (b) {
-    const bw = 360, bx = W / 2 - bw / 2;
-    text(ctx, b.name, W / 2, H - 38, 15, '#e6c0ff', 'center');
-    bar(ctx, bx, H - 30, bw, 12, b.hp / b.maxHp, b.enraged ? '#c040ff' : '#9a5cff');
+  const bs = Game.bosses;
+  if (bs.length) {
+    const gap = 30;
+    const bw = bs.length === 1 ? 360 : 260;
+    const total = bs.length * bw + (bs.length - 1) * gap;
+    bs.forEach((b, i) => {
+      const bx = W / 2 - total / 2 + i * (bw + gap);
+      text(ctx, b.name + (b.def.phases && !b.dead ? `  (${Math.min(b.phase, 3)} fazė)` : ''), bx + bw / 2, H - 38, 15, b.dead ? '#888888' : '#e6c0ff', 'center');
+      bar(ctx, bx, H - 30, bw, 12, b.hp / b.maxHp, b.enraged ? '#c040ff' : '#9a5cff');
+    });
   }
 
   const c = Game.clash;
@@ -73,7 +80,7 @@ function drawHUD(ctx) {
     const cw = 400, cx = W / 2 - cw / 2, cy = 120;
     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx - 3, cy - 3, cw + 6, 22);
     ctx.fillStyle = '#a040ff'; ctx.fillRect(cx, cy, cw, 16);
-    ctx.fillStyle = p.form > 0 ? '#ffb000' : '#3aa0ff'; ctx.fillRect(cx, cy, cw * clamp(c.push, 0, 1), 16);
+    ctx.fillStyle = p.F.auraP; ctx.fillRect(cx, cy, cw * clamp(c.push, 0, 1), 16);
     text(ctx, 'SPAUDINĖK L !!!', W / 2, cy - 10, 24 + Math.sin(Game.time * 30) * 2, '#ffffff', 'center');
   }
 
@@ -93,7 +100,7 @@ function drawHUD(ctx) {
   if (Game.hint) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, Game.hint.t * 2);
-    text(ctx, Game.hint.text, W / 2, 160, 20, '#9fe6ff', 'center');
+    text(ctx, Game.hint.text, W / 2, 268, 20, '#9fe6ff', 'center');
     ctx.restore();
   }
 }
@@ -111,7 +118,7 @@ function drawDialog(ctx) {
   ctx.roundRect(x, y, w, h, 12);
   ctx.fill(); ctx.stroke();
   if (line.who) {
-    const colors = { 'Kai': '#ff8a7a', 'Vorgas': '#d68bff', 'Raxas': '#c9a0ff', 'Meistras Oro': '#9fe6ff', 'ATRAKINTA': '#ffe14d', 'Patarimas': '#9fffb0', 'Valdymas': '#9fffb0' };
+    const colors = { 'Kai': '#ff8a7a', 'Vorgas': '#d68bff', 'Raxas': '#c9a0ff', 'Meistras Oro': '#9fe6ff', 'ATRAKINTA': '#ffe14d', 'Patarimas': '#9fffb0', 'Valdymas': '#9fffb0', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'Generolas Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Gyventoja': '#ffffff' };
     text(ctx, line.who, x + 20, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -129,36 +136,47 @@ function drawDialog(ctx) {
 function drawMenu(ctx) {
   ctx.fillStyle = 'rgba(5,6,20,0.45)';
   ctx.fillRect(0, 0, W, H);
-  // herojus su aura
+  // herojus keičia formas
   const t = Game.time;
-  const flame = Math.floor(t / 3) % 2 === 1;
-  drawAura(ctx, 250, 420, 150, flame ? 'rgba(255,200,40,A)' : 'rgba(170,210,255,A)', 1.1, t);
-  auraParticles(250, 420, 120, flame ? '#ffd34a' : '#bfe0ff', 1);
+  const fi = [0, 1, 2, 3][Math.floor(t / 2.5) % 4];
+  const F = FORMS[fi];
+  drawAura(ctx, 250, 420, 150, F.aura, 1.1, t);
+  auraParticles(250, 420, 120, F.auraP, 1);
   drawParticles(ctx);
-  drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: POSES.kicharge(t), style: flame ? STYLES.heroFlame : STYLES.heroBase, scale: 1.6, t });
+  drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: POSES.kicharge(t), style: STYLES[F.style], scale: 1.6, t });
+  text(ctx, F.name, 250, 470, 16, F.auraP, 'center', '600');
 
   ctx.save();
-  ctx.translate(620, 150);
+  ctx.translate(620, 130);
   ctx.rotate(-0.04);
   text(ctx, 'KI BANGA', 0, 0, 84, '#ffe14d', 'center', '900');
   ctx.restore();
-  text(ctx, '1 lygis: Kalnų vienuolynas', 620, 195, 20, '#ffffff', 'center', '600');
+  text(ctx, 'Surink 7 Žvaigždžių kristalus ir sustabdyk Vorgą!', 620, 172, 17, '#ffffff', 'center', '600');
 
   const lines = [
-    '← → / A D  judėti',
-    '↑ / W / Tarpas  šokti (laikyk ore – skristi)',
-    'J  smūgis (3 smūgių kombinacija)',
-    'K  Ki šūvis',
-    'L  laikyk ir paleisk – KI BANGA',
-    'S / ↓  kaupti Ki (ir blokuoti)',
-    'T  transformacija',
-    'P  pauzė · M  garsas',
+    '← → judėti · ↑ šokti / skristi',
+    'J smūgis · K Ki šūvis',
+    'L laikyk ir paleisk – KI BANGA',
+    'S / ↓ kaupti Ki · T transformacija',
+    'P pauzė · M garsas',
   ];
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(445, 222, 350, 200);
-  lines.forEach((l, i) => text(ctx, l, 462, 248 + i * 23, 15, '#e6ecff', 'left', '600'));
-  if (Math.floor(t * 2) % 2 === 0) text(ctx, 'Spausk ENTER arba bakstelk, kad pradėtum', 620, 460, 20, '#9fe6ff', 'center');
-  if (Game.highScore > 0) text(ctx, 'Rekordas: ' + Game.highScore, 620, 490, 15, '#ffd34a', 'center', '600');
+  ctx.fillRect(455, 192, 330, 132);
+  lines.forEach((l, i) => text(ctx, l, 470, 216 + i * 23, 15, '#e6ecff', 'left', '600'));
+
+  const opts = menuOptions();
+  const sel = clamp(Game.menuSel === undefined ? opts.length - 1 : Game.menuSel, 0, opts.length - 1);
+  opts.forEach((o, i) => {
+    const y = 370 + i * 36;
+    const on = i === sel;
+    if (on) {
+      ctx.fillStyle = 'rgba(255,225,77,0.18)';
+      ctx.fillRect(400, y - 24, 440, 34);
+    }
+    text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 21 : 18, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
+  });
+  if (Math.floor(t * 2) % 2 === 0) text(ctx, '↑ ↓ pasirink · ENTER / J pradėk', 620, 370 + opts.length * 36 + 8, 15, '#9fe6ff', 'center', '600');
+  if (Game.highScore > 0) text(ctx, 'Rekordas: ' + Game.highScore, 620, 520, 15, '#ffd34a', 'center', '600');
 }
 
 function drawOverlay(ctx, title, sub, lines, color) {
@@ -195,14 +213,26 @@ function drawUI(ctx) {
       break;
     }
     case 'VICTORY': {
+      const lvl = LEVELS[Game.levelIndex];
+      const last = Game.levelIndex + 1 >= LEVELS.length;
       const newRecord = Game.score >= Game.highScore && Game.score > 0;
-      drawOverlay(ctx, '1 LYGIS ĮVEIKTAS!', 'Kalnų vienuolynas išgelbėtas', [
-        '★ Gauta: Žvaigždžių kristalas (1/7)',
-        '✦ Atrakinta: Liepsnos forma',
-        'Taškai: ' + Game.score + (newRecord ? '  – NAUJAS REKORDAS!' : '  (rekordas ' + Game.highScore + ')'),
-        'Kiti lygiai – netrukus!',
-        Game.stateT > 1.5 ? 'ENTER – žaisti iš naujo' : '',
-      ], '#ffe14d');
+      const recLine = 'Taškai: ' + Game.score + (newRecord ? '  – NAUJAS REKORDAS!' : '  (rekordas ' + Game.highScore + ')');
+      const go = Game.stateT > 1.5;
+      if (last) {
+        drawOverlay(ctx, 'PABAIGA', 'Vorgas nugalėtas – planeta išgelbėta!', [
+          '★ Surinkti visi 7 Žvaigždžių kristalai',
+          'Kai tapo legendiniu kariu',
+          recLine,
+          'Ačiū, kad žaidei!',
+          go ? 'ENTER – į meniu' : '',
+        ], '#ffe14d');
+      } else {
+        const lines = [`★ Gauta kristalų: ${lvl.crystals}  (iš viso ${Game.crystals}/7)`];
+        if (lvl.unlockText) lines.push('✦ Atrakinta: ' + lvl.unlockText);
+        lines.push(recLine);
+        lines.push(go ? `ENTER – ${Game.levelIndex + 2} lygis: ${LEVELS[Game.levelIndex + 1].name}` : '');
+        drawOverlay(ctx, `${Game.levelIndex + 1} LYGIS ĮVEIKTAS!`, lvl.name + ' ' + (lvl.saved || 'išgelbėtas'), lines, '#ffe14d');
+      }
       break;
     }
   }

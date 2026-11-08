@@ -20,7 +20,7 @@ function update(dt) {
   switch (Game.state) {
     case 'MENU':
       updateParticles(dt);
-      if (anyConfirm() && Game.stateT > 0.2) { Sfx.unlock(); Sfx.select(); startLevel(0); }
+      updateMenu();
       break;
     case 'DIALOG':
       updateParticles(dt);
@@ -36,15 +36,45 @@ function update(dt) {
       break;
     case 'GAMEOVER':
       updateParticles(dt);
-      if (Game.stateT > 1 && (Input.pressed.confirm || Input.pressed.jump)) { Sfx.select(); startLevel(Game.checkpoint); }
+      if (Game.stateT > 1 && (Input.pressed.confirm || Input.pressed.jump)) {
+        Sfx.select();
+        // nuo kontrolinio taško arba nuo pirmos bangos (be įžangos dialogo)
+        startLevel(Game.levelIndex, Math.max(1, Game.checkpoint));
+      }
       break;
     case 'VICTORY':
       updateParticles(dt);
       if (Math.random() < dt * 6) explosion(rand(100, W - 100), rand(80, 300), 0.5);
-      if (Game.stateT > 1.5 && (Input.pressed.confirm || Input.pressed.jump)) { Sfx.select(); setState('MENU'); }
+      if (Game.stateT > 1.5 && (Input.pressed.confirm || Input.pressed.jump)) {
+        Sfx.select();
+        if (Game.levelIndex + 1 < LEVELS.length) startLevel(Game.levelIndex + 1);
+        else { Game.theme = 'monastery'; setState('MENU'); }
+      }
       break;
   }
   Game.shake = Math.max(0, Game.shake - 40 * dt);
+}
+
+// Meniu: ↑ ↓ pasirinkti, Enter / J / bakstelėjimas – patvirtinti.
+function menuOptions() {
+  const opts = [{ label: 'Naujas žaidimas', level: 0 }];
+  const prog = loadProgress();
+  if (prog > 0) opts.push({ label: `Tęsti: ${prog + 1} lygis – ${LEVELS[prog].name}`, level: prog });
+  return opts;
+}
+
+function updateMenu() {
+  const opts = menuOptions();
+  if (Game.menuSel === undefined) Game.menuSel = opts.length - 1;
+  Game.menuSel = clamp(Game.menuSel, 0, opts.length - 1);
+  const I = Input.pressed;
+  if (I.jump || I.left) { Game.menuSel = (Game.menuSel + opts.length - 1) % opts.length; Sfx.unlock(); Sfx.select(); }
+  if (I.charge || I.right) { Game.menuSel = (Game.menuSel + 1) % opts.length; Sfx.unlock(); Sfx.select(); }
+  if ((I.confirm || I.punch) && Game.stateT > 0.2) {
+    Sfx.unlock(); Sfx.select();
+    Game.score = 0;
+    startLevel(opts[Game.menuSel].level);
+  }
 }
 
 function updateTimers(dt) {
@@ -61,11 +91,12 @@ function updatePlay(dt) {
 
   p.update(p.state === 'transform' ? dt : edt);
   for (const e of Game.enemies) e.update(edt);
-  if (Game.boss) Game.boss.update(edt);
+  for (const b of Game.bosses) b.update(edt);
   checkClash();
   updateBeams(edt);
   updateClash(edt);
   updateProjectiles(edt);
+  updateBolts(edt);
   updateParticles(edt);
   Game.enemies = Game.enemies.filter((e) => !e.remove);
 
@@ -82,10 +113,11 @@ function updatePlay(dt) {
 
 function drawWorld(ctx) {
   for (const e of Game.enemies) e.draw(ctx);
-  if (Game.boss) Game.boss.draw(ctx);
+  for (const b of Game.bosses) b.draw(ctx);
   if (Game.player) Game.player.draw(ctx);
   for (const b of Game.beams) drawBeam(ctx, b);
   drawClash(ctx);
+  drawBolts(ctx);
   for (const pr of Game.projectiles) drawProjectile(ctx, pr);
   drawParticles(ctx);
   drawFloaters(ctx);

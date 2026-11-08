@@ -18,13 +18,18 @@ Atsidaryk `index.html` naršyklėje (serverio nereikia). Telefone rodomi lietimo
 | P / Esc | pauzė |
 | M | garsas įjungti / išjungti |
 
-## Kas yra MVP
+## Kas yra žaidime
 
-- 1 lygis „Kalnų vienuolynas“: įžangos dialogas, 3 priešų bangos (žvalgai ir šauliai), bosas **Raxas**.
-- Ki Banga su 3 krūvio lygiais (trumpa → pramušanti → per visą ekraną).
-- Liepsnos forma (atrakinama po 2 bangos): +50 % žala, greitis, platesnė banga; trunka, kol yra Jėgos.
-- **Bangų kova**: kai Raxas paleidžia savo bangą, o tu kaupi ar šaudai – spaudinėk L.
-- Taškai, kombinacijos, rekordas (`localStorage`), kontrolinis taškas prieš bosą.
+- **5 lygiai** su skirtingais fonais: Kalnų vienuolynas, Dykumų kanjonas, Ledynų miestas, Ugnikalnio sala, Vorgo laivas orbitoje.
+- **Priešai:** žvalgai, šauliai, skraidantys dronai, šarvuoti kariai (blokuoja Ki iš priekio), sprogstantys robotai, lavos galiūnai, elitinė gvardija.
+- **Bosai:** Raxas (kardininkas), dvyniai Zul ir Zel, Generolas Krag (skydas, puolimas, žemės drebėjimas), Nyx (teleportas, klonai), Vorgas (3 fazės ir finalinė bangų kova).
+- **Ki Banga** su 3 krūvio lygiais ir **bangų kova** su bosais (spaudinėk L).
+- **Transformacijos (T):**
+  - Liepsnos forma (1 lygis): +50 % žala;
+  - Audros forma (3 lygis): +100 % žala, smūgiai skelia žaibus į kitus priešus;
+  - Dangaus forma (5 lygis): +200 % žala, teleportas dvigubu ← / →;
+  - Žvaigždžių forma: finalinėje kovoje su Vorgu.
+- 7 Žvaigždžių kristalai, taškai, kombinacijos, rekordas, progreso išsaugojimas (meniu „Tęsti“), kontrolinis taškas prieš bosą.
 - Visa grafika piešiama Canvas API, garsai generuojami Web Audio API – jokių išorinių failų.
 
 ## Struktūra

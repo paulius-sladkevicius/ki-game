@@ -12,7 +12,10 @@ const Game = {
   time: 0,
   player: null,
   enemies: [],
-  boss: null,
+  bosses: [],
+  bolts: [],
+  levelIndex: 0,
+  crystals: 0,
   projectiles: [],
   beams: [],
   particles: [],
@@ -80,4 +83,21 @@ function saveHighScore() {
     Game.highScore = Game.score;
     try { localStorage.setItem('kibanga_hs', String(Game.score)); } catch (e) { /* nieko */ }
   }
+}
+
+// Išsaugotas progresas: aukščiausias pasiektas lygis (0..4).
+function loadProgress() {
+  try { return clamp(parseInt(localStorage.getItem('kibanga_level') || '0', 10) || 0, 0, 4); } catch (e) { return 0; }
+}
+function saveProgress(levelIndex) {
+  try {
+    if (levelIndex > loadProgress()) localStorage.setItem('kibanga_level', String(clamp(levelIndex, 0, 4)));
+  } catch (e) { /* nieko */ }
+}
+
+function liveBosses() { return Game.bosses.filter((b) => !b.dead); }
+
+// Žaibas tarp dviejų taškų (Audros forma).
+function addBolt(x1, y1, x2, y2, color = '#fff27a') {
+  Game.bolts.push({ x1, y1, x2, y2, color, life: 0.18, max: 0.18, seed: Math.random() * 1000 });
 }

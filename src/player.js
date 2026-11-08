@@ -1,5 +1,5 @@
 'use strict';
-// Herojus Kai: judėjimas, smūgiai, Ki šūviai, Ki Banga ir transformacija.
+// Herojus Kai: judėjimas, smūgiai, Ki šūviai, Ki Banga ir transformacijos.
 
 const BEAM_LEVELS = {
   1: { cost: 10, dmg: 20, len: 280, width: 18, dur: 0.35, pierce: 1, knock: 150 },
@@ -7,9 +7,13 @@ const BEAM_LEVELS = {
   3: { cost: 45, dmg: 120, len: 1200, width: 54, dur: 0.9, pierce: 99, knock: 450 },
 };
 
+// ball/blast: [vidinė, išorinė] spalva
 const FORMS = [
-  { name: 'Bazinė forma', dmg: 1, speed: 250, style: 'heroBase', beam: 'base', aura: 'rgba(170,210,255,A)', auraP: '#bfe0ff' },
-  { name: 'Liepsnos forma', dmg: 1.5, speed: 290, style: 'heroFlame', beam: 'flame', aura: 'rgba(255,200,40,A)', auraP: '#ffd34a' },
+  { id: 'base', name: 'Bazinė forma', dmg: 1, speed: 250, style: 'heroBase', beam: 'base', aura: 'rgba(170,210,255,A)', auraP: '#bfe0ff', drain: 0, kiRegen: 6, chargeRate: 1, widthMul: 1, ball: ['#9fdcff', 'rgba(40,140,255,0.6)'] },
+  { id: 'flame', name: 'Liepsnos forma', dmg: 1.5, speed: 290, style: 'heroFlame', beam: 'flame', aura: 'rgba(255,200,40,A)', auraP: '#ffd34a', drain: 6, kiRegen: 9, chargeRate: 1.4, widthMul: 1.5, ball: ['#ffe680', 'rgba(255,160,0,0.6)'], banner: '+50 % žala, platesnė Ki Banga' },
+  { id: 'storm', name: 'Audros forma', dmg: 2, speed: 310, style: 'heroStorm', beam: 'storm', aura: 'rgba(255,235,90,A)', auraP: '#fff27a', drain: 6.5, kiRegen: 13, chargeRate: 1.5, widthMul: 1.6, lightning: true, ball: ['#fffbd0', 'rgba(255,220,40,0.7)'], banner: '+100 % žala, žaibai, Ki atsistato 2× greičiau' },
+  { id: 'sky', name: 'Dangaus forma', dmg: 3, speed: 330, style: 'heroSky', beam: 'sky', aura: 'rgba(80,170,255,A)', auraP: '#7fd0ff', drain: 6.5, kiRegen: 13, chargeRate: 2, widthMul: 1.8, teleport: true, ball: ['#cfeaff', 'rgba(40,120,255,0.7)'], banner: '+200 % žala, teleportas (dukart ← arba →)' },
+  { id: 'star', name: 'Žvaigždžių forma', dmg: 4, speed: 340, style: 'heroStar', beam: 'star', aura: 'rgba(225,225,255,A)', auraP: '#ffffff', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, lightning: true, ball: ['#ffffff', 'rgba(200,200,255,0.8)'], banner: 'Galutinė jėga!' },
 ];
 
 class Player {
@@ -22,7 +26,8 @@ class Player {
     this.maxKi = 100; this.ki = 100;
     this.power = 0;
     this.form = 0;
-    this.flameUnlocked = false;
+    this.unlocked = 0;        // aukščiausia atrakinta forma (0..3); 4 – tik finale
+    this.transformTo = 1;
     this.state = 'normal';
     this.stateT = 0;
     this.animT = 0;
@@ -39,6 +44,8 @@ class Player {
     this.charge = 0;
     this.beamLevel = 1;
     this.flash = 0;
+    this.tapDir = 0;
+    this.tapT = 0;
     this.pose = POSES.idle(0);
   }
 
@@ -54,6 +61,7 @@ class Player {
     const I = Input;
     this.animT += dt;
     this.stateT += dt;
+    this.tapT += dt;
     if (this.invuln > 0) this.invuln -= dt;
     if (this.flash > 0) this.flash -= dt;
     if (this.blastCd > 0) this.blastCd -= dt;
@@ -61,7 +69,7 @@ class Player {
 
     // Transformacija trunka, kol yra Jėgos.
     if (this.form > 0 && this.state !== 'transform' && this.state !== 'clash') {
-      this.power -= 6 * dt;
+      this.power -= this.F.drain * dt;
       if (this.power <= 0) {
         this.power = 0;
         this.form = 0;
@@ -71,7 +79,7 @@ class Player {
     }
 
     if (!['charging', 'firing', 'kicharge', 'clash'].includes(this.state) && !this.flying) {
-      this.ki = Math.min(this.maxKi, this.ki + (this.form > 0 ? 9 : 6) * dt);
+      this.ki = Math.min(this.maxKi, this.ki + this.F.kiRegen * dt);
     }
 
     let move = 0;
@@ -82,6 +90,8 @@ class Player {
       case 'normal':
         this.vx = move * this.F.speed;
         if (move) this.facing = move;
+        if (I.pressed.left) this.checkDoubleTap(-1);
+        if (I.pressed.right) this.checkDoubleTap(1);
         if (I.pressed.jump && this.onGround) {
           this.vy = -680; this.onGround = false; this.airT = 0; Sfx.jump();
         }
@@ -109,7 +119,7 @@ class Player {
       case 'charging': {
         this.vx = 0;
         if (move) this.facing = move;
-        this.charge += dt * (this.form > 0 ? 1.4 : 1);
+        this.charge += dt * this.F.chargeRate;
         let lvl = this.charge < 0.5 ? 1 : this.charge < 1.5 ? 2 : 3;
         while (lvl > 1 && this.ki < BEAM_LEVELS[lvl].cost) lvl--;
         if (lvl > this.beamLevel) { burst(this.hand().x, this.hand().y, '#ffffff', 10, 160, 3, 0.3); Sfx.clashTick(); }
@@ -120,7 +130,7 @@ class Player {
         const h = this.hand();
         for (let i = 0; i < lvl; i++) {
           const a = Math.random() * Math.PI * 2, r = rand(40, 80);
-          spawnParticle({ x: h.x + Math.cos(a) * r, y: h.y + Math.sin(a) * r, vx: -Math.cos(a) * r * 4, vy: -Math.sin(a) * r * 4, life: 0.25, size: rand(1.5, 3.5), color: this.form > 0 ? '#ffe680' : '#9fdcff' });
+          spawnParticle({ x: h.x + Math.cos(a) * r, y: h.y + Math.sin(a) * r, vx: -Math.cos(a) * r * 4, vy: -Math.sin(a) * r * 4, life: 0.25, size: rand(1.5, 3.5), color: this.F.ball[0] });
         }
         if (!I.down.beam) this.releaseBeam();
         break;
@@ -147,20 +157,23 @@ class Player {
         if (this.stateT >= 0.3) this.setState('normal');
         break;
 
-      case 'transform':
+      case 'transform': {
         this.vx = 0;
-        auraParticles(this.x, this.y, 100, '#ffe680', 5, 34);
+        const TF = FORMS[this.transformTo];
+        auraParticles(this.x, this.y, 100, TF.auraP, 5, 34);
+        if (TF.lightning && Math.random() < 0.3) addBolt(this.x + rand(-40, 40), this.y - rand(60, 120), this.x + rand(-20, 20), this.y - rand(0, 40), TF.auraP);
         addShake(4);
         if (this.stateT >= 1.0) {
-          this.form = 1;
+          this.form = this.transformTo;
           this.setState('normal');
           Game.flash = 0.5;
           addShake(10);
-          burst(this.x, this.y - 40, '#ffd34a', 40, 450, 6, 0.7);
+          burst(this.x, this.y - 40, TF.auraP, 40, 450, 6, 0.7);
           burst(this.x, this.y - 40, '#ffffff', 20, 300, 5, 0.5);
-          showBanner('LIEPSNOS FORMA!', '+50 % žala, platesnė Ki Banga', 1.6);
+          showBanner(TF.name.toUpperCase() + '!', TF.banner, 1.6);
         }
         break;
+      }
 
       case 'clash':
         this.vx = 0;
@@ -201,7 +214,10 @@ class Player {
       this.onGround = false;
     }
 
-    if (this.form > 0 && this.state !== 'dead') auraParticles(this.x, this.y, 80, '#ffd34a', 1);
+    if (this.form > 0 && this.state !== 'dead') {
+      auraParticles(this.x, this.y, 80, this.F.auraP, 1);
+      if (this.F.lightning && Math.random() < dt * 5) addBolt(this.x + rand(-22, 22), this.y - rand(50, 90), this.x + rand(-22, 22), this.y - rand(10, 40), this.F.auraP);
+    }
     if (this.flying) spawnParticle({ x: this.x - this.facing * 14, y: this.y - 20, vx: -this.facing * 120, vy: rand(-20, 20), life: 0.3, size: 3, color: this.F.auraP });
 
     this.pose = this.computePose();
@@ -227,6 +243,28 @@ class Player {
     }
   }
 
+  // Dangaus forma: dvigubas ← arba → paspaudimas – teleportas.
+  checkDoubleTap(dir) {
+    if (this.F.teleport && this.tapDir === dir && this.tapT < 0.28) {
+      this.teleport(dir);
+      this.tapDir = 0;
+      return;
+    }
+    this.tapDir = dir;
+    this.tapT = 0;
+  }
+
+  teleport(dir) {
+    if (this.ki < 8) return;
+    this.ki -= 8;
+    for (let i = 0; i < 14; i++) spawnParticle({ x: this.x + rand(-12, 12), y: this.y - rand(0, 78), vx: rand(-40, 40), vy: rand(-40, 40), life: 0.35, size: rand(2, 4), color: this.F.auraP });
+    this.x = clamp(this.x + dir * 170, 20, W - 20);
+    this.facing = dir;
+    this.invuln = Math.max(this.invuln, 0.25);
+    burst(this.x, this.y - 40, this.F.auraP, 12, 200, 3, 0.3);
+    Sfx.teleport();
+  }
+
   startPunch() {
     if (this.comboWindow > 0 && this.comboStep < 3) this.comboStep++;
     else this.comboStep = 1;
@@ -243,14 +281,33 @@ class Player {
     const w = kick ? 72 : 62;
     const hb = { x: this.facing > 0 ? this.x : this.x - w, y: this.y - 76, w, h: 54 };
     const dmg = (kick ? 14 : 8) * this.dmgMult;
-    const hit = hitTargets(hb, dmg, this.facing, kick ? 380 : 120);
+    const hit = hitTargets(hb, dmg, this.facing, kick ? 380 : 120, 'melee');
     if (hit) {
       Sfx.hit();
       addHitstop(kick ? 0.08 : 0.045);
       addShake(kick ? 6 : 3);
       burst(this.x + this.facing * (w - 10), this.y - 52, '#ffffff', 8, 220, 3, 0.25);
+      if (this.F.lightning) this.chainLightning(hit, dmg * 0.6);
     } else {
       Sfx.punch();
+    }
+  }
+
+  // Audros forma: žaibas peršoka į artimiausią kitą priešą.
+  chainLightning(from, dmg) {
+    let best = null, bd = 260;
+    for (const t of liveTargets()) {
+      if (t === from) continue;
+      const d = Math.abs(t.x - from.x);
+      if (d < bd) { bd = d; best = t; }
+    }
+    const h = this.hand();
+    addBolt(h.x, h.y, from.x, from.y - 45, this.F.auraP);
+    if (best) {
+      addBolt(from.x, from.y - 45, best.x, best.y - 45, this.F.auraP);
+      const dealt = best.takeHit(dmg, sign(best.x - from.x), 80, 'melee');
+      if (dealt) onPlayerDamage(dmg);
+      Sfx.zap();
     }
   }
 
@@ -262,11 +319,10 @@ class Player {
     this.setState('blast');
     this.pose = POSES.punch1();
     const h = this.hand();
-    const flame = this.form > 0;
     Game.projectiles.push({
-      x: h.x + this.facing * 6, y: h.y, vx: this.facing * 720, vy: 0, r: flame ? 9 : 7,
+      x: h.x + this.facing * 6, y: h.y, vx: this.facing * 720, vy: 0, r: this.form > 0 ? 9 : 7,
       dmg: 6 * this.dmgMult, owner: 'player', life: 1.6,
-      inner: flame ? '#ffe680' : '#9fdcff', outer: flame ? 'rgba(255,160,0,0.6)' : 'rgba(40,140,255,0.6)',
+      inner: this.F.ball[0], outer: this.F.ball[1], trail: this.F.auraP,
     });
     Sfx.blast();
   }
@@ -285,10 +341,9 @@ class Player {
     this.ki = Math.max(0, this.ki - L.cost);
     this.pose = POSES.fire();
     const h = this.hand();
-    const flame = this.form > 0;
     const b = {
       owner: 'player', x: h.x, y: h.y, dir: this.facing,
-      len: L.len, width: L.width * (flame ? 1.5 : 1), dmg: L.dmg * this.dmgMult,
+      len: L.len, width: L.width * this.F.widthMul, dmg: L.dmg * this.dmgMult,
       pierce: L.pierce, knock: L.knock, level: this.beamLevel,
       life: L.dur, max: L.dur, hit: new Set(), color: this.F.beam, clash: false,
     };
@@ -297,18 +352,40 @@ class Player {
     Sfx.beam(this.beamLevel);
     addShake(this.beamLevel * 3);
     this.setState(forClash ? 'clash' : 'firing');
-    if (this.beamLevel === 3) floater(this.x, this.y - 110, 'KI BANGA!', flame ? '#ffe14d' : '#9fdcff', 26);
+    if (this.beamLevel === 3) floater(this.x, this.y - 110, 'KI BANGA!', this.F.auraP, 26);
     return b;
   }
 
   tryTransform() {
-    if (!this.flameUnlocked) { floater(this.x, this.y - 95, 'Forma dar neatrakinta', '#ffd34a', 15); return; }
-    if (this.form > 0) return;
-    if (this.power < 100) { floater(this.x, this.y - 95, 'Reikia pilnos Jėgos juostos', '#ffd34a', 15); return; }
+    if (this.unlocked === 0) { floater(this.x, this.y - 95, 'Forma dar neatrakinta', '#ffd34a', 15); return; }
+    if (this.form >= this.unlocked) return;
+    const need = this.form === 0 ? 100 : 50;
+    if (this.power < need) { floater(this.x, this.y - 95, this.form === 0 ? 'Reikia pilnos Jėgos juostos' : 'Reikia bent pusės Jėgos', '#ffd34a', 15); return; }
+    this.startTransform(this.unlocked);
+  }
+
+  startTransform(to) {
+    this.transformTo = to;
     this.setState('transform');
     Game.slowmo = 1.0;
+    Game.beams = Game.beams.filter((b) => b.owner !== 'player');
     Sfx.chargeStop();
     Sfx.transform();
+  }
+
+  // Finalo transformacija – nepriklauso nuo Jėgos.
+  forceForm(to) {
+    this.power = 100;
+    this.ki = this.maxKi;
+    this.hp = Math.min(this.maxHp, this.hp + 40);
+    this.invuln = 0;
+    if (this.state === 'dead') return;
+    this.startTransform(to);
+  }
+
+  unlock(form) {
+    this.unlocked = Math.max(this.unlocked, form);
+    this.power = 100;
   }
 
   gainPower(v) {
@@ -349,17 +426,16 @@ class Player {
     const F = this.F;
     if (this.form > 0 || this.state === 'kicharge' || this.state === 'transform' || (this.state === 'charging' && this.beamLevel >= 2)) {
       const intensity = this.state === 'transform' ? 1.6 : this.state === 'kicharge' ? 1.2 : 0.8;
-      drawAura(ctx, this.x, this.y, 110, this.state === 'transform' ? FORMS[1].aura : F.aura, intensity, this.animT);
+      drawAura(ctx, this.x, this.y, 110, this.state === 'transform' ? FORMS[this.transformTo].aura : F.aura, intensity, this.animT);
     }
     if (this.invuln > 0 && this.alive && Math.floor(this.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.45;
     let style = STYLES[F.style];
-    if (this.state === 'transform' && Math.floor(this.stateT * 14) % 2 === 1) style = STYLES.heroFlame;
+    if (this.state === 'transform' && Math.floor(this.stateT * 14) % 2 === 1) style = STYLES[FORMS[this.transformTo].style];
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, flash: this.flash > 0, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.state === 'charging') {
       const h = this.hand();
-      const flame = this.form > 0;
-      drawEnergyBall(ctx, h.x, h.y, 5 + this.beamLevel * 4 + Math.min(this.charge, 2) * 2, flame ? '#ffe680' : '#9fdcff', flame ? 'rgba(255,160,0,0.6)' : 'rgba(40,140,255,0.6)', this.animT);
+      drawEnergyBall(ctx, h.x, h.y, 5 + this.beamLevel * 4 + Math.min(this.charge, 2) * 2, F.ball[0], F.ball[1], this.animT);
     }
   }
 }
