@@ -113,7 +113,10 @@ function drawDialog(ctx) {
   const d = Game.dialog;
   if (!d) return;
   const line = d.lines[d.i];
-  const x = 60, y = H - 150, w = W - 120, h = 120;
+  // on touch screens with overlaid buttons the box avoids the button corners
+  const x = Math.max(60, (Game.safeLeft || 0) + 12);
+  const w = W - x - Math.max(60, (Game.safeRight || 0) + 12);
+  const y = H - 150, h = 120;
   ctx.save();
   ctx.fillStyle = 'rgba(10,12,30,0.88)';
   ctx.strokeStyle = 'rgba(255,220,120,0.9)';

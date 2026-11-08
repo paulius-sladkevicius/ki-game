@@ -36,15 +36,27 @@ const Input = (() => {
   });
   window.addEventListener('blur', () => { for (const k in down) down[k] = false; });
 
-  let triedFs = false;
-  function goFullscreen() {
-    if (triedFs) return;
-    triedFs = true;
+  const fsSupported = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function enterFullscreen() {
     const el = document.documentElement;
     try {
-      const r = (el.requestFullscreen || el.webkitRequestFullscreen || (() => null)).call(el);
+      const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
       if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* ignore */ } }).catch(() => {});
     } catch (e) { /* ignore */ }
+  }
+  function toggleFullscreen() {
+    if (!fsSupported) return;
+    if (isFullscreen()) {
+      try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) { /* ignore */ }
+    } else enterFullscreen();
+  }
+  // The first tap on a touch device tries to go fullscreen automatically.
+  let triedFs = false;
+  function goFullscreen() {
+    if (triedFs || !fsSupported) return;
+    triedFs = true;
+    if (!isFullscreen()) enterFullscreen();
   }
 
   function setupTouch() {
@@ -60,6 +72,12 @@ const Input = (() => {
       btn.addEventListener('pointercancel', off);
       btn.addEventListener('pointerleave', off);
     });
+    const fsBtn = document.getElementById('fsBtn');
+    if (!fsSupported) fsBtn.style.display = 'none';
+    fsBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); triedFs = true; toggleFullscreen(); });
+    const syncFs = () => { fsBtn.textContent = isFullscreen() ? '✕' : '⛶'; };
+    document.addEventListener('fullscreenchange', syncFs);
+    document.addEventListener('webkitfullscreenchange', syncFs);
     const canvas = document.getElementById('game');
     canvas.addEventListener('pointerdown', () => { Sfx.unlock(); if (isTouch) goFullscreen(); pressed.confirm = true; });
   }
