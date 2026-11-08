@@ -6,7 +6,7 @@ The game design document is in [DESIGN.md](DESIGN.md).
 
 ## How to play
 
-Open `index.html` in a browser – no server or build step needed. On phones and tablets, touch buttons are shown (play in landscape); the ⛶ button at the top switches to fullscreen.
+Open `index.html` in a browser – no server or build step needed. On phones and tablets, touch buttons are shown (play in landscape); the ⛶ button at the top switches to fullscreen. For the best experience on a phone or tablet, use the browser menu → **Add to Home screen**: the game then starts as a fullscreen app in landscape (works on iPhone too).
 
 | Key | Action |
 |---|---|
