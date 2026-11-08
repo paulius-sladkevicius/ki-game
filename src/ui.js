@@ -58,6 +58,7 @@ function drawHUD(ctx) {
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
     text(ctx, 'T - ' + p.forms[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, p.forms[p.unlocked].auraP);
   }
+  drawSpecialSlots(ctx, p, Game.ally ? 182 : 150);
   // the AI-controlled ally: small panel under the main bars
   const a = Game.ally;
   if (a) {
@@ -191,7 +192,7 @@ function drawMenu(ctx) {
     'J punch · K Ki blast',
     'L hold and release - KI WAVE',
     'S / ↓ guard + charge Ki · T transform',
-    'P pause · M sound',
+    'I / O techniques · P pause · M sound',
   ];
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
   ctx.fillRect(455, 192, 330, 132);
@@ -217,6 +218,40 @@ function drawMenu(ctx) {
   const hint = opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : '↑ ↓ choose · ENTER / J start';
   if (Math.floor(t * 2) % 2 === 0) text(ctx, hint, 620, y0 + opts.length * gap + 4, 14, '#9fe6ff', 'center', '600');
   if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 530, 14, '#ffd34a', 'center', '600');
+}
+
+// HUD icons of the two technique slots with a recharge wedge.
+function drawSpecialSlots(ctx, p, y) {
+  if (!Game.equip || (!Game.equip[1] && !Game.equip[2])) return;
+  [1, 2].forEach((slot, i) => {
+    const id = Game.equip[slot];
+    const x = 38 + i * 50;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2); ctx.fill();
+    if (id) {
+      const sp = SPECIAL_BY_ID[id];
+      const left = clamp(p.specialCd[slot] / specialCooldown(sp), 0, 1);
+      const ready = left <= 0;
+      ctx.fillStyle = ready ? sp.color : 'rgba(255,255,255,0.15)';
+      ctx.globalAlpha = ready ? 0.35 + 0.15 * Math.sin(Game.time * 6) : 1;
+      ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      if (!ready) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, 17, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = ready ? sp.color : 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.stroke();
+      text(ctx, sp.icon, x, y + 7, 19, ready ? '#ffffff' : '#a0a0b0', 'center', '900');
+      if (!ready) text(ctx, String(Math.ceil(p.specialCd[slot])), x + 14, y + 18, 11, '#ffffff', 'center', '700');
+    } else {
+      text(ctx, '·', x, y + 6, 18, '#666677', 'center');
+    }
+    text(ctx, IS_TOUCH ? (slot === 1 ? '①' : '②') : (slot === 1 ? 'I' : 'O'), x - 15, y - 12, 11, '#ffd34a', 'center', '800');
+    ctx.restore();
+  });
 }
 
 // Stars as text: filled ★ in gold, empty ☆ in grey.
@@ -317,7 +352,8 @@ function drawTraining(ctx) {
   text(ctx, `${Game.money} coins`, 650, 143, 24, '#ffe680', 'center', '800');
 
   const rows = trainRows();
-  const rowH = rows.length > 5 ? 54 : 62, top0 = 166, boxH = rowH - 8;
+  const rowH = Math.min(62, Math.floor(318 / rows.length)), top0 = 162, boxH = rowH - 6;
+  const small = rowH < 50;
   let y = top0;
   rows.forEach((row, i) => {
     const on = Game.trainSel === i;
@@ -327,8 +363,8 @@ function drawTraining(ctx) {
       ctx.fillStyle = on ? 'rgba(255,225,77,0.16)' : 'rgba(0,0,0,0.4)';
       ctx.fillRect(470, y, 360, boxH);
       if (on) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
-      text(ctx, tr.name, 486, y + boxH * 0.42, 18, tr.color, 'left', '800');
-      text(ctx, tr.desc, 486, y + boxH * 0.8, 13, '#cfd8ff', 'left', '600');
+      text(ctx, tr.name, 486, y + boxH * 0.45, small ? 15 : 18, tr.color, 'left', '800');
+      text(ctx, tr.desc, 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
       for (let k = 0; k < 5; k++) {
         ctx.fillStyle = k < lvl ? tr.color : 'rgba(255,255,255,0.15)';
         ctx.fillRect(660 + k * 16, y + 12, 12, 12);
@@ -341,9 +377,19 @@ function drawTraining(ctx) {
       ctx.fillStyle = on ? 'rgba(200,150,255,0.2)' : 'rgba(0,0,0,0.4)';
       ctx.fillRect(470, y, 360, boxH);
       if (on) { ctx.strokeStyle = '#c99bff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
-      text(ctx, 'Lead fighter', 486, y + boxH * 0.42, 18, '#c99bff', 'left', '800');
-      text(ctx, 'who you control at the start (C switches)', 486, y + boxH * 0.8, 13, '#cfd8ff', 'left', '600');
+      text(ctx, 'Lead fighter', 486, y + boxH * 0.45, small ? 15 : 18, '#c99bff', 'left', '800');
+      text(ctx, 'who you control at the start (C switches)', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
       text(ctx, '⇄ ' + c.name, 818, y + boxH * 0.62, 18, c.color, 'right', '800');
+      y += rowH;
+    } else if (row.kind === 'slot') {
+      const sp = Game.equip && Game.equip[row.slot] ? SPECIAL_BY_ID[Game.equip[row.slot]] : null;
+      ctx.fillStyle = on ? 'rgba(255,170,80,0.2)' : 'rgba(0,0,0,0.4)';
+      ctx.fillRect(470, y, 360, boxH);
+      if (on) { ctx.strokeStyle = '#ffb060'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
+      const label = row.slot === 1 ? 'Technique ① (I)' : 'Ultimate ② (O)';
+      text(ctx, label, 486, y + boxH * 0.45, small ? 15 : 18, '#ffb060', 'left', '800');
+      text(ctx, sp ? sp.desc : 'finish levels to learn techniques', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
+      text(ctx, sp ? (on ? '◀ ' : '') + sp.icon + ' ' + sp.name + (on ? ' ▶' : '') : '—', 818, y + boxH * 0.45, small ? 13 : 15, sp ? sp.color : '#888888', 'right', '800');
       y += rowH;
     } else {
       ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
@@ -352,8 +398,8 @@ function drawTraining(ctx) {
       text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 28, 19, '#9fe6ff', 'center', '800');
     }
   });
-  text(ctx, '↑ ↓ choose · ENTER / J select', 650, y + 64, 14, '#cfd8ff', 'center', '600');
-  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, Math.min(y + 92, 532), 20, Game.trainMsg.color || '#ff8080', 'center', '800');
+  text(ctx, '↑ ↓ choose · ENTER / J select · ← → change', 650, y + 60, 13, '#cfd8ff', 'center', '600');
+  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, Math.min(y + 86, 534), 18, Game.trainMsg.color || '#ff8080', 'center', '800');
 }
 
 function drawUI(ctx) {
@@ -407,6 +453,7 @@ function drawUI(ctx) {
         const actEnd = actOf(Game.levelIndex + 1) !== actOf(Game.levelIndex);
         const lines = [act2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
         if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
+        if (Game.result && Game.result.newTech) { const nt = Game.result.newTech; lines.push(`NEW TECHNIQUE: ${nt.icon} ${nt.name} (slot ${nt.slot === 1 ? '① - key I' : '② - key O'})`); }
         if (actEnd) lines.push('...but a darker power is waking up. ACT 2 begins!');
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);

@@ -34,7 +34,7 @@ const Layout = (() => {
     const gap = Math.round(btn * 0.16);
     const m = 10;                               // edge margin
     const leftW = 3 * btn + 2 * gap + 2 * m;    // d-pad: 3 columns
-    const rightW = 2 * btn + gap + 2 * m;       // actions: 2 columns
+    const rightW = 3 * btn + 2 * gap + 2 * m;   // actions: 3 columns
     const padH = 3 * btn + 2 * gap;             // d-pad: 3 rows
     const barH = padH + 2 * m;
 
@@ -74,7 +74,7 @@ const Layout = (() => {
       // parts of the screen covered by the buttons, in game coordinates (the dialog box avoids them)
       const scale = W / full.w;
       Game.safeLeft = Math.max(0, (m + 3 * ob + 2 * og - cx) * scale);
-      Game.safeRight = Math.max(0, (cx + full.w - (vw - m - 2 * ob - og)) * scale);
+      Game.safeRight = Math.max(0, (cx + full.w - (vw - m - 3 * ob - 2 * og)) * scale);
       return;
     }
     touch.classList.remove('overlay');

@@ -18,6 +18,8 @@ Open `index.html` in a browser – no server or build step needed. On phones and
 | S / ↓ (hold) | guard: blocks hits from the front and charges Ki, uses GUARD energy |
 | T | transform (when the Power bar is full) |
 | P / Esc | pause (Q in the pause menu – quit to menu) |
+| I | technique in slot ① |
+| O | ultimate technique in slot ② |
 | C | switch between Ren and Raxas (from level 6) |
 | M | sound on / off |
 
@@ -31,6 +33,7 @@ Open `index.html` in a browser – no server or build step needed. On phones and
 - **Enemies:** scouts, gunners, flying drones, armored soldiers (block Ki from the front), exploding robots, lava brutes, elite guards; in act 2 also shades (vanish and reappear behind you), stone golems and wisps (homing orbs).
 - **Bosses:** Raxas (swordsman), the twins Zul and Zel, General Krag (shield, charge, earthquake), Nyx (teleport, clones), Vorg (3 phases and a final beam clash); in act 2 Sable (shadow pillars), Gale (tornadoes, dive attacks), Quartzus (crystal rain, shield), Volta (lightning strikes) and the Hollow King (3 phases and a final **Twin Wave** clash fought by both heroes).
 - **Ki Wave** with 3 charge levels and **beam clashes** against bosses (mash L).
+- **Special techniques:** every completed level teaches a new technique (10 in total): Afterimage Dash, Flash Burst, Battle Cry, Ki Disc, Blink Strike (slot ①, quick, 8–18 s recharge) and Crimson Surge, Meteor Rush, Phoenix Fist, World Sphere, Silent Instinct (slot ②, ultimate, 40–60 s recharge). Choose which ones to equip in training.
 - **Difficulty** (in the menu): Easy / Normal / Hard / Very Hard. Harder levels mean tougher enemies and bosses, shorter attack warnings, less healing, more expensive guard and Ki Wave, extra enemies and golden **champions** – and smarter enemies that jump over your Ki Wave, block punches, interrupt your charging and jump at heroes hovering above them.
 - **Stars and ranks:** every level gives up to 3 stars (★ complete, ★ no defeat, ★ little damage) and a rank (S = 3 stars and fast, A, B, C). The best result is saved per difficulty; **Select level** in the menu lets you replay any level you have reached.
 - **Guard:** an energy shield that fully blocks hits from the front. Each blocked hit drains the GUARD bar, which refills over time when you stop guarding. If a hit is stronger than the energy left, the guard breaks: part of the damage gets through and you are briefly stunned.

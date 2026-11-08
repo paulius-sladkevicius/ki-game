@@ -41,7 +41,7 @@ html, body {
   grid-template-columns: repeat(3, var(--btn));
   grid-auto-rows: var(--btn);
 }
-#touch .pad.right { grid-template-columns: repeat(2, var(--btn)); }
+#touch .pad.right { grid-template-columns: repeat(3, var(--btn)); }
 
 /* D-pad as a cross */
 #touch [data-a="jump"] { grid-column: 2; grid-row: 1; }
@@ -53,6 +53,8 @@ html, body {
 #touch [data-a="transform"] { grid-column: 2; grid-row: 1; }
 #touch [data-a="punch"] { grid-column: 1; grid-row: 2; }
 #touch [data-a="beam"] { grid-column: 2; grid-row: 2; }
+#touch [data-a="special1"] { grid-column: 3; grid-row: 1; }
+#touch [data-a="special2"] { grid-column: 3; grid-row: 2; }
 
 #touch button {
   width: var(--btn);
@@ -110,3 +112,7 @@ html, body {
 
 #swBtn { background: rgba(120, 60, 200, 0.55) !important; }
 #swBtn.off { display: none; }
+
+/* technique buttons: a dark wedge shows the remaining cooldown */
+#touch button.sp { background: conic-gradient(rgba(0,0,0,0.55) var(--cd, 0deg), rgba(200,120,40,0.55) 0deg); }
+#touch button.sp.ready { border-color: #ffd34a; box-shadow: 0 0 10px rgba(255,210,80,0.7); }

@@ -6,6 +6,25 @@ const ctx = canvas.getContext('2d');
 Game.highScore = loadHighScore();
 Input.setupTouch();
 const swBtn = document.getElementById('swBtn');
+const spBtns = [1, 2].map((k) => document.querySelector(`#touch [data-a="special${k}"]`));
+
+// Touch buttons ① ② show how far the technique has recharged.
+function updateSpecialButtons() {
+  const p = Game.player;
+  spBtns.forEach((btn, i) => {
+    if (!btn) return;
+    const slot = i + 1;
+    const id = Game.equip && Game.equip[slot];
+    let pct = 0;
+    if (p && id) pct = clamp(p.specialCd[slot] / specialCooldown(SPECIAL_BY_ID[id]), 0, 1);
+    const key = id ? Math.round(pct * 40) : -1;
+    if (btn.dataset.k === String(key)) return;
+    btn.dataset.k = String(key);
+    btn.style.opacity = id ? '1' : '0.35';
+    btn.style.setProperty('--cd', `${Math.round(pct * 360)}deg`);
+    btn.classList.toggle('ready', !!id && pct === 0);
+  });
+}
 Layout.init();
 Sfx.music('menu');
 
@@ -22,6 +41,7 @@ function update(dt) {
   // the ⇄ button only makes sense in a level with two heroes
   const showSw = !!Game.ally && ['PLAY', 'DIALOG', 'PAUSE'].includes(Game.state);
   if (swBtn && swBtn.classList.contains('off') === showSw) swBtn.classList.toggle('off', !showSw);
+  updateSpecialButtons();
 
   switch (Game.state) {
     case 'MENU':
@@ -141,6 +161,7 @@ function trainRows() {
   const rows = TRAINING.map((t) => ({ kind: 'up', t }));
   const next = LEVELS[Game.levelIndex + 1];
   if (next && next.ally) rows.push({ kind: 'lead' });
+  rows.push({ kind: 'slot', slot: 1 }, { kind: 'slot', slot: 2 });
   rows.push({ kind: 'go' });
   return rows;
 }
@@ -149,9 +170,23 @@ function updateTraining() {
   const rows = trainRows();
   const n = rows.length;
   const I = Input.pressed;
-  if (I.jump || I.left) { Game.trainSel = (Game.trainSel + n - 1) % n; Sfx.select(); }
-  if (I.charge || I.right) { Game.trainSel = (Game.trainSel + 1) % n; Sfx.select(); }
+  if (I.jump) { Game.trainSel = (Game.trainSel + n - 1) % n; Sfx.select(); }
+  if (I.charge) { Game.trainSel = (Game.trainSel + 1) % n; Sfx.select(); }
   Game.trainSel = clamp(Game.trainSel, 0, n - 1);
+  const cur = rows[Game.trainSel];
+  // technique slots: ← → (or Enter) change the equipped technique
+  if (cur.kind === 'slot' && (I.left || I.right || ((I.confirm || I.punch) && Game.stateT > 0.3))) {
+    if (cycleEquip(cur.slot, I.left ? -1 : 1)) {
+      saveRun();
+      Sfx.select();
+      const sp = SPECIAL_BY_ID[Game.equip[cur.slot]];
+      Game.trainMsg = { text: `Slot ${cur.slot}: ${sp.name}`, t: 1.2, color: sp.color };
+    } else {
+      Sfx.deny();
+      Game.trainMsg = { text: 'No techniques for this slot yet - finish more levels!', t: 1.4 };
+    }
+    return;
+  }
   if ((I.confirm || I.punch) && Game.stateT > 0.3) {
     const row = rows[Game.trainSel];
     if (row.kind === 'go') {
@@ -159,7 +194,7 @@ function updateTraining() {
       startLevel(Game.levelIndex + 1);
       return;
     }
-    if (row.kind === 'lead') {
+    if (row.kind === 'lead' || (row.kind === 'lead' && (I.left || I.right))) {
       Game.controlChar = Game.controlChar === 'raxas' ? 'ren' : 'raxas';
       saveRun();
       Sfx.select();
@@ -224,6 +259,7 @@ function updatePlay(dt) {
   updateProjectiles(edt);
   updateBolts(edt);
   updateHazards(edt);
+  updateRings(edt);
   updateCoins(edt);
   updateParticles(edt);
   Game.enemies = Game.enemies.filter((e) => !e.remove);
@@ -254,6 +290,7 @@ function drawWorld(ctx) {
   drawBolts(ctx);
   drawCoins(ctx);
   drawHazards(ctx);
+  drawRings(ctx);
   for (const pr of Game.projectiles) drawProjectile(ctx, pr);
   drawParticles(ctx);
   drawFloaters(ctx);

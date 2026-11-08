@@ -412,6 +412,42 @@ function drawProjectile(ctx, p) {
     ctx.restore();
     return;
   }
+  if (p.type === 'disc') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(p.x, p.y);
+    ctx.fillStyle = 'rgba(255,220,60,0.35)';
+    ctx.beginPath(); ctx.ellipse(0, 0, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff6b0';
+    ctx.beginPath(); ctx.ellipse(0, 0, 20, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+    const a = Game.time * 30;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * 18, Math.sin(a) * 4); ctx.lineTo(-Math.cos(a) * 18, -Math.sin(a) * 4); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  if (p.type === 'phoenix') {
+    // a fire bird: glowing body and flapping wings
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(p.x, p.y);
+    ctx.scale(sign(p.vx), 1);
+    const flap = Math.sin(Game.time * 25) * 18;
+    const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 70);
+    g.addColorStop(0, 'rgba(255,255,220,1)'); g.addColorStop(0.35, 'rgba(255,140,40,0.8)'); g.addColorStop(1, 'rgba(255,40,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,170,60,0.9)';
+    ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(-20, -10); ctx.lineTo(-55, -50 - flap); ctx.lineTo(-30, -6); ctx.lineTo(-70, 0); ctx.lineTo(-30, 6); ctx.lineTo(-55, 50 + flap); ctx.lineTo(-20, 10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff6d0';
+    ctx.beginPath(); ctx.ellipse(8, 0, 18, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+  if (p.type === 'sphere') {
+    drawEnergyBall(ctx, p.x, p.y, 60, '#dff4ff', 'rgba(80,170,255,0.7)', Game.time);
+    return;
+  }
   if (p.type === 'shard') {
     // falling crystal + its shadow on the ground
     ctx.save();

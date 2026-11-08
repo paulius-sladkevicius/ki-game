@@ -123,6 +123,23 @@ After Vorg's defeat the Star Crystals start to dim: Vorg was never conquering �
 
 ---
 
+## 5a. Special techniques
+
+Two slots: **① technique** (key I, quick, short recharge) and **② ultimate** (key O, stronger, long recharge – starts each level half recharged). One technique is learned after each completed level and can be equipped in training. Each hero has its own cooldowns; the AI ally does not use them. Hard: +20% recharge time, Very Hard: +40%.
+
+| After level | Technique | Slot | Recharge | Effect |
+|---|---|---|---|---|
+| 1 | Afterimage Dash | ① | 10 s | dash through enemies, briefly untouchable |
+| 2 | Flash Burst | ① | 18 s | blinding flash: enemies freeze for 2.5 s (bosses 1 s) |
+| 3 | Battle Cry | ① | 12 s | shockwave pushes enemies away and erases all enemy shots |
+| 4 | Ki Disc | ① | 14 s | cutting disc goes through every enemy and shield |
+| 5 | Crimson Surge | ② | 45 s | 8 s of double damage and +30% speed, slowly costs HP |
+| 6 | Blink Strike | ① | 8 s | teleport behind the nearest enemy and strike |
+| 7 | Meteor Rush | ② | 40 s | 6-hit rush that ends with a slam |
+| 8 | Phoenix Fist | ② | 50 s | a fire bird flies across the screen, huge damage |
+| 9 | World Sphere | ② | 60 s | raise a giant sphere for 2 s, then throw it: area damage |
+| 10 | Silent Instinct | ② | 60 s | 6 s of dodging every attack (a bonus for replays) |
+
 ## 5b. Difficulty and stars
 
 | | Easy | Normal | Hard | Very Hard |

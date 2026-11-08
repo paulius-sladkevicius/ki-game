@@ -212,7 +212,21 @@ function updateProjectiles(dt) {
     if (pr.life <= 0) continue;
     if (Math.random() < 0.5) spawnParticle({ x: pr.x, y: pr.y + rand(-3, 3), vx: -pr.vx * 0.1, vy: rand(-20, 20), life: 0.2, size: 2.5, color: pr.trail || (pr.owner === 'player' ? '#bfe6ff' : '#ffb070') });
     const pb = { x: pr.x - pr.r, y: pr.y - pr.r, w: pr.r * 2, h: pr.r * 2 };
-    if (pr.owner === 'player') {
+    if (pr.owner === 'player' && pr.type === 'sphere') {
+      // World Sphere: explodes on the first enemy or on the ground
+      if (pr.y > GROUND - 40 || liveTargets().some((t) => rectsOverlap(pb, boxOf(t)))) explodeSphere(pr);
+    } else if (pr.owner === 'player' && pr.pierce) {
+      // techniques that go through every enemy (Ki Disc, Phoenix Fist)
+      for (const t of liveTargets()) {
+        if (pr.hitSet.has(t) || !rectsOverlap(pb, boxOf(t))) continue;
+        pr.hitSet.add(t);
+        const dealt = t.takeHit(pr.dmg, sign(pr.vx), 300, 'special');
+        if (dealt) onPlayerDamage(typeof dealt === 'number' ? dealt : pr.dmg, pr.src);
+        explosion(t.x, t.y - 45, pr.type === 'phoenix' ? 1.2 : 0.6);
+        Sfx.hit();
+      }
+      if (pr.type === 'disc' && Math.random() < 0.6) spawnParticle({ x: pr.x, y: pr.y, vx: -pr.vx * 0.2, vy: rand(-30, 30), life: 0.25, size: 3, color: '#ffe14d' });
+    } else if (pr.owner === 'player') {
       for (const t of liveTargets()) {
         if (rectsOverlap(pb, boxOf(t))) {
           const dealt = t.takeHit(pr.dmg, sign(pr.vx), 110, 'blast');

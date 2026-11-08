@@ -13,6 +13,8 @@ const Input = (() => {
     KeyM: 'mute',
     KeyQ: 'quit',
     KeyC: 'switch',
+    KeyI: 'special1',
+    KeyO: 'special2',
   };
   const down = {};
   const pressed = {};

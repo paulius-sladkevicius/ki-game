@@ -339,6 +339,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.beams = [];
   Game.bolts = [];
   Game.hazards = [];
+  Game.rings = [];
   Game.coins = [];
   Game.particles = [];
   Game.floaters = [];
@@ -391,6 +392,12 @@ function startLevel(levelIndex = 0, fromStep = 0) {
       Game.player.x = 200; Game.ally.x = 120;
     }
   }
+  // techniques: the slot 1 one is ready at once, the ultimate starts half recharged
+  ensureTechs();
+  for (const h of allHeroes()) {
+    h.specialCd[1] = 0;
+    h.specialCd[2] = Game.equip[2] ? specialCooldown(SPECIAL_BY_ID[Game.equip[2]]) * 0.5 : 0;
+  }
   const sw = document.getElementById('swBtn');
   if (sw) sw.classList.toggle('off', !Game.ally);
   saveProgress(levelIndex);
@@ -439,6 +446,7 @@ function nextStep() {
     case 'victory':
       Game.result = rateLevel();
       Game.result.newBest = saveResult(Game.levelIndex, Game.result);
+      Game.result.newTech = unlockTechForLevel(Game.levelIndex);
       collectAllCoins();
       saveRun();
       Sfx.music(null);

@@ -81,6 +81,13 @@ class Player {
     this.guardLocked = false;
     this.guardFlash = 0;
     this.hurtDur = 0.3;
+    // special techniques (see specials.js)
+    this.specialCd = { 1: 0, 2: 0 };
+    this.specialHits = new Set();
+    this.ghosts = [];
+    this.surgeT = 0;
+    this.instinctT = 0;
+    this.meteor = null;
   }
 
   // Guard is up while holding S, unless the guard was broken and has not refilled yet.
@@ -88,7 +95,8 @@ class Player {
 
   get F() { return this.forms[this.form]; }
   // the AI-controlled ally hits a bit softer, so the hero you control stays the main fighter
-  get dmgMult() { return this.F.dmg * (this.ai ? 0.75 : 1); }
+  get dmgMult() { return this.F.dmg * (this.ai ? 0.75 : 1) * (this.surgeT > 0 ? 2 : 1); }
+  get speed() { return this.F.speed * (this.surgeT > 0 ? 1.3 : 1); }
   get alive() { return this.state !== 'dead'; }
 
   setState(s) { this.state = s; this.stateT = 0; }
@@ -105,6 +113,16 @@ class Player {
     if (this.blastCd > 0) this.blastCd -= dt;
     if (this.comboWindow > 0) this.comboWindow -= dt; else this.comboStep = 0;
     if (this.guardFlash > 0) this.guardFlash -= dt;
+    for (const k of [1, 2]) if (this.specialCd[k] > 0) this.specialCd[k] -= dt;
+    for (const g of this.ghosts) g.life -= dt;
+    this.ghosts = this.ghosts.filter((g) => g.life > 0);
+    if (this.instinctT > 0) this.instinctT -= dt;
+    if (this.surgeT > 0) {
+      // Crimson Surge burns a little HP while it lasts
+      this.surgeT -= dt;
+      if (this.hp > 10) this.hp = Math.max(10, this.hp - 2 * dt);
+      if (Math.random() < dt * 20) spawnParticle({ x: this.x + rand(-20, 20), y: this.y - rand(0, 80), vx: rand(-20, 20), vy: rand(-200, -100), life: 0.4, size: rand(2, 4), color: '#ff5a4a' });
+    }
 
     // Guard energy refills after a short pause without guarding.
     if (this.state !== 'kicharge') this.guardIdle += dt;
@@ -137,21 +155,29 @@ class Player {
 
     switch (this.state) {
       case 'normal':
-        this.vx = move * this.F.speed;
+        this.vx = move * this.speed;
         if (move) this.facing = move;
         if (I.pressed.left) this.checkDoubleTap(-1);
         if (I.pressed.right) this.checkDoubleTap(1);
         if (I.pressed.jump && this.onGround) {
           this.vy = -680; this.onGround = false; this.airT = 0; Sfx.jump();
         }
-        if (I.pressed.punch) this.startPunch();
+        if (I.pressed.special1) useSpecial(this, 1);
+        else if (I.pressed.special2) useSpecial(this, 2);
+        else if (I.pressed.punch) this.startPunch();
         else if (I.pressed.blast) this.fireBlast();
         else if (I.pressed.beam) this.startCharge();
         else if (I.pressed.transform) this.tryTransform();
         else if (I.down.charge && this.onGround) this.setState('kicharge');
         break;
 
+      case 'dash': case 'special': case 'meteor': case 'sphere':
+        updateSpecialState(this, dt);
+        break;
+
       case 'punch':
+        if (I.pressed.special1) { useSpecial(this, 1); break; }
+        if (I.pressed.special2) { useSpecial(this, 2); break; }
         this.vx *= 0.82;
         if (!this.punchHit && this.stateT >= 0.07) { this.punchHit = true; this.doPunchHit(); }
         if (I.pressed.punch && this.stateT > 0.06) this.queuedPunch = true;
@@ -200,7 +226,9 @@ class Player {
         }
         auraParticles(this.x, this.y, 80, this.F.auraP, 2);
         if (Math.random() < dt * 8) spawnParticle({ x: this.x + rand(-40, 40), y: GROUND - 2, vx: rand(-60, 60), vy: rand(-120, -40), life: 0.5, size: 3, color: '#c9a27a', grav: 300 });
-        if (!I.down.charge) this.setState('normal');
+        if (I.pressed.special1) useSpecial(this, 1);
+        else if (I.pressed.special2) useSpecial(this, 2);
+        else if (!I.down.charge) this.setState('normal');
         else if (I.pressed.beam) this.startCharge();
         else if (I.pressed.transform) this.tryTransform();
         else if (I.pressed.punch) this.startPunch();
@@ -246,7 +274,7 @@ class Player {
         this.flying = true;
         this.vy += (-220 - this.vy) * Math.min(1, dt * 6);
         this.ki -= 10 * dt;
-      } else if (['charging', 'firing', 'clash', 'transform'].includes(this.state)) {
+      } else if (['charging', 'firing', 'clash', 'transform', 'dash', 'special', 'meteor', 'sphere'].includes(this.state)) {
         this.flying = false;
         this.vy = lerp(this.vy, 0, Math.min(1, dt * 10));
       } else {
@@ -285,6 +313,10 @@ class Player {
       case 'charging': return POSES.charge();
       case 'firing': case 'clash': return POSES.fire();
       case 'kicharge': return this.guardLocked ? POSES.kicharge(t) : POSES.guard(t);
+      case 'dash': return POSES.dash();
+      case 'special': return POSES[this.specialPose || 'transform'](t);
+      case 'meteor': return this.comboStep === 3 ? POSES.kick() : this.comboStep === 2 ? POSES.punch2() : POSES.punch1();
+      case 'sphere': return POSES.swordRaise();
       case 'hurt': return POSES.hurt();
       case 'transform': return POSES.transform(t);
       case 'dead': return this.onGround ? POSES.dead() : POSES.hurt();
@@ -477,6 +509,15 @@ class Player {
 
   takeHit(dmg, dir, knock = 200) {
     if (!this.alive || this.state === 'transform' || this.state === 'clash' || this.invuln > 0) return false;
+    // Silent Instinct: every attack is dodged
+    if (this.instinctT > 0) {
+      ghostAt(this);
+      this.x = clamp(this.x + dir * 55, 20, W - 20);
+      this.invuln = 0.25;
+      floater(this.x, this.y - 100, 'DODGE', '#e8e8ff', 15);
+      Sfx.teleport();
+      return true;
+    }
     dmg *= Game.dangerMul || 1;   // act 2 enemies hit harder
     let guardBreak = false;
     // Guard: the attack must come from the front (it pushes us backwards).
@@ -530,7 +571,14 @@ class Player {
   }
 
   draw(ctx) {
+    for (const g of this.ghosts) {
+      ctx.globalAlpha = 0.35 * (g.life / g.max);
+      drawHumanoid(ctx, { x: g.x, y: g.y, facing: g.facing, pose: g.pose, style: g.style, scale: g.scale, t: this.animT });
+    }
+    ctx.globalAlpha = 1;
     drawShadow(ctx, this.x, this.y, 22);
+    if (this.surgeT > 0) drawAura(ctx, this.x, this.y, 115, 'rgba(255,60,40,A)', 1.1, this.animT);
+    if (this.instinctT > 0) drawAura(ctx, this.x, this.y, 115, 'rgba(230,230,255,A)', 0.9 + Math.sin(this.animT * 8) * 0.2, this.animT);
     const F = this.F;
     if (this.form > 0 || (this.state === 'kicharge' && this.guardLocked) || this.state === 'transform' || (this.state === 'charging' && this.beamLevel >= 2)) {
       const intensity = this.state === 'transform' ? 1.6 : this.state === 'kicharge' ? 1.2 : 0.8;
@@ -542,6 +590,11 @@ class Player {
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, scale: this.scale, flash: this.flash > 0, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.guarding) this.drawGuard(ctx);
+    if (this.state === 'sphere') {
+      // the World Sphere grows above the hero's head
+      const r = 10 + Math.min(1, this.stateT / 2) * 60;
+      drawEnergyBall(ctx, this.x, this.y - 150, r, '#dff4ff', 'rgba(80,170,255,0.7)', this.animT);
+    }
     // with two heroes, a small marker shows which one you control
     if (Game.ally && this.controlled && this.alive) {
       const top = this.y - this.h * this.scale - 30 + Math.sin(this.animT * 5) * 3;
