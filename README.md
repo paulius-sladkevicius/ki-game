@@ -1,56 +1,58 @@
-# Ki Banga
+# Ki Wave
 
-Paprastas naršyklėje veikiantis 2D veiksmo žaidimas (MVP): kovos menų meistras Kai šaudo **Ki Bangomis** ir transformuojasi į **Liepsnos formą**. Scenarijus – [SCENARIJUS.md](SCENARIJUS.md).
+A simple 2D action game that runs in the browser. Ren, a young martial artist, fires charged **Ki Waves**, unlocks powerful **transformations** and fights his way through five levels to stop the space tyrant Vorg.
 
-## Kaip žaisti
+The game design document is in [DESIGN.md](DESIGN.md).
 
-Atsidaryk `index.html` naršyklėje (serverio nereikia). Telefone rodomi lietimo mygtukai.
+## How to play
 
-| Klavišas | Veiksmas |
+Open `index.html` in a browser – no server or build step needed. On phones and tablets, touch buttons are shown (play in landscape).
+
+| Key | Action |
 |---|---|
-| ← → / A D | judėti |
-| ↑ / W / Tarpas | šokti, laikant ore – skristi (eikvoja Ki) |
-| J | smūgis (3 smūgių kombinacija) |
-| K | Ki šūvis |
-| L (laikyti → paleisti) | Ki Banga: 3 krūvio lygiai |
-| S / ↓ | kaupti Ki (ir blokuoti pusę žalos) |
-| T | transformacija (kai pilna Jėgos juosta) |
-| P / Esc | pauzė (pauzėje Q – į meniu) |
-| M | garsas įjungti / išjungti |
+| ← → / A D | move |
+| ↑ / W / Space | jump, hold in the air to fly (uses Ki) |
+| J | punch (3-hit combo) |
+| K | Ki blast |
+| L (hold → release) | Ki Wave: 3 charge levels |
+| S / ↓ | charge Ki (also blocks half of the damage) |
+| T | transform (when the Power bar is full) |
+| P / Esc | pause (Q in the pause menu – quit to menu) |
+| M | sound on / off |
 
-## Kas yra žaidime
+## Features
 
-- **5 lygiai** su skirtingais fonais: Kalnų vienuolynas, Dykumų kanjonas, Ledynų miestas, Ugnikalnio sala, Vorgo laivas orbitoje.
-- **Priešai:** žvalgai, šauliai, skraidantys dronai, šarvuoti kariai (blokuoja Ki iš priekio), sprogstantys robotai, lavos galiūnai, elitinė gvardija.
-- **Bosai:** Raxas (kardininkas), dvyniai Zul ir Zel, Generolas Krag (skydas, puolimas, žemės drebėjimas), Nyx (teleportas, klonai), Vorgas (3 fazės ir finalinė bangų kova).
-- **Ki Banga** su 3 krūvio lygiais ir **bangų kova** su bosais (spaudinėk L).
-- **Transformacijos (T):**
-  - Liepsnos forma (1 lygis): +50 % žala;
-  - Audros forma (3 lygis): +100 % žala, smūgiai skelia žaibus į kitus priešus;
-  - Dangaus forma (5 lygis): +200 % žala, teleportas dvigubu ← / →;
-  - Žvaigždžių forma: finalinėje kovoje su Vorgu.
-- **Zenu ir treniruotės:** iš priešų krenta Zenu monetos. Tarp lygių už jas galima pagerinti gyvybę, Ki arba Ki Bangos žalą (po 5 lygius).
-- **Muzika:** kiekvienas lygis turi savo melodiją, bosai ir finalas – atskirą. Viskas generuojama Web Audio API.
-- Dialogai su kalbančiųjų portretais.
-- **Telefonui:** lietimo mygtukai su užrašais, viso ekrano režimas, prašymas pasukti telefoną horizontaliai, vibracija gavus smūgį.
-- 7 Žvaigždžių kristalai, taškai, kombinacijos, rekordas, progreso išsaugojimas (meniu „Tęsti“), kontrolinis taškas prieš bosą.
-- Visa grafika piešiama Canvas API, garsai generuojami Web Audio API – jokių išorinių failų.
+- **5 levels** with their own backgrounds: Mountain Monastery, Desert Canyon, Ice City, Volcano Island, Vorg's Ship in Orbit.
+- **Enemies:** scouts, gunners, flying drones, armored soldiers (block Ki from the front), exploding robots, lava brutes, elite guards.
+- **Bosses:** Raxas (swordsman), the twins Zul and Zel, General Krag (shield, charge, earthquake), Nyx (teleport, clones), Vorg (3 phases and a final beam clash).
+- **Ki Wave** with 3 charge levels and **beam clashes** against bosses (mash L).
+- **Transformations (T):**
+  - Flame Form (level 1): +50% damage;
+  - Storm Form (level 3): +100% damage, punches throw chain lightning;
+  - Sky Form (level 5): +200% damage, teleport with a double-tap of ← / →;
+  - Star Form: in the final battle against Vorg.
+- **Coins and training:** enemies drop coins. Between levels you can spend them to upgrade health, Ki or Ki Wave damage (5 levels each).
+- **Music:** every level has its own tune, bosses and the finale have separate tracks – all generated with the Web Audio API.
+- Dialogs with speaker portraits.
+- **Mobile:** labelled touch buttons, fullscreen mode, a rotate-your-phone hint, vibration when hit.
+- 5 Star Crystals, score, combos, best score, saved progress ("Continue" in the menu), a checkpoint before every boss.
+- All graphics are drawn with the Canvas API and all sounds are generated in code – no external assets.
 
-## Struktūra
+## Project structure
 
 ```
 index.html, style.css
-src/core.js       bendra būsena, pagalbinės funkcijos
-src/input.js      klaviatūra ir lietimas
-src/audio.js      garso efektai ir muzika
-src/particles.js  dalelės, skraidantys skaičiai
-src/coins.js      Zenu monetos
-src/draw.js       figūrėlės, pozos, fonas, bangos
-src/player.js     herojus, Ki Banga, transformacija
-src/enemies.js    Vorgo kariai
-src/boss.js       bosas Raxas
-src/combat.js     pataikymai, šūviai, bangų kova
-src/level.js      lygio scenarijus ir dialogai
-src/ui.js         HUD, meniu, ekranai
-src/main.js       žaidimo ciklas
+src/core.js       shared state and helpers
+src/input.js      keyboard and touch input
+src/audio.js      sound effects and music
+src/particles.js  particles and floating numbers
+src/draw.js       figures, poses, backgrounds, beams
+src/player.js     the hero, Ki Wave, transformations
+src/enemies.js    Vorg's soldiers
+src/boss.js       bosses
+src/coins.js      coins
+src/combat.js     hits, projectiles, beam clashes
+src/level.js      level scripts and dialogs
+src/ui.js         HUD, menu, screens
+src/main.js       game loop
 ```

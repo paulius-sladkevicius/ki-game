@@ -1,18 +1,18 @@
 'use strict';
-// Bosai. Kiekvienas aprašomas BOSS_DEFS, o elgesys – bendra atakų būsenų mašina.
+// Bosses. Each is described in BOSS_DEFS; behavior is a shared attack state machine.
 
 const BOSS_DEFS = {
-  raxas: { name: 'RAXAS', title: 'Greičiausias Vorgo kardas', style: 'boss', hp: 450, scale: 1.15, score: 2000, zenu: 150,
+  raxas: { name: 'RAXAS', title: "Vorg's fastest blade", style: 'boss', hp: 450, scale: 1.15, score: 2000, coins: 150,
     attacks: ['dash', 'slash', 'leap'], rage: ['beam'], beamColor: 'boss', aura: 'rgba(170,80,255,A)' },
-  zul: { name: 'ZUL', title: 'Raudonasis dvynys', style: 'twinRed', hp: 210, scale: 1.05, score: 1500, zenu: 100,
+  zul: { name: 'ZUL', title: 'The red twin', style: 'twinRed', hp: 210, scale: 1.05, score: 1500, coins: 100,
     attacks: ['dash', 'leap', 'dash'], rage: ['fingers', 'beam'], beamColor: 'red', aura: 'rgba(255,70,50,A)' },
-  zel: { name: 'ZEL', title: 'Mėlynasis dvynys', style: 'twinBlue', hp: 210, scale: 1.05, score: 1500, zenu: 100, want: 320,
+  zel: { name: 'ZEL', title: 'The blue twin', style: 'twinBlue', hp: 210, scale: 1.05, score: 1500, coins: 100, want: 320,
     attacks: ['fingers', 'fingers', 'teleport'], rage: ['beam', 'dash'], beamColor: 'sky', aura: 'rgba(60,170,255,A)' },
-  krag: { name: 'GENEROLAS KRAG', title: 'Milžinas su skydu', style: 'krag', hp: 700, scale: 1.45, score: 3000, zenu: 200, shield: true, speed: 110,
+  krag: { name: 'GENERAL KRAG', title: 'The shielded giant', style: 'krag', hp: 700, scale: 1.45, score: 3000, coins: 200, shield: true, speed: 110,
     attacks: ['charge', 'quake', 'leap'], rage: ['beam'], beamColor: 'red', aura: 'rgba(255,60,60,A)' },
-  nyx: { name: 'NYX', title: 'Iliuzionistė', style: 'nyx', hp: 560, scale: 1.05, score: 3000, zenu: 200, want: 280,
+  nyx: { name: 'NYX', title: 'The illusionist', style: 'nyx', hp: 560, scale: 1.05, score: 3000, coins: 200, want: 280,
     attacks: ['teleport', 'fingers', 'clones'], rage: ['beam', 'teleport'], beamColor: 'boss', aura: 'rgba(210,60,170,A)' },
-  vorg: { name: 'VORGAS', title: 'Kosmoso tironas', style: 'vorg', hp: 1300, scale: 1.25, score: 6000, phases: true,
+  vorg: { name: 'VORG', title: 'Tyrant of the stars', style: 'vorg', hp: 1300, scale: 1.25, score: 6000, phases: true,
     attacks: ['fingers', 'dash', 'teleport'], rage: ['beam', 'summon', 'leap', 'fingers'], beamColor: 'boss', aura: 'rgba(255,40,100,A)' },
 };
 
@@ -88,7 +88,7 @@ class Boss {
         break;
       }
 
-      // ----- puolimas į priekį -----
+      // ----- forward dash -----
       case 'dash_tell':
         this.vx = 0;
         if (Math.random() < 0.5) spawnParticle({ x: this.x + rand(-20, 20), y: this.y - rand(10, this.h), vx: 0, vy: -80, life: 0.3, size: 3, color: '#d68bff' });
@@ -101,7 +101,7 @@ class Boss {
         if (this.stateT >= 0.42 || this.x <= 50 || this.x >= W - 50) this.recover(0.45);
         break;
 
-      // ----- kardo pjūvio banga -----
+      // ----- sword slash wave -----
       case 'slash_tell':
         this.vx = 0;
         if (this.stateT >= 0.38) {
@@ -115,7 +115,7 @@ class Boss {
         if (this.stateT >= 0.3) this.recover(0.35);
         break;
 
-      // ----- šuolis ir smūgis į žemę -----
+      // ----- leap and ground slam -----
       case 'leap':
         if (!this.hasHit) {
           this.hasHit = true;
@@ -130,7 +130,7 @@ class Boss {
         }
         break;
 
-      // ----- šūviai iš pirštų -----
+      // ----- rapid Ki shots -----
       case 'fingers_tell':
         this.vx = 0;
         this.facing = sign(dx);
@@ -152,7 +152,7 @@ class Boss {
         if (this.shotsLeft <= 0 && this.shotT <= 0) this.recover(0.35);
         break;
 
-      // ----- teleportas už žaidėjo -----
+      // ----- teleport behind the player -----
       case 'tp_out':
         this.vx = 0;
         this.alpha = clamp(1 - this.stateT / 0.3, 0, 1);
@@ -175,7 +175,7 @@ class Boss {
         }
         break;
 
-      // ----- Krag: puolimas su skydu -----
+      // ----- Krag: shield charge -----
       case 'charge_tell':
         this.vx = 0;
         this.facing = sign(dx);
@@ -189,13 +189,13 @@ class Boss {
         if (this.x <= 45 || this.x >= W - 45) {
           addShake(12); Sfx.boom();
           burst(this.x + this.facing * 30, this.y - 60, '#ffffff', 16, 260, 4, 0.4);
-          floater(this.x, this.y - this.h - 20, 'APSVAIGO!', '#ffff88', 18);
+          floater(this.x, this.y - this.h - 20, 'STUNNED!', '#ffff88', 18);
           this.setState('stunned');
           this.stunLen = 1.3;
         } else if (this.stateT >= 1.3) this.recover(0.5);
         break;
 
-      // ----- Krag: žemės drebėjimas -----
+      // ----- Krag: earthquake -----
       case 'quake_tell':
         this.vx = 0;
         if (this.stateT >= 0.5) { this.setState('quake'); this.quakeWaves = 0; }
@@ -211,7 +211,7 @@ class Boss {
         if (this.stateT >= 0.9) this.recover(0.4);
         break;
 
-      // ----- Nyx: klonai -----
+      // ----- Nyx: clones -----
       case 'clones_tell':
         this.vx = 0;
         if (Math.random() < 0.5) spawnParticle({ x: this.x + rand(-30, 30), y: this.y - rand(0, this.h), vx: 0, vy: -100, life: 0.4, size: 3, color: '#d040a0' });
@@ -223,23 +223,23 @@ class Boss {
             Game.enemies.push(c);
             burst(c.x, c.y - 40, '#d040a0', 14, 200, 4, 0.4);
           }
-          floater(this.x, this.y - this.h - 20, 'Kuri tikroji?', '#ffb0f0', 18);
+          floater(this.x, this.y - this.h - 20, 'Which one is real?', '#ffb0f0', 18);
           this.recover(0.5);
         }
         break;
 
-      // ----- Vorgas: pastiprinimas -----
+      // ----- Vorg: reinforcements -----
       case 'summon_tell':
         this.vx = 0;
         if (this.stateT >= 0.6) {
           const elites = Game.enemies.filter((e) => e.type === 'elite' && !e.dead).length;
           for (let i = 0; i < 2 - elites; i++) Game.enemies.push(new Enemy('elite', i === 0 ? 'L' : 'R'));
-          floater(this.x, this.y - this.h - 20, 'Gvardija, pulti!', '#ff9090', 18);
+          floater(this.x, this.y - this.h - 20, 'Guards, attack!', '#ff9090', 18);
           this.recover(0.4);
         }
         break;
 
-      // ----- energijos banga -----
+      // ----- energy beam -----
       case 'beam_tell': {
         this.vx = 0;
         const h = this.hand();
@@ -262,7 +262,7 @@ class Boss {
         if (this.stateT >= 1.2) this.recover(0.6);
         break;
 
-      // ----- Vorgo transformacija -----
+      // ----- Vorg's transformation -----
       case 'phase':
         this.vx = 0;
         addShake(4);
@@ -273,12 +273,12 @@ class Boss {
           Game.flash = 0.6;
           explosion(this.x, this.y - 60, 1.4);
           Sfx.explode();
-          showBanner('VORGAS: ANTROJI FORMA', 'Dabar jis rimtai pyksta!', 1.8);
+          showBanner('VORG: SECOND FORM', "Now he's really angry!", 1.8);
           this.recover(0.3);
         }
         break;
 
-      // ----- Finalas: planetą naikinanti sfera -----
+      // ----- Finale: planet-breaker sphere -----
       case 'final_tell': {
         this.vx = 0;
         this.facing = sign(dx);
@@ -298,7 +298,7 @@ class Boss {
           Game.beams.push(bb);
           const pb = p.releaseBeam(true);
           startClash(pb, bb, { final: true, rate: 0.3 });
-          showHint('PASKUTINĖ BANGŲ KOVA! SPAUDINĖK L!', 2.5);
+          showHint('FINAL BEAM CLASH! MASH L!', 2.5);
         }
         break;
       }
@@ -331,7 +331,7 @@ class Boss {
         break;
     }
 
-    // fizika
+    // physics
     if (!this.onGround) this.vy += GRAVITY * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -376,7 +376,7 @@ class Boss {
       this.setState('beam_tell');
       this.facing = sign(Game.player.x - this.x);
       this.beamCd = 7;
-      showHint(`${this.name} kaupia energiją! Laikyk L – bangų kova!`, 2.2);
+      showHint(`${this.name} is charging! Hold L for a beam clash!`, 2.2);
       return;
     }
     let opts = d.attacks.slice();
@@ -411,13 +411,13 @@ class Boss {
     const p = Game.player;
     if (p.form !== 4 && p.alive) {
       p.forceForm(4);
-      showBanner('ŽVAIGŽDŽIŲ FORMA!', 'Visos planetos Ki tavyje!', 2.2);
+      showBanner('STAR FORM!', "The whole planet's Ki is with you!", 2.2);
     } else {
-      showHint('Vorgas vėl kaupia sferą! Pasiruošk!', 2.5);
+      showHint('Vorg is charging the sphere again! Get ready!', 2.5);
     }
   }
 
-  // Vorgo fazių perėjimai
+  // Vorg's phase transitions
   checkPhase() {
     if (!this.def.phases) return false;
     if (this.phase === 1 && this.hp <= this.maxHp * 0.66) {
@@ -425,7 +425,7 @@ class Boss {
       this.hp = this.maxHp * 0.66;
       Game.beams = Game.beams.filter((b) => b.src !== this);
       this.setState('phase');
-      showBanner('VORGAS TRANSFORMUOJASI!', '', 1.6);
+      showBanner('VORG IS TRANSFORMING!', '', 1.6);
       return true;
     }
     if (this.phase === 2 && this.hp <= this.maxHp * 0.25) {
@@ -457,12 +457,12 @@ class Boss {
   takeHit(dmg, dir, knock, kind = 'melee') {
     if (this.dead) return false;
     if (this.invulnerable) {
-      if (this.phase >= 3 && Math.random() < 0.3) floater(this.x, this.y - this.h - 20, 'Nepažeidžiamas!', '#ff9090', 15);
+      if (this.phase >= 3 && Math.random() < 0.3) floater(this.x, this.y - this.h - 20, 'Invulnerable!', '#ff9090', 15);
       return false;
     }
     if (this.def.shield && (kind === 'blast' || kind === 'beam') && this.facing === -dir && !['stunned', 'recover', 'quake'].includes(this.state)) {
       dmg *= 0.12;
-      floater(this.x, this.y - this.h - 30, 'SKYDAS', '#9fe6ff', 15);
+      floater(this.x, this.y - this.h - 30, 'SHIELD', '#9fe6ff', 15);
       burst(this.x + this.facing * 24, this.y - this.h / 2, '#9fe6ff', 6, 150, 3, 0.25);
     }
     this.hp -= dmg;
@@ -474,7 +474,7 @@ class Boss {
     return dmg;
   }
 
-  // Finalinės bangų kovos pergalė
+  // Winning the final beam clash
   finalBlow() {
     this.phase = 4;
     this.hp = 0;
@@ -492,19 +492,19 @@ class Boss {
     Game.slowmo = 1.4;
     Game.flash = 0.6;
     Game.score += this.def.score;
-    spawnCoins(this.x, this.y - 60, this.def.zenu || 0);
+    spawnCoins(this.x, this.y - 60, this.def.coins || 0);
     Game.beams = Game.beams.filter((b) => b.src !== this);
     const others = liveBosses();
     if (others.length === 0) {
       Game.projectiles = Game.projectiles.filter((p) => p.owner !== 'enemy');
       for (const e of Game.enemies) if (!e.dead) { e.dead = true; e.setState('dying'); explosion(e.x, e.y - 40, 0.6); }
-      showBanner(`${this.name} NUGALĖTAS!`, `+${this.def.score} taškų`, 2.2);
+      showBanner(`${this.name} DEFEATED!`, `+${this.def.score} points`, 2.2);
     } else {
       for (const o of others) {
         o.forcedRage = true;
-        floater(o.x, o.y - o.h - 30, 'ĮSIUTO!', '#ff6060', 22);
+        floater(o.x, o.y - o.h - 30, 'ENRAGED!', '#ff6060', 22);
       }
-      showBanner(`${this.name} NUGALĖTAS!`, 'Bet dar ne viskas...', 1.6);
+      showBanner(`${this.name} DEFEATED!`, "But it's not over yet...", 1.6);
     }
   }
 

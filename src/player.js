@@ -1,5 +1,5 @@
 'use strict';
-// Herojus Kai: judėjimas, smūgiai, Ki šūviai, Ki Banga ir transformacijos.
+// The hero Ren: movement, punches, Ki blasts, the Ki Wave and transformations.
 
 const BEAM_LEVELS = {
   1: { cost: 10, dmg: 20, len: 280, width: 18, dur: 0.35, pierce: 1, knock: 150 },
@@ -7,13 +7,13 @@ const BEAM_LEVELS = {
   3: { cost: 45, dmg: 120, len: 1200, width: 54, dur: 0.9, pierce: 99, knock: 450 },
 };
 
-// ball/blast: [vidinė, išorinė] spalva
+// ball/blast: [inner, outer] color
 const FORMS = [
-  { id: 'base', name: 'Bazinė forma', dmg: 1, speed: 250, style: 'heroBase', beam: 'base', aura: 'rgba(170,210,255,A)', auraP: '#bfe0ff', drain: 0, kiRegen: 6, chargeRate: 1, widthMul: 1, ball: ['#9fdcff', 'rgba(40,140,255,0.6)'] },
-  { id: 'flame', name: 'Liepsnos forma', dmg: 1.5, speed: 290, style: 'heroFlame', beam: 'flame', aura: 'rgba(255,200,40,A)', auraP: '#ffd34a', drain: 6, kiRegen: 9, chargeRate: 1.4, widthMul: 1.5, ball: ['#ffe680', 'rgba(255,160,0,0.6)'], banner: '+50 % žala, platesnė Ki Banga' },
-  { id: 'storm', name: 'Audros forma', dmg: 2, speed: 310, style: 'heroStorm', beam: 'storm', aura: 'rgba(255,235,90,A)', auraP: '#fff27a', drain: 6.5, kiRegen: 13, chargeRate: 1.5, widthMul: 1.6, lightning: true, ball: ['#fffbd0', 'rgba(255,220,40,0.7)'], banner: '+100 % žala, žaibai, Ki atsistato 2× greičiau' },
-  { id: 'sky', name: 'Dangaus forma', dmg: 3, speed: 330, style: 'heroSky', beam: 'sky', aura: 'rgba(80,170,255,A)', auraP: '#7fd0ff', drain: 6.5, kiRegen: 13, chargeRate: 2, widthMul: 1.8, teleport: true, ball: ['#cfeaff', 'rgba(40,120,255,0.7)'], banner: '+200 % žala, teleportas (dukart ← arba →)' },
-  { id: 'star', name: 'Žvaigždžių forma', dmg: 4, speed: 340, style: 'heroStar', beam: 'star', aura: 'rgba(225,225,255,A)', auraP: '#ffffff', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, lightning: true, ball: ['#ffffff', 'rgba(200,200,255,0.8)'], banner: 'Galutinė jėga!' },
+  { id: 'base', name: 'Base Form', dmg: 1, speed: 250, style: 'heroBase', beam: 'base', aura: 'rgba(170,210,255,A)', auraP: '#bfe0ff', drain: 0, kiRegen: 6, chargeRate: 1, widthMul: 1, ball: ['#9fdcff', 'rgba(40,140,255,0.6)'] },
+  { id: 'flame', name: 'Flame Form', dmg: 1.5, speed: 290, style: 'heroFlame', beam: 'flame', aura: 'rgba(255,110,30,A)', auraP: '#ff8a3a', drain: 6, kiRegen: 9, chargeRate: 1.4, widthMul: 1.5, ball: ['#ffc890', 'rgba(255,90,20,0.6)'], banner: '+50% damage, wider Ki Wave' },
+  { id: 'storm', name: 'Storm Form', dmg: 2, speed: 310, style: 'heroStorm', beam: 'storm', aura: 'rgba(160,100,255,A)', auraP: '#c9a8ff', drain: 6.5, kiRegen: 13, chargeRate: 1.5, widthMul: 1.6, lightning: true, ball: ['#e8dcff', 'rgba(150,80,255,0.7)'], banner: '+100% damage, chain lightning, 2x Ki regen' },
+  { id: 'sky', name: 'Sky Form', dmg: 3, speed: 330, style: 'heroSky', beam: 'sky', aura: 'rgba(40,220,190,A)', auraP: '#7ff0d8', drain: 6.5, kiRegen: 13, chargeRate: 2, widthMul: 1.8, teleport: true, ball: ['#d0fff4', 'rgba(20,200,170,0.7)'], banner: '+200% damage, teleport (double-tap ← or →)' },
+  { id: 'star', name: 'Star Form', dmg: 4, speed: 340, style: 'heroStar', beam: 'star', aura: 'rgba(255,140,220,A)', auraP: '#ffc8ee', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, lightning: true, ball: ['#ffffff', 'rgba(255,110,210,0.8)'], banner: 'Ultimate power!' },
 ];
 
 class Player {
@@ -26,7 +26,7 @@ class Player {
     this.maxKi = 100; this.ki = 100;
     this.power = 0;
     this.form = 0;
-    this.unlocked = 0;        // aukščiausia atrakinta forma (0..3); 4 – tik finale
+    this.unlocked = 0;        // highest unlocked form (0..3); 4 = final battle only
     this.transformTo = 1;
     this.state = 'normal';
     this.stateT = 0;
@@ -47,7 +47,7 @@ class Player {
     this.tapDir = 0;
     this.tapT = 0;
     this.pose = POSES.idle(0);
-    // treniruočių patobulinimai
+    // training upgrades
     const up = Game.upgrades;
     this.maxHp = this.hp = 100 + up.hp * 20;
     this.maxKi = this.ki = 100 + up.ki * 20;
@@ -73,14 +73,14 @@ class Player {
     if (this.blastCd > 0) this.blastCd -= dt;
     if (this.comboWindow > 0) this.comboWindow -= dt; else this.comboStep = 0;
 
-    // Transformacija trunka, kol yra Jėgos.
+    // A transformation lasts while there is Power left.
     if (this.form > 0 && this.state !== 'transform' && this.state !== 'clash') {
       this.power -= this.F.drain * dt;
       if (this.power <= 0) {
         this.power = 0;
         this.form = 0;
         burst(this.x, this.y - 40, '#ffd34a', 20, 200);
-        floater(this.x, this.y - 100, 'Forma baigėsi', '#ffd34a');
+        floater(this.x, this.y - 100, 'Form ended', '#ffd34a');
       }
     }
 
@@ -132,7 +132,7 @@ class Player {
         this.beamLevel = lvl;
         Sfx.chargeSet(Math.min(1, this.charge / 1.5));
         if (lvl === 3) addShake(2.5);
-        // dalelės traukiamos į delnus
+        // particles pulled into the palms
         const h = this.hand();
         for (let i = 0; i < lvl; i++) {
           const a = Math.random() * Math.PI * 2, r = rand(40, 80);
@@ -190,7 +190,7 @@ class Player {
         break;
     }
 
-    // Gravitacija ir skrydis
+    // Gravity and flight
     if (!this.onGround) {
       this.airT += dt;
       const canFly = this.state === 'normal' || this.state === 'punch' || this.state === 'blast';
@@ -249,7 +249,7 @@ class Player {
     }
   }
 
-  // Dangaus forma: dvigubas ← arba → paspaudimas – teleportas.
+  // Sky Form: double-tap ← or → to teleport.
   checkDoubleTap(dir) {
     if (this.F.teleport && this.tapDir === dir && this.tapT < 0.28) {
       this.teleport(dir);
@@ -299,7 +299,7 @@ class Player {
     }
   }
 
-  // Audros forma: žaibas peršoka į artimiausią kitą priešą.
+  // Storm Form: lightning jumps to the nearest other enemy.
   chainLightning(from, dmg) {
     let best = null, bd = 260;
     for (const t of liveTargets()) {
@@ -319,7 +319,7 @@ class Player {
 
   fireBlast() {
     if (this.blastCd > 0) return;
-    if (this.ki < 5) { floater(this.x, this.y - 95, 'Trūksta Ki!', '#7fc8ff', 15); return; }
+    if (this.ki < 5) { floater(this.x, this.y - 95, 'Not enough Ki!', '#7fc8ff', 15); return; }
     this.ki -= 5;
     this.blastCd = 0.22;
     this.setState('blast');
@@ -334,14 +334,14 @@ class Player {
   }
 
   startCharge() {
-    if (this.ki < BEAM_LEVELS[1].cost) { floater(this.x, this.y - 95, 'Trūksta Ki! (laikyk S)', '#7fc8ff', 15); return; }
+    if (this.ki < BEAM_LEVELS[1].cost) { floater(this.x, this.y - 95, 'Not enough Ki! (hold S)', '#7fc8ff', 15); return; }
     this.setState('charging');
     this.charge = 0;
     this.beamLevel = 1;
     Sfx.chargeStart();
   }
 
-  // Paleidžia bangą. Grąžina sukurtą bangą.
+  // Fires the beam. Returns the created beam.
   releaseBeam(forClash = false) {
     const L = BEAM_LEVELS[this.beamLevel];
     this.ki = Math.max(0, this.ki - L.cost);
@@ -358,15 +358,15 @@ class Player {
     Sfx.beam(this.beamLevel);
     addShake(this.beamLevel * 3);
     this.setState(forClash ? 'clash' : 'firing');
-    if (this.beamLevel === 3) floater(this.x, this.y - 110, 'KI BANGA!', this.F.auraP, 26);
+    if (this.beamLevel === 3) floater(this.x, this.y - 110, 'KI WAVE!', this.F.auraP, 26);
     return b;
   }
 
   tryTransform() {
-    if (this.unlocked === 0) { floater(this.x, this.y - 95, 'Forma dar neatrakinta', '#ffd34a', 15); return; }
+    if (this.unlocked === 0) { floater(this.x, this.y - 95, 'No form unlocked yet', '#ffd34a', 15); return; }
     if (this.form >= this.unlocked) return;
     const need = this.form === 0 ? 100 : 50;
-    if (this.power < need) { floater(this.x, this.y - 95, this.form === 0 ? 'Reikia pilnos Jėgos juostos' : 'Reikia bent pusės Jėgos', '#ffd34a', 15); return; }
+    if (this.power < need) { floater(this.x, this.y - 95, this.form === 0 ? 'Power bar must be full' : 'Need at least half Power', '#ffd34a', 15); return; }
     this.startTransform(this.unlocked);
   }
 
@@ -379,7 +379,7 @@ class Player {
     Sfx.transform();
   }
 
-  // Finalo transformacija – nepriklauso nuo Jėgos.
+  // Final battle transformation - does not need Power.
   forceForm(to) {
     this.power = 100;
     this.ki = this.maxKi;

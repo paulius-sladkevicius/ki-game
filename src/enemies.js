@@ -1,6 +1,6 @@
 'use strict';
-// Vorgo kariai.
-// ai: melee – muša iš arti, ranged – šaudo iš toli, elite – abu, drone – skraido ir šaudo, bomber – rieda ir sprogsta.
+// Vorg's soldiers.
+// ai: melee = hits up close, ranged = shoots from afar, elite = both, drone = flies and shoots, bomber = rolls and explodes.
 
 const ENEMY_DEFS = {
   scout: { hp: 30, speed: 120, windup: 0.45, dmg: 6, style: 'scout', score: 100, ai: 'melee', cd: [1.2, 2.0] },
@@ -54,7 +54,7 @@ class Enemy {
     const dx = p.x - this.x;
     const dist = Math.abs(dx);
 
-    // Nyx klonai išnyksta po kurio laiko
+    // Nyx's clones vanish after a while
     if (this.def.life && this.age > this.def.life && !this.dead) {
       this.dead = true; this.setState('dying');
       burst(this.x, this.y - 40, '#d040a0', 14, 200, 4, 0.4);
@@ -179,7 +179,7 @@ class Enemy {
     Sfx.punch();
   }
 
-  // Robotas sprogsta: hurt – ar žeidžia žaidėją
+  // The robot explodes: hurt = whether it damages the player
   explodeSelf(hurt) {
     const p = Game.player;
     explosion(this.x, this.y - 15, 1.1);
@@ -200,14 +200,14 @@ class Enemy {
     }
   }
 
-  // Grąžina padarytą žalą (skaičių) arba false.
+  // Returns the damage dealt (a number) or false.
   takeHit(dmg, dir, knock, kind = 'melee') {
     if (this.dead) return false;
-    // šarvuotis blokuoja Ki iš priekio (išskyrus 3 lygio bangą)
+    // armored soldiers block Ki from the front (except a level 3 wave)
     if (this.def.block && (kind === 'blast' || kind === 'beam') && this.facing === -dir && this.state !== 'stun') {
       dmg *= 0.15;
       knock = 0;
-      floater(this.x, this.y - 100, 'BLOKAS', '#9fe6ff', 15);
+      floater(this.x, this.y - 100, 'BLOCK', '#9fe6ff', 15);
       burst(this.x + this.facing * 18, this.y - 50, '#9fe6ff', 6, 150, 3, 0.25);
     }
     this.hp -= dmg;
@@ -215,7 +215,7 @@ class Enemy {
     floater(this.x, this.y - 88, String(Math.round(dmg)), '#ffffff', 16);
     if (this.hp <= 0) {
       Game.score += this.def.score;
-      spawnCoins(this.x, this.y - 40, ZENU_VALUES[this.type] || 0);
+      spawnCoins(this.x, this.y - 40, COIN_VALUES[this.type] || 0);
       if (this.ai === 'bomber') { this.explodeSelf(false); return dmg; }
       this.dead = true;
       this.setState('dying');

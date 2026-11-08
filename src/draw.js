@@ -1,7 +1,7 @@
 'use strict';
-// Piešimas: figūrėlės iš paprastų formų, pozos, fonas, bangos ir šūviai.
+// Drawing: figures built from simple shapes, poses, backgrounds, beams and projectiles.
 
-// ---------- Spalvų pagalbininkas ----------
+// ---------- Color helper ----------
 const _shadeCache = {};
 function shade(hex, f) {
   const key = hex + f;
@@ -13,16 +13,16 @@ function shade(hex, f) {
   return (_shadeCache[key] = `rgb(${r},${g},${b})`);
 }
 
-// ---------- Stiliai ----------
+// ---------- Styles ----------
 const STYLES = {
-  heroBase: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'spiky', hairColor: '#1a1a1a' },
-  heroFlame: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'flame', hairColor: '#ffd93b' },
+  heroBase: { gi: '#2b59c3', under: '#f4f4f4', belt: '#d63b2e', pants: '#1f2f5a', boots: '#2a2a2a', arm: '#f2c29b', skin: '#f2c29b', band: '#d63b2e', headband: '#d63b2e', hair: 'swept', hairColor: '#1a1a1a' },
+  heroFlame: { gi: '#2b59c3', under: '#f4f4f4', belt: '#d63b2e', pants: '#1f2f5a', boots: '#2a2a2a', arm: '#f2c29b', skin: '#f2c29b', band: '#d63b2e', headband: '#d63b2e', hair: 'flame', hairColor: '#ff6a1a' },
   scout: { gi: '#5b6170', under: '#2c2f38', belt: '#c0392b', pants: '#3a3f4b', boots: '#22252c', arm: '#5b6170', skin: '#8fc28a', band: '#c0392b', hair: 'helmet', hairColor: '#c0392b', visor: '#55e6ff' },
   gunner: { gi: '#6b4f8a', under: '#2c2238', belt: '#e67e22', pants: '#3d2e52', boots: '#22202c', arm: '#6b4f8a', skin: '#9ad0c2', band: '#e67e22', hair: 'helmet', hairColor: '#e67e22', visor: '#ffe14d' },
   boss: { gi: '#3b2a5c', under: '#c9c9d9', belt: '#c8a640', pants: '#2a1f40', boots: '#c9c9d9', arm: '#3b2a5c', skin: '#b9d7e8', band: '#c8a640', hair: 'long', hairColor: '#e8e8f0', sword: true },
-  heroStorm: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'storm', hairColor: '#ffe94d' },
-  heroSky: { gi: '#d6332e', under: '#1d2b6b', belt: '#1d2b6b', pants: '#d6332e', boots: '#1d2b6b', arm: '#f2c29b', skin: '#f2c29b', band: '#1d2b6b', hair: 'flame', hairColor: '#4fb3ff' },
-  heroStar: { gi: '#e8e8f8', under: '#5a5aa8', belt: '#5a5aa8', pants: '#d6332e', boots: '#5a5aa8', arm: '#f2c29b', skin: '#f2c29b', band: '#5a5aa8', hair: 'storm', hairColor: '#eef0ff' },
+  heroStorm: { gi: '#2b59c3', under: '#f4f4f4', belt: '#d63b2e', pants: '#1f2f5a', boots: '#2a2a2a', arm: '#f2c29b', skin: '#f2c29b', band: '#d63b2e', headband: '#d63b2e', hair: 'storm', hairColor: '#b48cff' },
+  heroSky: { gi: '#2b59c3', under: '#f4f4f4', belt: '#d63b2e', pants: '#1f2f5a', boots: '#2a2a2a', arm: '#f2c29b', skin: '#f2c29b', band: '#d63b2e', headband: '#d63b2e', hair: 'flame', hairColor: '#3fe0c0' },
+  heroStar: { gi: '#f4f4f4', under: '#2b59c3', belt: '#d63b2e', pants: '#1f2f5a', boots: '#2a2a2a', arm: '#f2c29b', skin: '#f2c29b', band: '#d63b2e', headband: '#ffffff', hair: 'storm', hairColor: 'rainbow' },
   armored: { gi: '#3a6a9a', under: '#1a2a3a', belt: '#d0d0d0', pants: '#2a4a6a', boots: '#1a2a3a', arm: '#3a6a9a', skin: '#9ab0c8', band: '#d0d0d0', hair: 'helmet', hairColor: '#d0e0f0', visor: '#40ffd0', shield: true },
   brute: { gi: '#3a2a22', under: '#ff6a1a', belt: '#ff6a1a', pants: '#2a1a12', boots: '#1a1008', arm: '#c8501a', skin: '#c8501a', band: '#ff6a1a', hair: 'horns', hairColor: '#2a1a12' },
   elite: { gi: '#1f1f26', under: '#c8a640', belt: '#c8a640', pants: '#15151a', boots: '#c8a640', arm: '#1f1f26', skin: '#c0a0d8', band: '#c8a640', hair: 'helmet', hairColor: '#c8a640', visor: '#ff3040' },
@@ -30,16 +30,16 @@ const STYLES = {
   twinBlue: { gi: '#1e3a8b', under: '#222222', belt: '#e0b030', pants: '#10183a', boots: '#222222', arm: '#a0c8e8', skin: '#a0c8e8', band: '#e0b030', hair: 'mohawk', hairColor: '#3ab0ff' },
   krag: { gi: '#4a5a6a', under: '#2a2f38', belt: '#8a6a2a', pants: '#2a3038', boots: '#1a1a1a', arm: '#4a5a6a', skin: '#7a8f6a', band: '#8a6a2a', hair: 'helmet', hairColor: '#3a4a5a', visor: '#ff4040', shield: true },
   nyx: { gi: '#2a1a3a', under: '#d040a0', belt: '#d040a0', pants: '#1a1028', boots: '#d040a0', arm: '#d8c8f0', skin: '#d8c8f0', band: '#d040a0', hair: 'long', hairColor: '#8a2be2' },
-  vorg: { gi: '#e8e0f0', under: '#5a2a8a', belt: '#5a2a8a', pants: '#5a2a8a', boots: '#e8e0f0', arm: '#c8a8e8', skin: '#c8a8e8', band: '#5a2a8a', hair: 'horns', hairColor: '#5a2a8a' },
-  vorg2: { gi: '#2a0a22', under: '#ff3060', belt: '#ffd040', pants: '#1a0614', boots: '#ffd040', arm: '#e05a8a', skin: '#e05a8a', band: '#ffd040', hair: 'horns', hairColor: '#ffd040' },
-  master: { gi: '#e08a2a', under: '#f5d6a0', belt: '#7a3a10', pants: '#e08a2a', boots: '#5a3a20', arm: '#e08a2a', skin: '#e8c8a8', band: '#7a3a10', hair: 'beard', hairColor: '#f0f0f0' },
+  vorg: { gi: '#2b2b33', under: '#b8322a', belt: '#c9a227', pants: '#1d1d24', boots: '#3a3a44', arm: '#2b2b33', skin: '#6f9a5c', band: '#c9a227', hair: 'horns', hairColor: '#d8cfa8' },
+  vorg2: { gi: '#4a0d0d', under: '#ff7a1a', belt: '#ffcc33', pants: '#2a0606', boots: '#ffcc33', arm: '#4a0d0d', skin: '#3f6a34', band: '#ffcc33', hair: 'horns', hairColor: '#f4f0e0' },
+  master: { gi: '#3d7a52', under: '#e8dcc0', belt: '#6b4a2a', pants: '#2f5a3e', boots: '#4a3420', arm: '#3d7a52', skin: '#e2c09a', band: '#6b4a2a', hair: 'sage', hairColor: '#cfcfcf' },
   villager: { gi: '#3a6aa8', under: '#e8e8f0', belt: '#8a5a2a', pants: '#2a3a5a', boots: '#5a3a20', arm: '#3a6aa8', skin: '#f0d0b0', band: '#e8e8f0', hair: 'long', hairColor: '#7a4a2a' },
   flash: { gi: '#ffffff', under: '#ffffff', belt: '#ffffff', pants: '#ffffff', boots: '#ffffff', arm: '#ffffff', skin: '#ffffff', band: '#ffffff', hair: null, hairColor: '#ffffff', visor: '#ffffff' },
 };
 
-// ---------- Pozos ----------
-// Kampai radianais nuo „tiesiai žemyn“, teigiamas – į priekį (žiūrėjimo kryptimi).
-// Kojoms antras skaičius neigiamas (kelias lenkiasi atgal), rankoms – teigiamas.
+// ---------- Poses ----------
+// Angles in radians from "straight down"; positive = forward (facing direction).
+// For legs the second number is negative (knee bends back), for arms positive.
 const POSES = {
   idle: (t) => ({ crouch: 3 + Math.sin(t * 4), lean: 0.05, fl: [0.35, -0.25], bl: [-0.3, -0.15], fa: [0.9, 1.7], ba: [0.5, 1.9] }),
   run: (t) => {
@@ -63,14 +63,14 @@ const POSES = {
   transform: (t) => ({ crouch: 10 + Math.sin(t * 40), lean: -0.2, fl: [0.5, -0.5], bl: [-0.5, -0.3], fa: [0.7, 0.4], ba: [-0.7, 0.4], scream: true }),
   windup: () => ({ crouch: 4, lean: -0.1, fl: [0.4, -0.3], bl: [-0.4, -0.2], fa: [-0.9, 1.7], ba: [0.5, 1.8] }),
   dead: () => ({ lying: 1, crouch: 0, lean: 0, fl: [0.1, -0.1], bl: [-0.1, -0.1], fa: [2.5, 0.3], ba: [2.8, 0.2] }),
-  // Boso pozos su kardu
+  // Boss poses with a sword
   swordIdle: (t) => ({ crouch: 4 + Math.sin(t * 3), lean: 0.05, fl: [0.4, -0.3], bl: [-0.35, -0.2], fa: [0.6, 1.0], ba: [0.3, 1.6] }),
   swordRaise: () => ({ crouch: 6, lean: -0.15, fl: [0.45, -0.4], bl: [-0.45, -0.2], fa: [2.8, 0.3], ba: [0.4, 1.6] }),
   swordSlash: () => ({ crouch: 8, lean: 0.3, fl: [0.7, -0.4], bl: [-0.6, -0.1], fa: [1.4, -0.1], ba: [-0.5, 0.8] }),
   dash: () => ({ crouch: 10, lean: 0.55, fl: [0.8, -0.6], bl: [-0.8, -0.3], fa: [1.7, -0.2], ba: [-0.9, 0.5] }),
 };
 
-// ---------- Figūrėlė ----------
+// ---------- Figure ----------
 function limb(ctx, x, y, a1, l1, a2, l2, w1, w2, c1, c2) {
   const kx = x + Math.sin(a1) * l1;
   const ky = y + Math.cos(a1) * l1;
@@ -102,7 +102,7 @@ function drawArm(ctx, x, y, A, st, back) {
   const end = limb(ctx, x, y, A[0], 14, A[1], 13, 8, 7, shade(st.arm, f), shade(st.skin, f));
   ctx.fillStyle = shade(st.skin, f);
   ctx.beginPath(); ctx.arc(end.x, end.y, 4.8, 0, Math.PI * 2); ctx.fill();
-  // riešo juosta
+  // wristband
   const bx = end.x - Math.sin(end.a) * 4, by = end.y - Math.cos(end.a) * 4;
   ctx.strokeStyle = shade(st.band, f); ctx.lineWidth = 7.5;
   ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - Math.sin(end.a) * 2, by - Math.cos(end.a) * 2); ctx.stroke();
@@ -123,6 +123,8 @@ function drawTorso(ctx, st) {
 }
 
 const HAIR = {
+  swept: [[8, -4], [9, -9], [4, -11], [-2, -12], [-8, -10], [-11, -6], [-18, -4], [-25, 1], [-16, 1], [-10, 3], [-8, 7], [-6, 8]],
+  sage: [[-5, -8], [-4, -14], [0, -17], [4, -14], [4, -8], [0, -9]],
   spiky: [[8, -4], [10, -10], [5, -9], [6, -16], [0, -11], [-3, -19], [-5, -11], [-12, -15], [-9, -6], [-15, -6], [-9, -1], [-13, 3], [-8, 4], [-6, 8]],
   flame: [[8, -3], [13, -11], [6, -10], [9, -21], [2, -13], [1, -26], [-4, -13], [-10, -23], [-8, -10], [-17, -15], [-10, -4], [-17, 0], [-9, 2], [-6, 8]],
   storm: [[8, -3], [15, -12], [6, -11], [11, -24], [2, -14], [2, -30], [-4, -14], [-12, -27], [-8, -10], [-21, -18], [-10, -4], [-22, -2], [-10, 2], [-18, 8], [-6, 8]],
@@ -146,7 +148,7 @@ function drawHead(ctx, st, pose, t) {
     ctx.fillRect(3, -4, 8, 4);
   } else {
     if (st.hair && HAIR[st.hair]) {
-      ctx.fillStyle = st.hairColor;
+      ctx.fillStyle = st.hairColor === 'rainbow' ? `hsl(${(t * 140) % 360}, 90%, 72%)` : st.hairColor;
       ctx.beginPath();
       const jit = st.hair === 'flame' ? 1.2 : 0;
       HAIR[st.hair].forEach(([x, y], i) => {
@@ -155,11 +157,24 @@ function drawHead(ctx, st, pose, t) {
         if (i === 0) ctx.moveTo(x + jx, y + jy); else ctx.lineTo(x + jx, y + jy);
       });
       ctx.closePath(); ctx.fill();
+      if (st.hair === 'sage') {
+        ctx.beginPath();
+        HAIR.beard.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+        ctx.closePath(); ctx.fill();
+      }
     }
-    // akis ir antakis
+    if (st.headband) {
+      // headband with two tails flowing back
+      ctx.fillStyle = st.headband;
+      ctx.fillRect(-9, -6, 18.5, 3.6);
+      ctx.beginPath();
+      ctx.moveTo(-8, -5); ctx.lineTo(-17, -3 + Math.sin(t * 9) * 2); ctx.lineTo(-16, 0 + Math.sin(t * 9) * 2); ctx.lineTo(-8, -2);
+      ctx.closePath(); ctx.fill();
+    }
+    // eye and eyebrow
     ctx.fillStyle = '#111';
     ctx.fillRect(4.5, -2.5, 2.4, 3.6);
-    ctx.strokeStyle = st.hair === 'flame' ? '#b8860b' : '#111';
+    ctx.strokeStyle = '#111';
     ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(3, -5); ctx.lineTo(8, -3.6); ctx.stroke();
     if (pose.scream) {
@@ -220,7 +235,7 @@ function drawHumanoid(ctx, f) {
   ctx.restore();
 }
 
-// Skraidantis dronas
+// Flying drone
 function drawDrone(ctx, x, y, facing, t, flash) {
   ctx.save();
   ctx.translate(x, y - 14);
@@ -240,7 +255,7 @@ function drawDrone(ctx, x, y, facing, t, flash) {
   ctx.restore();
 }
 
-// Riedantis sprogstantis robotas
+// Rolling exploding robot
 function drawBomber(ctx, x, y, facing, t, flash, fuse) {
   ctx.save();
   ctx.translate(x, y - 15);
@@ -255,7 +270,7 @@ function drawBomber(ctx, x, y, facing, t, flash, fuse) {
   ctx.beginPath(); ctx.arc(x, y - 33, 4, 0, Math.PI * 2); ctx.fill();
 }
 
-// Priekinės rankos plaštakos padėtis pasaulio koordinatėse.
+// Position of the front hand in world coordinates.
 function handOf(f) {
   const P = f.pose, s = f.scale || 1, lean = P.lean || 0;
   const hipY = -40 + (P.crouch || 0);
@@ -306,14 +321,14 @@ function drawEnergyBall(ctx, x, y, r, inner, outer, t) {
   ctx.restore();
 }
 
-// ---------- Bangos ----------
+// ---------- Beams ----------
 const BEAM_COLORS = {
   base: ['rgba(40,140,255,A)', 'rgba(140,215,255,A)'],
-  flame: ['rgba(255,170,0,A)', 'rgba(255,235,140,A)'],
-  storm: ['rgba(255,215,30,A)', 'rgba(255,250,190,A)'],
-  sky: ['rgba(30,110,255,A)', 'rgba(170,230,255,A)'],
-  star: ['rgba(190,190,255,A)', 'rgba(255,255,255,A)'],
-  boss: ['rgba(160,60,255,A)', 'rgba(220,170,255,A)'],
+  flame: ['rgba(255,90,20,A)', 'rgba(255,195,130,A)'],
+  storm: ['rgba(150,80,255,A)', 'rgba(225,200,255,A)'],
+  sky: ['rgba(20,200,170,A)', 'rgba(175,255,235,A)'],
+  star: ['rgba(255,110,210,A)', 'rgba(255,255,255,A)'],
+  boss: ['rgba(200,30,110,A)', 'rgba(255,165,205,A)'],
   red: ['rgba(255,40,60,A)', 'rgba(255,170,170,A)'],
 };
 
@@ -344,7 +359,7 @@ function drawBeam(ctx, b) {
   drawEnergyBall(ctx, x0, b.y, w * 0.55, mid.replace('A', '1'), outer.replace('A', '0.6'), Game.time);
 }
 
-// ---------- Šūviai ----------
+// ---------- Projectiles ----------
 function drawProjectile(ctx, p) {
   if (p.type === 'crescent') {
     ctx.save();
@@ -375,7 +390,7 @@ function drawProjectile(ctx, p) {
   drawEnergyBall(ctx, p.x, p.y, p.r, p.inner, p.outer, Game.time + p.x * 0.01);
 }
 
-// ---------- Fonai ----------
+// ---------- Backgrounds ----------
 const _bgCache = {};
 
 function bgSky(g, stops) {
@@ -464,7 +479,7 @@ const BG_BUILDERS = {
     bgGlow(g, 220, 110, 120, 'rgba(255,255,230,1)', 'rgba(255,240,180,0.6)');
     bgClouds(g, 'rgba(255,255,255,0.45)', [[520, 90, 110], [820, 140, 80]]);
     bgPeaks(g, '#e0a46a', [[0, 330], [140, 320], [200, 300], [330, 310], [420, 290], [560, 320], [700, 300], [820, 315], [960, 305]]);
-    // mezos (plokščiakalniai)
+    // mesas
     const mesa = (x, w, top, color) => {
       g.fillStyle = color;
       g.beginPath(); g.moveTo(x - 20, GROUND); g.lineTo(x, top + 10); g.lineTo(x + 8, top); g.lineTo(x + w - 8, top); g.lineTo(x + w, top + 10); g.lineTo(x + w + 20, GROUND); g.closePath(); g.fill();
@@ -474,7 +489,7 @@ const BG_BUILDERS = {
     mesa(40, 200, 220, '#b5562e');
     mesa(620, 150, 260, '#a24a28');
     mesa(800, 180, 200, '#c2643a');
-    // kaktusai
+    // cacti
     const cactus = (x, h) => {
       g.fillStyle = '#2f6b3a';
       g.beginPath(); g.roundRect(x - 6, GROUND - h, 12, h, 6); g.fill();
@@ -492,7 +507,7 @@ const BG_BUILDERS = {
   ice(g) {
     bgSky(g, [[0, '#0b1a3a'], [0.5, '#2a5a8a'], [1, '#bfe6ff']]);
     bgStars(g, 60, 220, 0.7);
-    // šiaurės pašvaistė
+    // aurora
     for (let k = 0; k < 3; k++) {
       g.strokeStyle = ['rgba(80,255,180,0.18)', 'rgba(120,200,255,0.15)', 'rgba(200,120,255,0.12)'][k];
       g.lineWidth = 26 - k * 6;
@@ -502,7 +517,7 @@ const BG_BUILDERS = {
     }
     bgPeaks(g, '#d6ecff', [[0, 300], [100, 200], [180, 260], [300, 170], [420, 270], [520, 210], [640, 280], [760, 190], [880, 260], [960, 220]]);
     bgPeaks(g, '#9fc8e8', [[0, 360], [150, 310], [260, 350], [400, 300], [520, 360], [650, 320], [780, 360], [900, 310], [960, 340]]);
-    // ledo miestas
+    // ice city
     const tower = (x, w, h) => {
       g.fillStyle = '#6fa8d0'; g.fillRect(x, GROUND - h, w, h);
       g.fillStyle = '#4f88b8'; g.fillRect(x + w * 0.6, GROUND - h, w * 0.4, h);
@@ -522,18 +537,18 @@ const BG_BUILDERS = {
   volcano(g) {
     bgSky(g, [[0, '#1a0a0e'], [0.5, '#5a1414'], [0.85, '#c0401a'], [1, '#ff8a3a']]);
     bgStars(g, 20, 120, 0.4);
-    // ugnikalnis
+    // volcano
     g.fillStyle = '#2a1414';
     g.beginPath(); g.moveTo(260, GROUND); g.lineTo(450, 150); g.lineTo(530, 150); g.lineTo(740, GROUND); g.closePath(); g.fill();
     bgGlow(g, 490, 150, 120, 'rgba(255,200,80,0.9)', 'rgba(255,90,20,0.5)');
     g.strokeStyle = '#ff6a1a'; g.lineWidth = 6;
     g.beginPath(); g.moveTo(470, 155); g.quadraticCurveTo(440, 260, 400, 330); g.stroke();
     g.beginPath(); g.moveTo(515, 155); g.quadraticCurveTo(560, 250, 610, 340); g.stroke();
-    // dūmai
+    // smoke
     g.fillStyle = 'rgba(40,20,20,0.6)';
     [[490, 110, 50], [520, 70, 60], [470, 40, 70], [540, 20, 80]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); });
     bgPeaks(g, '#1a0a0a', [[0, 360], [90, 320], [180, 370], [260, 380], [740, 380], [820, 330], [900, 360], [960, 320]]);
-    // lavos jūra
+    // lava sea
     const lava = g.createLinearGradient(0, GROUND - 40, 0, GROUND);
     lava.addColorStop(0, '#ff8a1a'); lava.addColorStop(1, '#c02a0a');
     g.fillStyle = lava; g.fillRect(0, GROUND - 30, W, 30);
@@ -547,7 +562,7 @@ const BG_BUILDERS = {
 
   ship(g) {
     g.fillStyle = '#05060f'; g.fillRect(0, 0, W, GROUND);
-    // langas į kosmosą
+    // window to space
     g.save();
     g.beginPath(); g.roundRect(120, 70, 720, 250, 30); g.clip();
     g.fillStyle = '#02030a'; g.fillRect(120, 70, 720, 250);
@@ -559,7 +574,7 @@ const BG_BUILDERS = {
     g.beginPath(); g.ellipse(600, 250, 50, 22, 0.3, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.ellipse(700, 300, 40, 18, -0.2, 0, Math.PI * 2); g.fill();
     g.restore();
-    // sienų plokštės
+    // wall panels
     g.fillStyle = '#20202e';
     g.fillRect(0, 0, W, 60); g.fillRect(0, 0, 110, GROUND); g.fillRect(850, 0, 110, GROUND); g.fillRect(0, 330, W, GROUND - 330);
     g.strokeStyle = '#3a3a52'; g.lineWidth = 6;
@@ -567,7 +582,7 @@ const BG_BUILDERS = {
     g.strokeStyle = 'rgba(255,255,255,0.06)'; g.lineWidth = 2;
     for (let x = 0; x < W; x += 80) { g.beginPath(); g.moveTo(x, 330); g.lineTo(x, GROUND); g.stroke(); }
     for (let y = 80; y < GROUND; y += 90) { g.beginPath(); g.moveTo(0, y); g.lineTo(110, y); g.moveTo(850, y); g.lineTo(W, y); g.stroke(); }
-    // Vorgo ženklas
+    // Vorg's emblem
     g.fillStyle = '#5a2a8a';
     g.beginPath(); g.moveTo(480, 350); g.lineTo(510, 390); g.lineTo(480, 430); g.lineTo(450, 390); g.closePath(); g.fill();
     g.fillStyle = '#d040a0'; g.beginPath(); g.arc(480, 390, 8, 0, Math.PI * 2); g.fill();

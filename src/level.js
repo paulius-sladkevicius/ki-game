@@ -1,168 +1,168 @@
 'use strict';
-// Lygiai: dialogai, priešų bangos, formų atrakinimas ir bosai.
+// Levels: dialogs, enemy waves, form unlocks and bosses.
 
 const L = (who, text) => ({ who, text });
 
 const LEVELS = [
-  // ---------- 1. Kalnų vienuolynas ----------
+  // ---------- 1. Mountain Monastery ----------
   {
-    name: 'Kalnų vienuolynas', theme: 'monastery', crystals: 1, unlockStart: 0, unlockText: 'Liepsnos forma',
+    name: 'Mountain Monastery', theme: 'monastery', crystals: 1, unlockStart: 0, unlockText: 'Flame Form',
     script: [
       { type: 'dialog', lines: [
-        L('', 'Ramus rytas kalnų vienuolyne. Kai treniruojasi po kriokliu...'),
-        L('Meistras Oro', 'Kai, tavo Ki šiandien neramus...'),
-        L('', 'Dangų perskrodžia ugnies kamuolys. Žemė sudreba!'),
-        L('Vorgas', 'Planetos gyventojai! Žvaigždžių kristalai dabar mano. Per septynias dienas jūsų pasaulis priklausys man!'),
-        L('Meistras Oro', 'Jo žvalgai jau vienuolyno kieme! Kai, parodyk, ko išmokai!'),
-        L('Kai', 'Ne, jei aš turiu ką pasakyti!'),
-        L('Valdymas', '← → judėti · ↑ šokti (laikyk ore – skristi) · J smūgis · K Ki šūvis · L laikyk ir paleisk – KI BANGA · S kaupti Ki'),
+        L('', 'A quiet morning at the mountain monastery. Ren is training under the waterfall...'),
+        L('Master Oro', 'Ren, your Ki is restless today...'),
+        L('', 'A ball of fire tears across the sky. The ground shakes!'),
+        L('Vorg', 'People of this planet! Your five Star Crystals now belong to me. With their power, my flagship will bring your world to its knees!'),
+        L('Master Oro', "His scouts are already in the courtyard! Ren, show them what you've learned!"),
+        L('Ren', 'Not while I am here!'),
+        L('Controls', '← → move · ↑ jump (hold in the air to fly) · J punch · K Ki blast · hold and release L for the KI WAVE · S charge Ki'),
       ] },
       { type: 'wave', enemies: [['scout', 'R'], ['scout', 'L'], ['scout', 'R']] },
       { type: 'wave', enemies: [['scout', 'L'], ['scout', 'R'], ['gunner', 'R'], ['scout', 'L']] },
       { type: 'dialog', unlock: 1, lines: [
-        L('Meistras Oro', 'Kai! Jaučiu, kaip tavyje bunda žvaigždžių kraujas!'),
-        L('Kai', 'Kas... kas man darosi?! Visas kūnas dega!'),
-        L('Meistras Oro', 'Paleisk tą jėgą! Kai geltona Jėgos juosta pilna – spausk T!'),
-        L('ATRAKINTA', 'LIEPSNOS FORMA: +50 % žala, greitesnis judėjimas, platesnė Ki Banga. Trunka, kol yra Jėgos.'),
+        L('Master Oro', 'Ren! I can feel a hidden power awakening inside you!'),
+        L('Ren', "What... what's happening to me?! My whole body is burning!"),
+        L('Master Oro', 'Let that power out! When the yellow Power bar is full, press T!'),
+        L('UNLOCKED', 'FLAME FORM: +50% damage, faster movement, a wider Ki Wave. Lasts while you have Power.'),
       ] },
       { type: 'wave', enemies: [['scout', 'R'], ['gunner', 'L'], ['scout', 'L'], ['gunner', 'R'], ['scout', 'R']] },
       { type: 'dialog', checkpoint: true, lines: [
-        L('Raxas', 'Hm. Taigi tu tas berniukas, kuris išdaužė mano žvalgus.'),
-        L('Raxas', 'Aš – Raxas, greičiausias Vorgo kardas. Kristalo tu negausi!'),
-        L('Kai', 'Pažiūrėsim, ar tavo kardas greitesnis už mano Ki Bangą!'),
-        L('Patarimas', 'Kai Raxas kaupia violetinę energiją – laikyk L. Prasidės bangų kova: greitai spaudinėk L!'),
+        L('Raxas', 'Hm. So you are the boy who smashed my scouts.'),
+        L('Raxas', "I am Raxas, Vorg's fastest blade. You will not get the crystal!"),
+        L('Ren', "Let's see if your sword is faster than my Ki Wave!"),
+        L('Tip', 'When Raxas charges up energy, hold L. A beam clash will start: mash L as fast as you can!'),
       ] },
       { type: 'boss', bosses: [['raxas']] },
       { type: 'dialog', lines: [
-        L('Raxas', 'Neįmanoma... Vorgas... tavęs... nepaliks...'),
-        L('', 'Raxas pabėga, palikęs Žvaigždžių kristalą.'),
-        L('Meistras Oro', 'Puiku, Kai! Bet tai tik pradžia. Liko dar šeši kristalai.'),
-        L('Kai', 'Vorgai, aš ateinu!'),
+        L('Raxas', 'Impossible... Vorg... will not... spare you...'),
+        L('', 'Raxas flees, leaving a Star Crystal behind.'),
+        L('Master Oro', 'Well done, Ren! But this is only the beginning. Four crystals are still missing.'),
+        L('Ren', "Vorg, I'm coming for you!"),
       ] },
       { type: 'victory' },
     ],
   },
 
-  // ---------- 2. Dykumų kanjonas ----------
+  // ---------- 2. Desert Canyon ----------
   {
-    name: 'Dykumų kanjonas', theme: 'desert', crystals: 2, unlockStart: 1,
+    name: 'Desert Canyon', theme: 'desert', crystals: 1, unlockStart: 1,
     script: [
       { type: 'dialog', lines: [
-        L('', 'Dykumų kanjonas. Karštis tvyro virš raudonų uolų.'),
-        L('Kai', 'Raxas minėjo, kad du kristalai paslėpti kažkur kanjone...'),
-        L('', 'Virš galvos ima zvimbti Vorgo dronai!'),
-        L('Patarimas', 'Dronai skraido – šok arba skrisk (laikyk ↑) ir šauk į juos Ki šūviais ar banga.'),
+        L('', 'The desert canyon. Heat shimmers over the red rocks.'),
+        L('Ren', 'Raxas said the next crystal is hidden somewhere in this canyon...'),
+        L('', "Vorg's drones start buzzing overhead!"),
+        L('Tip', 'Drones fly - jump or fly (hold ↑) and hit them with Ki blasts or a wave.'),
       ] },
       { type: 'wave', enemies: [['scout', 'R'], ['drone', 'L'], ['scout', 'R']] },
       { type: 'wave', enemies: [['drone', 'R'], ['gunner', 'L'], ['drone', 'L'], ['scout', 'R']] },
       { type: 'wave', enemies: [['drone', 'L'], ['scout', 'R'], ['drone', 'R'], ['gunner', 'R'], ['scout', 'L']] },
       { type: 'dialog', checkpoint: true, lines: [
-        L('Zul', 'Ei, Zel, žiūrėk – mažylis atėjo pasiimti kristalų!'),
-        L('Zel', 'Tai duokim jam... po smūgį iš kiekvieno!'),
-        L('Kai', 'Du prieš vieną? Tiek to – vis tiek pralaimėsit!'),
-        L('Patarimas', 'Zul puola iš arti, Zel šaudo iš toli. Nugalėjus vieną, kitas įsiunta!'),
+        L('Zul', 'Hey Zel, look - the little one came for the crystal!'),
+        L('Zel', "Then let's give him... a hit from each of us!"),
+        L('Ren', "Two against one? Fine - you'll still lose!"),
+        L('Tip', 'Zul fights up close, Zel shoots from afar. Defeat one and the other becomes enraged!'),
       ] },
       { type: 'boss', bosses: [['zul', W - 120], ['zel', W - 300]] },
       { type: 'dialog', lines: [
-        L('Zul', 'Mes... dar sugrįšim...'),
-        L('', 'Dvyniai pabėga. Kai paima du Žvaigždžių kristalus.'),
-        L('Kai', 'Jau trys! Kitas – Ledynų miestas.'),
+        L('Zul', "We'll... be back..."),
+        L('', 'The twins run away. Ren picks up the second Star Crystal.'),
+        L('Ren', 'Two down! Next stop - the Ice City.'),
       ] },
       { type: 'victory' },
     ],
   },
 
-  // ---------- 3. Ledynų miestas ----------
+  // ---------- 3. Ice City ----------
   {
-    name: 'Ledynų miestas', theme: 'ice', crystals: 1, unlockStart: 1, unlockText: 'Audros forma',
+    name: 'Ice City', theme: 'ice', crystals: 1, unlockStart: 1, unlockText: 'Storm Form',
     script: [
       { type: 'dialog', lines: [
-        L('', 'Ledynų miestas. Gatvėmis žygiuoja šarvuoti Vorgo kariai.'),
-        L('Gyventoja', 'Prašau, padėk! Generolas Krag užėmė miesto bokštą!'),
-        L('Kai', 'Nesijaudink. Aš juo pasirūpinsiu.'),
-        L('Patarimas', 'Šarvuoti kariai blokuoja Ki iš priekio. Mušk smūgiais, pulk iš nugaros arba naudok 3 lygio Ki Bangą!'),
+        L('', "The Ice City. Vorg's armored soldiers march through the streets."),
+        L('Villager', 'Please help us! General Krag has taken the city tower!'),
+        L('Ren', "Don't worry. I'll take care of him."),
+        L('Tip', 'Armored soldiers block Ki from the front. Use punches, attack from behind or use a level 3 Ki Wave!'),
       ] },
       { type: 'wave', enemies: [['armored', 'R'], ['scout', 'L'], ['scout', 'R']] },
       { type: 'wave', enemies: [['armored', 'L'], ['gunner', 'R'], ['drone', 'R'], ['armored', 'R']] },
       { type: 'dialog', unlock: 2, lines: [
-        L('Kai', 'Šaltis... bet viduje kažkas verda... Dangus griaudžia!'),
-        L('Meistras Oro', 'Kai, girdžiu tave per Ki. Tavo jėga peržengė Liepsnos ribą!'),
-        L('ATRAKINTA', 'AUDROS FORMA: +100 % žala, smūgiai skelia žaibus į kitus priešus, Ki atsistato 2× greičiau. Spausk T!'),
+        L('Ren', 'The cold... but something is boiling inside me... I can hear thunder!'),
+        L('Master Oro', 'Ren, I can hear you through your Ki. Your power has gone beyond the Flame!'),
+        L('UNLOCKED', 'STORM FORM: +100% damage, punches throw lightning to other enemies, 2x Ki regeneration. Press T!'),
       ] },
       { type: 'wave', enemies: [['armored', 'R'], ['armored', 'L'], ['scout', 'R'], ['gunner', 'L'], ['drone', 'R']] },
       { type: 'dialog', checkpoint: true, lines: [
-        L('Generolas Krag', 'MANO SKYDO DAR NIEKAS NEPRAMUŠĖ!'),
-        L('Kai', 'Viskas kada nors būna pirmą kartą.'),
-        L('Patarimas', 'Skydas sulaiko Ki iš priekio. Kai Krag atsitrenkia į sieną – jis apsvaigsta. Tada pulk!'),
+        L('General Krag', 'NO ONE HAS EVER BROKEN MY SHIELD!'),
+        L('Ren', "There's a first time for everything."),
+        L('Tip', 'The shield stops Ki from the front. When Krag charges into a wall he gets stunned - attack then!'),
       ] },
       { type: 'boss', bosses: [['krag']] },
       { type: 'dialog', lines: [
-        L('Generolas Krag', 'Mano... skydas...'),
-        L('', 'Miestas laisvas! Kai gauna dar vieną kristalą.'),
-        L('Kai', 'Keturi! Liko Ugnikalnio sala ir pats Vorgas.'),
+        L('General Krag', 'My... shield...'),
+        L('', 'The city is free! Ren gets the third crystal.'),
+        L('Ren', "Three! Only the Volcano Island and Vorg himself are left."),
       ] },
       { type: 'victory' },
     ],
   },
 
-  // ---------- 4. Ugnikalnio sala ----------
+  // ---------- 4. Volcano Island ----------
   {
-    name: 'Ugnikalnio sala', theme: 'volcano', crystals: 2, unlockStart: 2, saved: 'išgelbėta',
+    name: 'Volcano Island', theme: 'volcano', crystals: 1, unlockStart: 2,
     script: [
       { type: 'dialog', lines: [
-        L('', 'Ugnikalnio sala. Lava teka kaip upės, ore tvyro sieros kvapas.'),
-        L('Kai', 'Kažkas mane stebi... jaučiu keistą Ki.'),
-        L('Nyx', 'Cha cha... sveikas atvykęs į mano iliuzijų salą, berniuk.'),
-        L('Patarimas', 'Riedantys robotai sprogsta šalia tavęs – sunaikink juos iš toli!'),
+        L('', 'The Volcano Island. Lava flows like rivers and the air smells of sulfur.'),
+        L('Ren', 'Someone is watching me... I can sense a strange Ki.'),
+        L('Nyx', 'Ha ha... welcome to my island of illusions, boy.'),
+        L('Tip', 'Rolling robots explode next to you - destroy them from a distance!'),
       ] },
       { type: 'wave', enemies: [['brute', 'R'], ['bomber', 'L'], ['brute', 'L']] },
       { type: 'wave', enemies: [['bomber', 'R'], ['bomber', 'L'], ['brute', 'R'], ['gunner', 'L'], ['drone', 'R']] },
       { type: 'wave', enemies: [['brute', 'L'], ['armored', 'R'], ['bomber', 'R'], ['brute', 'R'], ['drone', 'L'], ['bomber', 'L']] },
       { type: 'dialog', checkpoint: true, lines: [
-        L('Nyx', 'Kuri iš mūsų tikroji? Spėk!'),
-        L('Kai', 'Tikroji ta, kurios Ki stipriausias!'),
-        L('Patarimas', 'Nyx teleportuojasi ir kuria klonus. Klonai žūva nuo vieno smūgio.'),
+        L('Nyx', 'Which one of us is real? Take a guess!'),
+        L('Ren', 'The real one is the one with the strongest Ki!'),
+        L('Tip', 'Nyx teleports and creates clones. Clones vanish after a single hit.'),
       ] },
       { type: 'boss', bosses: [['nyx']] },
       { type: 'dialog', lines: [
-        L('Nyx', 'Ne... mano iliuzijos... sudužo...'),
-        L('', 'Kai paima du kristalus. Danguje pasirodo milžiniškas Vorgo laivas.'),
-        L('Vorgas', 'Įspūdinga, žemės kirmine. Ateik į mano laivą – ten ir mirsi.'),
-        L('Kai', 'Ateinu, Vorgai!'),
+        L('Nyx', 'No... my illusions... are shattered...'),
+        L('', "Ren takes the fourth crystal. Vorg's giant ship appears in the sky."),
+        L('Vorg', 'Impressive, little warrior. Come to my ship - that is where you will fall.'),
+        L('Ren', "I'm coming, Vorg!"),
       ] },
       { type: 'victory' },
     ],
   },
 
-  // ---------- 5. Vorgo laivas ----------
+  // ---------- 5. Vorg's Ship ----------
   {
-    name: 'Vorgo laivas orbitoje', theme: 'ship', crystals: 1, unlockStart: 2, unlockText: 'Dangaus ir Žvaigždžių formos',
+    name: "Vorg's Ship in Orbit", theme: 'ship', crystals: 1, unlockStart: 2, unlockText: 'Sky and Star Forms',
     script: [
       { type: 'dialog', lines: [
-        L('', 'Vorgo laivas orbitoje. Pro langą matyti visa planeta.'),
-        L('Kai', 'Šeši kristalai saugūs. Paskutinis – pas Vorgą.'),
-        L('', 'Sirenos kaukia. Elitinė gvardija bėga link Kai!'),
+        L('', "Vorg's ship in orbit. The whole planet can be seen through the window."),
+        L('Ren', 'Four crystals are safe. The last one is with Vorg.'),
+        L('', 'Sirens wail. The elite guard runs towards Ren!'),
       ] },
       { type: 'wave', enemies: [['elite', 'R'], ['drone', 'L'], ['elite', 'L']] },
       { type: 'wave', enemies: [['elite', 'L'], ['armored', 'R'], ['bomber', 'R'], ['elite', 'R']] },
       { type: 'dialog', unlock: 3, lines: [
-        L('Kai', 'Viskas, ką išmokau... Meistras, draugai, visa planeta... jaučiu jų Ki!'),
-        L('', 'Kai aura nusidažo ramia mėlyna spalva.'),
-        L('ATRAKINTA', 'DANGAUS FORMA: +200 % žala, Ki Banga kaupiasi 2× greičiau, teleportas – dukart spausk ← arba →. Spausk T!'),
+        L('Ren', "Everything I've learned... my master, my friends, the whole planet... I can feel their Ki!"),
+        L('', "Ren's aura turns a calm teal."),
+        L('UNLOCKED', 'SKY FORM: +200% damage, the Ki Wave charges 2x faster, teleport - double-tap ← or →. Press T!'),
       ] },
       { type: 'wave', enemies: [['elite', 'R'], ['elite', 'L'], ['drone', 'R'], ['armored', 'L'], ['gunner', 'R'], ['elite', 'L']] },
       { type: 'dialog', checkpoint: true, lines: [
-        L('Vorgas', 'Tad tu tas, kuris sutrypė mano generolus. Įdomu.'),
-        L('Vorgas', 'Septintas kristalas mano rankoje. Kai jį panaudosiu – tavo planeta virs dulkėmis.'),
-        L('Kai', 'Tai bus paskutinė tavo kova, Vorgai!'),
-        L('Patarimas', 'Vorgas turi tris fazes. Pabaigoje laimėk paskutinę bangų kovą!'),
+        L('Vorg', 'So you are the one who crushed my generals. Interesting.'),
+        L('Vorg', 'The last crystal powers my planet-breaker. One shot and your world turns to dust.'),
+        L('Ren', 'This will be your last fight, Vorg!'),
+        L('Tip', 'Vorg has three phases. At the end, win the final beam clash!'),
       ] },
       { type: 'boss', bosses: [['vorg']] },
       { type: 'dialog', lines: [
-        L('Vorgas', 'Neįmanoma... aš... visatos valdovas...'),
-        L('', 'Galinga Žvaigždžių banga nusviedžia Vorgą į gilų kosmosą. Laivas ima griūti.'),
-        L('Kai', 'Septyni kristalai... Mano noras – kad planeta vėl būtų rami.'),
-        L('Meistras Oro', 'Tu tapai tikru kariu, Kai. Grįžk namo.'),
+        L('Vorg', 'Impossible... I am... the ruler of the stars...'),
+        L('', 'A mighty Star Wave hurls Vorg into deep space. His ship starts to fall apart.'),
+        L('Ren', 'All five crystals... It is time to take them home.'),
+        L('Master Oro', 'You have become a true warrior, Ren. Come home.'),
       ] },
       { type: 'victory' },
     ],
@@ -175,7 +175,7 @@ function crystalsBefore(levelIndex) {
   return n;
 }
 
-// Pradeda lygį. fromStep > 0 – nuo kontrolinio taško. Taškus nunulina kviečiantysis.
+// Starts a level. fromStep > 0 = from a checkpoint. The caller resets the score.
 function startLevel(levelIndex = 0, fromStep = 0) {
   const lvl = LEVELS[levelIndex];
   Game.levelIndex = levelIndex;
@@ -204,7 +204,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   } else {
     Game.score = Game.checkpointScore;
   }
-  // formos, atrakintos ankstesniuose lygiuose ir praeituose žingsniuose
+  // forms unlocked in earlier levels and in steps already passed
   let unlocked = lvl.unlockStart;
   for (let i = 0; i < fromStep; i++) if (lvl.script[i].unlock) unlocked = Math.max(unlocked, lvl.script[i].unlock);
   Game.player.unlocked = unlocked;
@@ -214,7 +214,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Sfx.music(lvl.theme);
   Game.step = fromStep - 1;
   setState('PLAY');
-  showBanner(`${levelIndex + 1} LYGIS`, lvl.name, 2.0);
+  showBanner(`LEVEL ${levelIndex + 1}`, lvl.name, 2.0);
   nextStep();
 }
 
@@ -230,14 +230,14 @@ function nextStep() {
       openDialog(s.lines, () => {
         if (s.unlock) {
           Game.player.unlock(s.unlock);
-          showHint('Spausk T – transformacija!', 3);
+          showHint('Press T to transform!', 3);
         }
         nextStep();
       });
       break;
     case 'wave': {
       const n = waves.indexOf(s) + 1;
-      showBanner(`BANGA ${n}/${waves.length}`, 'Nugalėk Vorgo karius!', 1.8);
+      showBanner(`WAVE ${n}/${waves.length}`, "Defeat Vorg's soldiers!", 1.8);
       break;
     }
     case 'boss': {
@@ -246,8 +246,8 @@ function nextStep() {
       p.hp = p.maxHp;
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
       Sfx.music(Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
-      const names = Game.bosses.map((b) => b.name).join(' IR ');
-      showBanner('BOSAS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'Dvyniai', 2.0);
+      const names = Game.bosses.map((b) => b.name).join(' & ');
+      showBanner('BOSS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'The twins', 2.0);
       break;
     }
     case 'victory':
@@ -293,7 +293,7 @@ function updateScript(dt) {
   }
 }
 
-// ---------- Dialogai ----------
+// ---------- Dialogs ----------
 function openDialog(lines, cb) {
   const p = Game.player;
   Sfx.chargeStop();

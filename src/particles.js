@@ -1,5 +1,5 @@
 'use strict';
-// Dalelės (aura, sprogimai) ir skraidantys skaičiai.
+// Particles (aura, explosions) and floating damage numbers.
 
 function spawnParticle(o) {
   if (Game.particles.length > 900) return;
@@ -22,7 +22,7 @@ function explosion(x, y, scale = 1) {
   burst(x, y, '#ff6a2a', 14 * scale, 260 * scale, 8 * scale, 0.8);
 }
 
-// Aura: dalelės kyla aukštyn aplink kūną.
+// Aura: particles rising around the body.
 function auraParticles(x, y, h, color, n = 2, width = 26) {
   for (let i = 0; i < n; i++) {
     spawnParticle({

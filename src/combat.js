@@ -1,6 +1,6 @@
 'use strict';
-// Pataikymai, šūviai, bangos ir bangų kova.
-// Smūgio rūšis (kind): 'melee' – kūnu, 'blast' – Ki šūvis, 'beam' – banga, 'beam3' – 3 lygio banga (pramuša skydus).
+// Hits, projectiles, beams and beam clashes.
+// Hit kind: 'melee' = body, 'blast' = Ki blast, 'beam' = wave, 'beam3' = level 3 wave (breaks shields).
 
 function liveTargets() {
   const t = Game.enemies.filter((e) => !e.dead);
@@ -8,7 +8,7 @@ function liveTargets() {
   return t;
 }
 
-// Žaidėjo padaryta žala: Jėga, kombinacijos, taškai.
+// Damage dealt by the player: Power, combos, score.
 function onPlayerDamage(dmg) {
   const p = Game.player;
   if (p.form === 0) p.gainPower(dmg * 0.35);
@@ -17,11 +17,11 @@ function onPlayerDamage(dmg) {
   Game.score += Math.round(dmg);
   if (Game.combo % 10 === 0) {
     p.gainPower(10);
-    floater(p.x, p.y - 120, `KOMBO x${Game.combo}! +Jėga`, '#ffd34a', 20);
+    floater(p.x, p.y - 120, `COMBO x${Game.combo}! +Power`, '#ffd34a', 20);
   }
 }
 
-// Smūgis stačiakampiu: grąžina pirmą taikinį, kuriam pataikė (arba null).
+// Rectangle hit: returns the first target hit (or null).
 function hitTargets(hb, dmg, dir, knock, kind = 'melee') {
   let first = null;
   for (const t of liveTargets()) {
@@ -42,7 +42,7 @@ function beamRect(b) {
 function updateBeams(dt) {
   const p = Game.player;
   for (const b of Game.beams) {
-    // banga lieka prisegta prie rankų
+    // the beam stays attached to the hands
     if (b.owner === 'player' && p.alive) { const h = p.hand(); b.x = h.x; b.y = h.y; }
     if (b.owner === 'boss' && b.src && !b.src.dead) { const h = b.src.hand(); b.x = h.x; b.y = h.y; }
     if (b.clash) continue;
@@ -66,7 +66,7 @@ function updateBeams(dt) {
           Sfx.hit();
         }
       }
-      // banga sunaikina priešų šūvius
+      // the beam destroys enemy projectiles
       for (const pr of Game.projectiles) {
         if (pr.owner === 'enemy' && pr.type !== 'groundwave' && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
           pr.life = 0;
@@ -115,7 +115,7 @@ function updateBolts(dt) {
   Game.bolts = Game.bolts.filter((b) => b.life > 0);
 }
 
-// ---------- Bangų kova ----------
+// ---------- Beam clash ----------
 function checkClash() {
   if (Game.clash) return;
   const p = Game.player;
@@ -186,7 +186,7 @@ function updateClash(dt) {
       const dmg = 90 * p.dmgMult;
       const dealt = boss.takeHit(dmg, p.facing, 300, 'clash');
       if (dealt) onPlayerDamage(dmg);
-      showBanner('BANGŲ KOVA LAIMĖTA!', '', 1.4);
+      showBanner('BEAM CLASH WON!', '', 1.4);
     }
   } else {
     explosion(p.x, p.y - 50, 1.2);

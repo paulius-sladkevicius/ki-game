@@ -1,5 +1,5 @@
 'use strict';
-// Klaviatūra + lietimo mygtukai. down – laikomas, pressed – ką tik paspaustas.
+// Keyboard + touch buttons. down = held, pressed = just pressed this frame.
 
 const Input = (() => {
   const map = {
@@ -43,8 +43,8 @@ const Input = (() => {
     const el = document.documentElement;
     try {
       const r = (el.requestFullscreen || el.webkitRequestFullscreen || (() => null)).call(el);
-      if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* nieko */ } }).catch(() => {});
-    } catch (e) { /* nieko */ }
+      if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* ignore */ } }).catch(() => {});
+    } catch (e) { /* ignore */ }
   }
 
   function setupTouch() {

@@ -1,7 +1,7 @@
 'use strict';
-// Zenu monetos: iškrenta iš priešų, po akimirkos skrenda pas herojų.
+// Coins: dropped by enemies, after a moment they fly to the hero.
 
-const ZENU_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0 };
+const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0 };
 
 function spawnCoins(x, y, value) {
   if (value <= 0) return;
@@ -13,7 +13,7 @@ function spawnCoins(x, y, value) {
 }
 
 function collectAllCoins() {
-  for (const c of Game.coins) Game.zenu += c.v;
+  for (const c of Game.coins) Game.money += c.v;
   Game.coins = [];
 }
 
@@ -30,8 +30,8 @@ function updateCoins(dt) {
       c.vy = lerp(c.vy, (dy / d) * sp, Math.min(1, dt * 8));
       if (d < 26) {
         c.dead = true;
-        Game.zenu += c.v;
-        Game.zenuFlash = 0.3;
+        Game.money += c.v;
+        Game.moneyFlash = 0.3;
         Sfx.coin();
         spawnParticle({ x: c.x, y: c.y, vx: 0, vy: -40, life: 0.25, size: 4, color: '#ffe680' });
       }
@@ -43,7 +43,7 @@ function updateCoins(dt) {
     c.y += c.vy * dt;
   }
   Game.coins = Game.coins.filter((c) => !c.dead);
-  if (Game.zenuFlash > 0) Game.zenuFlash -= dt;
+  if (Game.moneyFlash > 0) Game.moneyFlash -= dt;
 }
 
 function drawCoins(ctx) {

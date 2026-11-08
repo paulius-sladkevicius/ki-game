@@ -1,5 +1,5 @@
 'use strict';
-// Bendros konstantos, žaidimo būsena ir pagalbinės funkcijos.
+// Shared constants, game state and helper functions.
 
 const W = 960;
 const H = 540;
@@ -7,7 +7,7 @@ const GROUND = 462;
 const GRAVITY = 1800;
 
 const Game = {
-  state: 'MENU',      // MENU, DIALOG, PLAY, PAUSE, GAMEOVER, VICTORY
+  state: 'MENU',      // MENU, DIALOG, PLAY, PAUSE, GAMEOVER, VICTORY, TRAINING
   stateT: 0,
   time: 0,
   player: null,
@@ -16,7 +16,7 @@ const Game = {
   bolts: [],
   levelIndex: 0,
   crystals: 0,
-  zenu: 0,
+  money: 0,
   upgrades: { hp: 0, ki: 0, beam: 0 },
   coins: [],
   projectiles: [],
@@ -57,7 +57,7 @@ function rectsOverlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-// Kūno stačiakampis (x – centras, y – pėdos).
+// Body rectangle (x = center, y = feet).
 function boxOf(e) {
   return { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 }
@@ -78,53 +78,53 @@ function showHint(text, time = 2.5) {
 }
 
 function loadHighScore() {
-  try { return parseInt(localStorage.getItem('kibanga_hs') || '0', 10) || 0; } catch (e) { return 0; }
+  try { return parseInt(localStorage.getItem('kiwave_hs') || '0', 10) || 0; } catch (e) { return 0; }
 }
 
 function saveHighScore() {
   if (Game.score > Game.highScore) {
     Game.highScore = Game.score;
-    try { localStorage.setItem('kibanga_hs', String(Game.score)); } catch (e) { /* nieko */ }
+    try { localStorage.setItem('kiwave_hs', String(Game.score)); } catch (e) { /* ignore */ }
   }
 }
 
-// Išsaugotas progresas: aukščiausias pasiektas lygis (0..4).
+// Saved progress: highest level reached (0..4).
 function loadProgress() {
-  try { return clamp(parseInt(localStorage.getItem('kibanga_level') || '0', 10) || 0, 0, 4); } catch (e) { return 0; }
+  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 4); } catch (e) { return 0; }
 }
 function saveProgress(levelIndex) {
   try {
-    if (levelIndex > loadProgress()) localStorage.setItem('kibanga_level', String(clamp(levelIndex, 0, 4)));
-  } catch (e) { /* nieko */ }
+    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 4)));
+  } catch (e) { /* ignore */ }
 }
 
 function liveBosses() { return Game.bosses.filter((b) => !b.dead); }
 
-// Žaibas tarp dviejų taškų (Audros forma).
-function addBolt(x1, y1, x2, y2, color = '#fff27a') {
+// Lightning bolt between two points (Storm form).
+function addBolt(x1, y1, x2, y2, color = '#d9c2ff') {
   Game.bolts.push({ x1, y1, x2, y2, color, life: 0.18, max: 0.18, seed: Math.random() * 1000 });
 }
 
-// Žaidimo eiga (Zenu ir patobulinimai) – kad „Tęsti“ išsaugotų treniruotes.
+// Run state (coins and upgrades), so that "Continue" keeps the training.
 function saveRun() {
-  try { localStorage.setItem('kibanga_run', JSON.stringify({ zenu: Game.zenu, upgrades: Game.upgrades })); } catch (e) { /* nieko */ }
+  try { localStorage.setItem('kiwave_run', JSON.stringify({ money: Game.money, upgrades: Game.upgrades })); } catch (e) { /* ignore */ }
 }
 function loadRun() {
   try {
-    const r = JSON.parse(localStorage.getItem('kibanga_run') || 'null');
+    const r = JSON.parse(localStorage.getItem('kiwave_run') || 'null');
     if (r && r.upgrades) {
-      Game.zenu = Math.max(0, r.zenu | 0);
+      Game.money = Math.max(0, r.money | 0);
       Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5) };
       return;
     }
-  } catch (e) { /* nieko */ }
+  } catch (e) { /* ignore */ }
   resetRun();
 }
 function resetRun() {
-  Game.zenu = 0;
+  Game.money = 0;
   Game.upgrades = { hp: 0, ki: 0, beam: 0 };
   saveRun();
 }
 
 const IS_TOUCH = ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
-function vibrate(ms) { if (IS_TOUCH && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* nieko */ } } }
+function vibrate(ms) { if (IS_TOUCH && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* ignore */ } } }

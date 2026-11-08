@@ -1,5 +1,5 @@
 'use strict';
-// HUD, meniu, dialogai ir pranešimai.
+// HUD, menu, dialogs and messages.
 
 function text(ctx, str, x, y, size, color = '#fff', align = 'left', weight = 'bold') {
   ctx.font = `${weight} ${size}px system-ui, -apple-system, Segoe UI, sans-serif`;
@@ -40,8 +40,8 @@ function wrapLines(ctx, str, maxW) {
 function drawHUD(ctx) {
   const p = Game.player;
   if (!p) return;
-  text(ctx, 'KAI', 20, 26, 18, p.form > 0 ? '#ffe14d' : '#ffffff');
-  text(ctx, p.F.name, 64, 26, 13, p.form > 0 ? '#ffd34a' : '#cfd8ff', 'left', '600');
+  text(ctx, 'REN', 20, 26, 18, p.form > 0 ? '#ffe14d' : '#ffffff');
+  text(ctx, p.F.name, 68, 26, 13, p.form > 0 ? '#ffd34a' : '#cfd8ff', 'left', '600');
   bar(ctx, 20, 34, 260, 14, p.hp / p.maxHp, p.hp > 30 ? '#4cd964' : '#ff3b30');
   bar(ctx, 20, 54, 260, 9, p.ki / p.maxKi, '#3aa0ff');
   const full = p.power >= 100;
@@ -49,19 +49,19 @@ function drawHUD(ctx) {
   bar(ctx, 20, 69, 260, 9, p.power / 100, pc, 'rgba(0,0,0,0.55)', full || p.form > 0);
   text(ctx, 'HP', 288, 46, 11, '#d0ffd8');
   text(ctx, 'KI', 288, 63, 11, '#bfe0ff');
-  text(ctx, 'JĖGA', 288, 78, 11, '#fff2b0');
+  text(ctx, 'POWER', 288, 78, 11, '#fff2b0');
   const canUp = p.unlocked > p.form && p.form < 4 && (p.form === 0 ? full : p.power >= 50);
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
-    text(ctx, 'T – ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 100, 16, FORMS[p.unlocked].auraP);
+    text(ctx, 'T - ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 100, 16, FORMS[p.unlocked].auraP);
   }
 
-  text(ctx, 'TAŠKAI ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
-  text(ctx, 'REKORDAS ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, '#cfd8ff', 'right', '600');
-  text(ctx, `${Game.levelIndex + 1} LYGIS · ★ ${Game.crystals}/7`, W - 20, 66, 12, '#ffd34a', 'right', '600');
-  text(ctx, `${Game.zenu} Zenu`, W - 20, 82, Game.zenuFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
+  text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
+  text(ctx, 'BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, '#cfd8ff', 'right', '600');
+  text(ctx, `LEVEL ${Game.levelIndex + 1} · ★ ${Game.crystals}/5`, W - 20, 66, 12, '#ffd34a', 'right', '600');
+  text(ctx, `${Game.money} coins`, W - 20, 82, Game.moneyFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
   if (Game.combo >= 3) {
     const s = 22 + Math.min(14, Game.combo);
-    text(ctx, Game.combo + ' KOMBO', W - 20, 114, s, '#ffd34a', 'right');
+    text(ctx, Game.combo + ' COMBO', W - 20, 114, s, '#ffd34a', 'right');
   }
 
   const bs = Game.bosses;
@@ -71,7 +71,7 @@ function drawHUD(ctx) {
     const total = bs.length * bw + (bs.length - 1) * gap;
     bs.forEach((b, i) => {
       const bx = W / 2 - total / 2 + i * (bw + gap);
-      text(ctx, b.name + (b.def.phases && !b.dead ? `  (${Math.min(b.phase, 3)} fazė)` : ''), bx + bw / 2, H - 38, 15, b.dead ? '#888888' : '#e6c0ff', 'center');
+      text(ctx, b.name + (b.def.phases && !b.dead ? `  (phase ${Math.min(b.phase, 3)})` : ''), bx + bw / 2, H - 38, 15, b.dead ? '#888888' : '#e6c0ff', 'center');
       bar(ctx, bx, H - 30, bw, 12, b.hp / b.maxHp, b.enraged ? '#c040ff' : '#9a5cff');
     });
   }
@@ -82,7 +82,7 @@ function drawHUD(ctx) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx - 3, cy - 3, cw + 6, 22);
     ctx.fillStyle = '#a040ff'; ctx.fillRect(cx, cy, cw, 16);
     ctx.fillStyle = p.F.auraP; ctx.fillRect(cx, cy, cw * clamp(c.push, 0, 1), 16);
-    text(ctx, 'SPAUDINĖK L !!!', W / 2, cy - 10, 24 + Math.sin(Game.time * 30) * 2, '#ffffff', 'center');
+    text(ctx, 'MASH L !!!', W / 2, cy - 10, 24 + Math.sin(Game.time * 30) * 2, '#ffffff', 'center');
   }
 
   if (Game.banner) {
@@ -118,7 +118,7 @@ function drawDialog(ctx) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
   ctx.fill(); ctx.stroke();
-  const portraits = { 'Kai': null, 'Meistras Oro': 'master', 'Vorgas': 'vorg', 'Raxas': 'boss', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'Generolas Krag': 'krag', 'Nyx': 'nyx', 'Gyventoja': 'villager' };
+  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'boss', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
   let tx = x + 20;
   if (line.who in portraits) {
     let st = portraits[line.who];
@@ -132,7 +132,7 @@ function drawDialog(ctx) {
     tx = x + 122;
   }
   if (line.who) {
-    const colors = { 'Kai': '#ff8a7a', 'Vorgas': '#d68bff', 'Raxas': '#c9a0ff', 'Meistras Oro': '#9fe6ff', 'ATRAKINTA': '#ffe14d', 'Patarimas': '#9fffb0', 'Valdymas': '#9fffb0', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'Generolas Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Gyventoja': '#ffffff' };
+    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff' };
     text(ctx, line.who, tx, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -142,7 +142,7 @@ function drawDialog(ctx) {
   ctx.textAlign = 'left';
   lines.forEach((l, i) => ctx.fillText(l, tx, y + (line.who ? 58 : 40) + i * 25));
   if (d.chars >= line.text.length && Math.floor(Game.time * 3) % 2 === 0) {
-    text(ctx, '▼ Enter / Tarpas', x + w - 20, y + h - 12, 13, '#ffe14d', 'right', '600');
+    text(ctx, '▼ Enter / Space', x + w - 20, y + h - 12, 13, '#ffe14d', 'right', '600');
   }
   ctx.restore();
 }
@@ -150,7 +150,7 @@ function drawDialog(ctx) {
 function drawMenu(ctx) {
   ctx.fillStyle = 'rgba(5,6,20,0.45)';
   ctx.fillRect(0, 0, W, H);
-  // herojus keičia formas
+  // the hero cycles through forms
   const t = Game.time;
   const fi = Math.abs(Math.floor(t / 2.5)) % 4;
   const F = FORMS[fi];
@@ -163,16 +163,16 @@ function drawMenu(ctx) {
   ctx.save();
   ctx.translate(620, 130);
   ctx.rotate(-0.04);
-  text(ctx, 'KI BANGA', 0, 0, 84, '#ffe14d', 'center', '900');
+  text(ctx, 'KI WAVE', 0, 0, 84, '#ffe14d', 'center', '900');
   ctx.restore();
-  text(ctx, 'Surink 7 Žvaigždžių kristalus ir sustabdyk Vorgą!', 620, 172, 17, '#ffffff', 'center', '600');
+  text(ctx, 'Recover the 5 Star Crystals and stop Vorg!', 620, 172, 17, '#ffffff', 'center', '600');
 
   const lines = [
-    '← → judėti · ↑ šokti / skristi',
-    'J smūgis · K Ki šūvis',
-    'L laikyk ir paleisk – KI BANGA',
-    'S / ↓ kaupti Ki · T transformacija',
-    'P pauzė · M garsas',
+    '← → move · ↑ jump / fly',
+    'J punch · K Ki blast',
+    'L hold and release - KI WAVE',
+    'S / ↓ charge Ki · T transform',
+    'P pause · M sound',
   ];
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
   ctx.fillRect(455, 192, 330, 132);
@@ -189,8 +189,8 @@ function drawMenu(ctx) {
     }
     text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 21 : 18, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
   });
-  if (Math.floor(t * 2) % 2 === 0) text(ctx, '↑ ↓ pasirink · ENTER / J pradėk', 620, 370 + opts.length * 36 + 8, 15, '#9fe6ff', 'center', '600');
-  if (Game.highScore > 0) text(ctx, 'Rekordas: ' + Game.highScore, 620, 520, 15, '#ffd34a', 'center', '600');
+  if (Math.floor(t * 2) % 2 === 0) text(ctx, '↑ ↓ choose · ENTER / J start', 620, 370 + opts.length * 36 + 8, 15, '#9fe6ff', 'center', '600');
+  if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 520, 15, '#ffd34a', 'center', '600');
 }
 
 function drawOverlay(ctx, title, sub, lines, color) {
@@ -210,11 +210,11 @@ function drawTraining(ctx) {
   drawParticles(ctx);
   drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: Math.floor(t * 3) % 2 ? POSES.punch1() : POSES.punch2(), style: STYLES.heroBase, scale: 1.6, t });
   drawHumanoid(ctx, { x: 120, y: 420, facing: 1, pose: POSES.idle(t), style: STYLES.master, scale: 1.4, t });
-  text(ctx, 'Meistras Oro: „Treniruokis, Kai – kitas priešas stipresnis!“', 250, 470, 14, '#9fe6ff', 'center', '600');
+  text(ctx, 'Master Oro: "Train hard, Ren - the next enemy is stronger!"', 250, 470, 14, '#9fe6ff', 'center', '600');
 
-  text(ctx, 'TRENIRUOTĖS', 650, 80, 48, '#ffe14d', 'center', '900');
-  text(ctx, `Prieš ${Game.levelIndex + 2} lygį: ${LEVELS[Game.levelIndex + 1].name}`, 650, 110, 16, '#ffffff', 'center', '600');
-  text(ctx, `${Game.zenu} Zenu`, 650, 145, 24, '#ffe680', 'center', '800');
+  text(ctx, 'TRAINING', 650, 80, 48, '#ffe14d', 'center', '900');
+  text(ctx, `Before level ${Game.levelIndex + 2}: ${LEVELS[Game.levelIndex + 1].name}`, 650, 110, 16, '#ffffff', 'center', '600');
+  text(ctx, `${Game.money} coins`, 650, 145, 24, '#ffe680', 'center', '800');
 
   TRAINING.forEach((tr, i) => {
     const y = 180 + i * 70;
@@ -229,16 +229,16 @@ function drawTraining(ctx) {
       ctx.fillStyle = k < lvl ? tr.color : 'rgba(255,255,255,0.15)';
       ctx.fillRect(660 + k * 16, y + 14, 12, 12);
     }
-    const cost = lvl >= 5 ? 'MAKS.' : trainCost(lvl) + ' Z';
-    text(ctx, cost, 818, y + 48, 15, lvl < 5 && Game.zenu >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
+    const cost = lvl >= 5 ? 'MAX' : trainCost(lvl) + ' c';
+    text(ctx, cost, 818, y + 48, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
   });
   const y = 180 + TRAINING.length * 70;
   const on = Game.trainSel === TRAINING.length;
   ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
   ctx.fillRect(470, y, 360, 46);
   if (on) { ctx.strokeStyle = '#9fe6ff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 46); }
-  text(ctx, (on ? '▶ ' : '') + 'Tęsti į kitą lygį', 650, y + 30, 19, '#9fe6ff', 'center', '800');
-  text(ctx, '↑ ↓ pasirink · ENTER / J pirkti', 650, y + 80, 14, '#cfd8ff', 'center', '600');
+  text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 30, 19, '#9fe6ff', 'center', '800');
+  text(ctx, '↑ ↓ choose · ENTER / J buy', 650, y + 80, 14, '#cfd8ff', 'center', '600');
   if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, y + 108, 20, Game.trainMsg.color || '#ff8080', 'center', '800');
 }
 
@@ -259,14 +259,14 @@ function drawUI(ctx) {
       break;
     case 'PAUSE':
       drawHUD(ctx);
-      drawOverlay(ctx, 'PAUZĖ', '', ['Q / J – išeiti į meniu', 'P / Esc / Enter – tęsti'], '#ffffff');
+      drawOverlay(ctx, 'PAUSED', '', ['Q / J - quit to menu', 'P / Esc / Enter - resume'], '#ffffff');
       break;
     case 'GAMEOVER': {
       drawHUD(ctx);
       const cp = Game.checkpoint > 0;
-      drawOverlay(ctx, 'PRALAIMĖJAI', 'Vorgo kariauna šįkart stipresnė...', [
-        'Taškai: ' + Game.score,
-        Game.stateT > 1 ? (cp ? 'ENTER – bandyti nuo boso' : 'ENTER – bandyti dar kartą') : '',
+      drawOverlay(ctx, 'DEFEATED', "Vorg's army was stronger this time...", [
+        'Score: ' + Game.score,
+        Game.stateT > 1 ? (cp ? 'ENTER - retry from the boss' : 'ENTER - try again') : '',
       ], '#ff5a4a');
       break;
     }
@@ -274,23 +274,23 @@ function drawUI(ctx) {
       const lvl = LEVELS[Game.levelIndex];
       const last = Game.levelIndex + 1 >= LEVELS.length;
       const newRecord = Game.score >= Game.highScore && Game.score > 0;
-      const recLine = 'Taškai: ' + Game.score + (newRecord ? '  – NAUJAS REKORDAS!' : '  (rekordas ' + Game.highScore + ')');
+      const recLine = 'Score: ' + Game.score + (newRecord ? '  - NEW BEST!' : '  (best ' + Game.highScore + ')');
       const go = Game.stateT > 1.5;
       if (last) {
-        drawOverlay(ctx, 'PABAIGA', 'Vorgas nugalėtas – planeta išgelbėta!', [
-          '★ Surinkti visi 7 Žvaigždžių kristalai',
-          'Kai tapo legendiniu kariu',
+        drawOverlay(ctx, 'THE END', 'Vorg is defeated - the planet is saved!', [
+          '★ All 5 Star Crystals recovered',
+          'Ren has become a legendary warrior',
           recLine,
-          'Ačiū, kad žaidei!',
-          go ? 'ENTER – į meniu' : '',
+          'Thanks for playing!',
+          go ? 'ENTER - back to menu' : '',
         ], '#ffe14d');
       } else {
-        const lines = [`★ Gauta kristalų: ${lvl.crystals}  (iš viso ${Game.crystals}/7)`];
-        if (lvl.unlockText) lines.push('✦ Atrakinta: ' + lvl.unlockText);
-        lines.push(`Zenu: ${Game.zenu} – išleisk treniruotėse!`);
+        const lines = [`★ Star Crystal recovered  (${Game.crystals}/5)`];
+        if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
+        lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);
-        lines.push(go ? 'ENTER – į treniruotes' : '');
-        drawOverlay(ctx, `${Game.levelIndex + 1} LYGIS ĮVEIKTAS!`, lvl.name + ' ' + (lvl.saved || 'išgelbėtas'), lines, '#ffe14d');
+        lines.push(go ? 'ENTER - go to training' : '');
+        drawOverlay(ctx, `LEVEL ${Game.levelIndex + 1} COMPLETE!`, lvl.name + ' is safe', lines, '#ffe14d');
       }
       break;
     }

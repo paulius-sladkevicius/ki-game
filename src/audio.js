@@ -1,5 +1,5 @@
 'use strict';
-// Sugeneruoti garso efektai per Web Audio API (be failų).
+// Sound effects and music generated with the Web Audio API (no audio files).
 
 const Sfx = (() => {
   let ctx = null;
@@ -22,7 +22,7 @@ const Sfx = (() => {
       }
       if (ctx.state === 'suspended') ctx.resume();
       if (musicWanted && musicNow !== musicWanted) startMusic();
-    } catch (e) { /* garsas neprivalomas */ }
+    } catch (e) { /* sound is optional */ }
   }
 
   function ok() { return ctx && !Game.muted; }
@@ -84,11 +84,11 @@ const Sfx = (() => {
     try {
       n.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
       n.o.stop(ctx.currentTime + 0.2);
-    } catch (e) { /* nieko */ }
+    } catch (e) { /* ignore */ }
   }
 
-  // ---------- Muzika: paprastas 16-ųjų žingsnių sekvenceris ----------
-  // lead – pustoniai virš (root + 12), null – pauzė; prog – akordų šaknys kiekvienam taktui.
+  // ---------- Music: a simple 16th-note step sequencer ----------
+  // lead = semitones above (root + 12), null = rest; prog = chord roots, one per half bar.
   const _ = null;
   const TRACKS = {
     menu: { bpm: 100, root: 57, prog: [0, -4, -2, -5], drums: 'half',
@@ -137,12 +137,12 @@ const Sfx = (() => {
     const chord = tr.root + tr.prog[(Math.floor(step / 8)) % tr.prog.length];
     void bar;
     const s16 = step % 16;
-    // bosas
+    // bass
     if (step % 2 === 0) mNote(midi(chord - 12 + (step % 4 === 2 ? 12 : 0)), t, stepDur * 1.8, 'triangle', 0.22);
-    // melodija
+    // melody
     const n = tr.lead[step % tr.lead.length];
     if (n !== null && n !== undefined) mNote(midi(tr.root + 12 + n), t, stepDur * 1.6, 'square', 0.06);
-    // būgnai
+    // drums
     const kick = tr.drums === 'fast' ? s16 % 4 === 0 : (s16 === 0 || s16 === 8 || (tr.drums === 'rock' && s16 === 10));
     const snare = tr.drums === 'half' ? s16 === 8 : (s16 === 4 || s16 === 12);
     if (kick) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.15); }

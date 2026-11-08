@@ -1,5 +1,5 @@
 'use strict';
-// Žaidimo ciklas: atnaujinimas ir piešimas.
+// Game loop: update and render.
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -45,7 +45,7 @@ function update(dt) {
       updateParticles(dt);
       if (Game.stateT > 1 && (Input.pressed.confirm || Input.pressed.jump)) {
         Sfx.select();
-        // nuo kontrolinio taško arba nuo pirmos bangos (be įžangos dialogo)
+        // from the checkpoint or from the first wave (skipping the intro dialog)
         startLevel(Game.levelIndex, Math.max(1, Game.checkpoint));
       }
       break;
@@ -62,11 +62,11 @@ function update(dt) {
   Game.shake = Math.max(0, Game.shake - 40 * dt);
 }
 
-// Meniu: ↑ ↓ pasirinkti, Enter / J / bakstelėjimas – patvirtinti.
+// Menu: ↑ ↓ to choose, Enter / J / tap to confirm.
 function menuOptions() {
-  const opts = [{ label: 'Naujas žaidimas', level: 0 }];
+  const opts = [{ label: 'New game', level: 0 }];
   const prog = loadProgress();
-  if (prog > 0) opts.push({ label: `Tęsti: ${prog + 1} lygis – ${LEVELS[prog].name}`, level: prog });
+  if (prog > 0) opts.push({ label: `Continue: level ${prog + 1} - ${LEVELS[prog].name}`, level: prog });
   return opts;
 }
 
@@ -86,11 +86,11 @@ function updateMenu() {
   }
 }
 
-// Treniruotės tarp lygių: už Zenu gerinami HP, Ki ir Ki Banga.
+// Training between levels: spend coins to upgrade HP, Ki and the Ki Wave.
 const TRAINING = [
-  { key: 'hp', name: 'Gyvybė', desc: '+20 maks. HP', color: '#4cd964' },
-  { key: 'ki', name: 'Ki', desc: '+20 maks. Ki, +15 % atsistatymas', color: '#3aa0ff' },
-  { key: 'beam', name: 'Ki Banga', desc: '+15 % bangos žala', color: '#ffd34a' },
+  { key: 'hp', name: 'Health', desc: '+20 max HP', color: '#4cd964' },
+  { key: 'ki', name: 'Ki', desc: '+20 max Ki, +15% regeneration', color: '#3aa0ff' },
+  { key: 'beam', name: 'Ki Wave', desc: '+15% wave damage', color: '#ffd34a' },
 ];
 function trainCost(lvl) { return 100 * (lvl + 1); }
 
@@ -108,13 +108,13 @@ function updateTraining() {
     const t = TRAINING[Game.trainSel];
     const lvl = Game.upgrades[t.key];
     const cost = trainCost(lvl);
-    if (lvl >= 5) { Sfx.deny(); Game.trainMsg = { text: 'Jau maksimalus lygis!', t: 1.2 }; return; }
-    if (Game.zenu < cost) { Sfx.deny(); Game.trainMsg = { text: 'Trūksta Zenu!', t: 1.2 }; return; }
-    Game.zenu -= cost;
+    if (lvl >= 5) { Sfx.deny(); Game.trainMsg = { text: 'Already at max level!', t: 1.2 }; return; }
+    if (Game.money < cost) { Sfx.deny(); Game.trainMsg = { text: 'Not enough coins!', t: 1.2 }; return; }
+    Game.money -= cost;
     Game.upgrades[t.key]++;
     saveRun();
     Sfx.buy();
-    Game.trainMsg = { text: `${t.name}: ${Game.upgrades[t.key]} lygis!`, t: 1.2, color: t.color };
+    Game.trainMsg = { text: `${t.name}: level ${Game.upgrades[t.key]}!`, t: 1.2, color: t.color };
     burst(250, 360, t.color, 30, 300, 5, 0.6);
   }
 }
@@ -196,5 +196,5 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// Testavimui / derinimui
+// For testing / debugging
 window.Game = Game;
