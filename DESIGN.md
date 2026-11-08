@@ -35,7 +35,7 @@ Mobile: virtual buttons on the left and action buttons on the right.
 
 ## 3. Core mechanics
 
-### 3.1. Three bars
+### 3.1. Four bars
 - **Health (HP):** goes down when you get hit.
 - **Ki (blue):** spent on blasts, waves and flight. Regenerates slowly, or quickly while holding "charge" (S).
 - **Power (yellow):** rises when you hit enemies and take damage. When full, you can transform.
