@@ -40,8 +40,9 @@ function wrapLines(ctx, str, maxW) {
 function drawHUD(ctx) {
   const p = Game.player;
   if (!p) return;
-  text(ctx, 'REN', 20, 26, 18, p.form > 0 ? '#ffe14d' : '#ffffff');
-  text(ctx, p.F.name, 68, 26, 13, p.form > 0 ? '#ffd34a' : '#cfd8ff', 'left', '600');
+  text(ctx, p.char.name, 20, 26, 18, p.form > 0 ? '#ffe14d' : '#ffffff');
+  const nameW = ctx.measureText(p.char.name).width;
+  text(ctx, p.F.name, 30 + nameW, 26, 13, p.form > 0 ? '#ffd34a' : '#cfd8ff', 'left', '600');
   bar(ctx, 20, 34, 260, 14, p.hp / p.maxHp, p.hp > 30 ? '#4cd964' : '#ff3b30');
   bar(ctx, 20, 54, 260, 9, p.ki / p.maxKi, '#3aa0ff');
   const full = p.power >= 100;
@@ -53,14 +54,24 @@ function drawHUD(ctx) {
   const gk = p.guard / p.maxGuard;
   bar(ctx, 20, 84, 260, 7, gk, p.guardLocked ? '#5a6a78' : '#7fe8ff', 'rgba(0,0,0,0.55)', p.guarding);
   text(ctx, p.guardLocked ? 'GUARD (broken)' : 'GUARD', 288, 92, 11, p.guardLocked ? '#ff9a40' : '#bff4ff');
-  const canUp = p.unlocked > p.form && p.form < 4 && (p.form === 0 ? full : p.power >= 50);
+  const canUp = p.unlocked > p.form && p.unlocked < p.char.finalForm && (p.form === 0 ? full : p.power >= 50);
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
-    text(ctx, 'T - ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, FORMS[p.unlocked].auraP);
+    text(ctx, 'T - ' + p.forms[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, p.forms[p.unlocked].auraP);
+  }
+  // the AI-controlled ally: small panel under the main bars
+  const a = Game.ally;
+  if (a) {
+    const y0 = 128;
+    text(ctx, a.char.name + (a.alive ? '' : '  (down)'), 20, y0, 13, a.alive ? a.char.color : '#888888');
+    text(ctx, a.F.name, 20 + ctx.measureText(a.char.name + (a.alive ? '' : '  (down)')).width + 8, y0, 11, '#cfd8ff', 'left', '600');
+    bar(ctx, 20, y0 + 6, 150, 7, a.hp / a.maxHp, a.hp > a.maxHp * 0.3 ? '#4cd964' : '#ff3b30');
+    bar(ctx, 20, y0 + 17, 150, 4, a.ki / a.maxKi, '#3aa0ff');
+    if (!IS_TOUCH) text(ctx, 'C - switch', 178, y0 + 14, 11, '#cfd8ff', 'left', '600');
   }
 
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
   text(ctx, 'BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, '#cfd8ff', 'right', '600');
-  text(ctx, `LEVEL ${Game.levelIndex + 1} · ★ ${Game.crystals}/5`, W - 20, 66, 12, '#ffd34a', 'right', '600');
+  text(ctx, actOf(Game.levelIndex) === 2 ? `LEVEL ${Game.levelIndex + 1} · ◆ ${Game.crystals}/5 seals` : `LEVEL ${Game.levelIndex + 1} · ★ ${Game.crystals}/5`, W - 20, 66, 12, '#ffd34a', 'right', '600');
   text(ctx, `${Game.money} coins`, W - 20, 82, Game.moneyFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
   if (Game.combo >= 3) {
     const s = 22 + Math.min(14, Game.combo);
@@ -124,11 +135,13 @@ function drawDialog(ctx) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
   ctx.fill(); ctx.stroke();
-  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'boss', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
+  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'raxas', 'Sable': 'sable', 'Gale': 'gale', 'Quartzus': 'quartz', 'Volta': 'volta', 'Hollow King': 'hollow', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
   let tx = x + 20;
   if (line.who in portraits) {
     let st = portraits[line.who];
-    st = st ? STYLES[st] : STYLES[Game.player ? Game.player.F.style : 'heroBase'];
+    const ren = heroById('ren'), rax = heroById('raxas');
+    if (st === 'raxas') st = STYLES[rax ? rax.F.style : 'raxasBase'];
+    else st = st ? STYLES[st] : STYLES[ren ? ren.F.style : 'heroBase'];
     ctx.save();
     ctx.beginPath(); ctx.roundRect(x + 10, y + 10, 96, h - 20, 8); ctx.clip();
     ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + 10, y + 10, 96, h - 20);
@@ -138,7 +151,7 @@ function drawDialog(ctx) {
     tx = x + 122;
   }
   if (line.who) {
-    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff' };
+    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff', 'Sable': '#b08aff', 'Gale': '#7ff0d8', 'Quartzus': '#9ff0ff', 'Volta': '#fff27a', 'Hollow King': '#ff80c8' };
     text(ctx, line.who, tx, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -171,7 +184,7 @@ function drawMenu(ctx) {
   ctx.rotate(-0.04);
   text(ctx, 'KI WAVE', 0, 0, 84, '#ffe14d', 'center', '900');
   ctx.restore();
-  text(ctx, 'Recover the 5 Star Crystals and stop Vorg!', 620, 172, 17, '#ffffff', 'center', '600');
+  text(ctx, 'Stop Vorg - and the darkness he was running from!', 620, 172, 17, '#ffffff', 'center', '600');
 
   const lines = [
     '← → move · ↑ jump / fly',
@@ -216,37 +229,52 @@ function drawTraining(ctx) {
   drawParticles(ctx);
   drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: Math.floor(t * 3) % 2 ? POSES.punch1() : POSES.punch2(), style: STYLES.heroBase, scale: 1.6, t });
   drawHumanoid(ctx, { x: 120, y: 420, facing: 1, pose: POSES.idle(t), style: STYLES.master, scale: 1.4, t });
+  const nextLvl = LEVELS[Game.levelIndex + 1];
+  if (nextLvl && nextLvl.ally) drawHumanoid(ctx, { x: 370, y: 420, facing: -1, pose: Math.floor(t * 3) % 2 ? POSES.punch2() : POSES.swordSlash(), style: STYLES.raxasBase, scale: 1.6, t });
   text(ctx, 'Master Oro: "Train hard, Ren - the next enemy is stronger!"', 250, 470, 14, '#9fe6ff', 'center', '600');
 
   text(ctx, 'TRAINING', 650, 80, 48, '#ffe14d', 'center', '900');
   text(ctx, `Before level ${Game.levelIndex + 2}: ${LEVELS[Game.levelIndex + 1].name}`, 650, 110, 16, '#ffffff', 'center', '600');
   text(ctx, `${Game.money} coins`, 650, 143, 24, '#ffe680', 'center', '800');
 
-  const rowH = 62, top0 = 166;
-  TRAINING.forEach((tr, i) => {
-    const y = top0 + i * rowH;
+  const rows = trainRows();
+  const rowH = rows.length > 5 ? 54 : 62, top0 = 166, boxH = rowH - 8;
+  let y = top0;
+  rows.forEach((row, i) => {
     const on = Game.trainSel === i;
-    const lvl = Game.upgrades[tr.key];
-    ctx.fillStyle = on ? 'rgba(255,225,77,0.16)' : 'rgba(0,0,0,0.4)';
-    ctx.fillRect(470, y, 360, 54);
-    if (on) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 54); }
-    text(ctx, tr.name, 486, y + 23, 18, tr.color, 'left', '800');
-    text(ctx, tr.desc, 486, y + 43, 13, '#cfd8ff', 'left', '600');
-    for (let k = 0; k < 5; k++) {
-      ctx.fillStyle = k < lvl ? tr.color : 'rgba(255,255,255,0.15)';
-      ctx.fillRect(660 + k * 16, y + 14, 12, 12);
+    if (row.kind === 'up') {
+      const tr = row.t;
+      const lvl = Game.upgrades[tr.key];
+      ctx.fillStyle = on ? 'rgba(255,225,77,0.16)' : 'rgba(0,0,0,0.4)';
+      ctx.fillRect(470, y, 360, boxH);
+      if (on) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
+      text(ctx, tr.name, 486, y + boxH * 0.42, 18, tr.color, 'left', '800');
+      text(ctx, tr.desc, 486, y + boxH * 0.8, 13, '#cfd8ff', 'left', '600');
+      for (let k = 0; k < 5; k++) {
+        ctx.fillStyle = k < lvl ? tr.color : 'rgba(255,255,255,0.15)';
+        ctx.fillRect(660 + k * 16, y + 12, 12, 12);
+      }
+      const cost = lvl >= 5 ? 'MAX' : trainCost(lvl) + ' c';
+      text(ctx, cost, 818, y + boxH * 0.8, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
+      y += rowH;
+    } else if (row.kind === 'lead') {
+      const c = CHARACTERS[Game.controlChar === 'raxas' ? 'raxas' : 'ren'];
+      ctx.fillStyle = on ? 'rgba(200,150,255,0.2)' : 'rgba(0,0,0,0.4)';
+      ctx.fillRect(470, y, 360, boxH);
+      if (on) { ctx.strokeStyle = '#c99bff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
+      text(ctx, 'Lead fighter', 486, y + boxH * 0.42, 18, '#c99bff', 'left', '800');
+      text(ctx, 'who you control at the start (C switches)', 486, y + boxH * 0.8, 13, '#cfd8ff', 'left', '600');
+      text(ctx, '⇄ ' + c.name, 818, y + boxH * 0.62, 18, c.color, 'right', '800');
+      y += rowH;
+    } else {
+      ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
+      ctx.fillRect(470, y, 360, 42);
+      if (on) { ctx.strokeStyle = '#9fe6ff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 42); }
+      text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 28, 19, '#9fe6ff', 'center', '800');
     }
-    const cost = lvl >= 5 ? 'MAX' : trainCost(lvl) + ' c';
-    text(ctx, cost, 818, y + 44, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
   });
-  const y = top0 + TRAINING.length * rowH;
-  const on = Game.trainSel === TRAINING.length;
-  ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
-  ctx.fillRect(470, y, 360, 42);
-  if (on) { ctx.strokeStyle = '#9fe6ff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 42); }
-  text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 28, 19, '#9fe6ff', 'center', '800');
-  text(ctx, '↑ ↓ choose · ENTER / J buy', 650, y + 64, 14, '#cfd8ff', 'center', '600');
-  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, y + 92, 20, Game.trainMsg.color || '#ff8080', 'center', '800');
+  text(ctx, '↑ ↓ choose · ENTER / J select', 650, y + 64, 14, '#cfd8ff', 'center', '600');
+  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, Math.min(y + 92, 532), 20, Game.trainMsg.color || '#ff8080', 'center', '800');
 }
 
 function drawUI(ctx) {
@@ -284,20 +312,23 @@ function drawUI(ctx) {
       const recLine = 'Score: ' + Game.score + (newRecord ? '  - NEW BEST!' : '  (best ' + Game.highScore + ')');
       const go = Game.stateT > 1.5;
       if (last) {
-        drawOverlay(ctx, 'THE END', 'Vorg is defeated - the planet is saved!', [
-          '★ All 5 Star Crystals recovered',
-          'Ren has become a legendary warrior',
+        drawOverlay(ctx, 'THE END', 'The Hollow King is gone - light returns to the world!', [
+          '◆ All 5 Hollow Seals broken',
+          'Ren and Raxas - legends of light and shadow',
           recLine,
           'Thanks for playing!',
           go ? 'ENTER - back to menu' : '',
         ], '#ffe14d');
       } else {
-        const lines = [`★ Star Crystal recovered  (${Game.crystals}/5)`];
+        const act2 = actOf(Game.levelIndex) === 2;
+        const actEnd = actOf(Game.levelIndex + 1) !== actOf(Game.levelIndex);
+        const lines = [act2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
         if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
+        if (actEnd) lines.push('...but a darker power is waking up. ACT 2 begins!');
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);
         lines.push(go ? 'ENTER - go to training' : '');
-        drawOverlay(ctx, `LEVEL ${Game.levelIndex + 1} COMPLETE!`, lvl.name + ' is safe', lines, '#ffe14d');
+        drawOverlay(ctx, actEnd ? 'ACT 1 COMPLETE!' : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? 'Vorg is defeated - the Star Crystals are safe' : lvl.name + ' is safe', lines, '#ffe14d');
       }
       break;
     }

@@ -14,6 +14,8 @@ const Game = {
   enemies: [],
   bosses: [],
   bolts: [],
+  hazards: [],
+  ally: null,
   levelIndex: 0,
   crystals: 0,
   money: 0,
@@ -88,13 +90,13 @@ function saveHighScore() {
   }
 }
 
-// Saved progress: highest level reached (0..4).
+// Saved progress: highest level reached (0..9).
 function loadProgress() {
-  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 4); } catch (e) { return 0; }
+  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 9); } catch (e) { return 0; }
 }
 function saveProgress(levelIndex) {
   try {
-    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 4)));
+    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 9)));
   } catch (e) { /* ignore */ }
 }
 
@@ -107,13 +109,14 @@ function addBolt(x1, y1, x2, y2, color = '#d9c2ff') {
 
 // Run state (coins and upgrades), so that "Continue" keeps the training.
 function saveRun() {
-  try { localStorage.setItem('kiwave_run', JSON.stringify({ money: Game.money, upgrades: Game.upgrades })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('kiwave_run', JSON.stringify({ money: Game.money, upgrades: Game.upgrades, lead: Game.controlChar || 'ren' })); } catch (e) { /* ignore */ }
 }
 function loadRun() {
   try {
     const r = JSON.parse(localStorage.getItem('kiwave_run') || 'null');
     if (r && r.upgrades) {
       Game.money = Math.max(0, r.money | 0);
+      Game.controlChar = r.lead === 'raxas' ? 'raxas' : 'ren';
       Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5), guard: clamp(r.upgrades.guard | 0, 0, 5) };
       return;
     }
@@ -123,8 +126,23 @@ function loadRun() {
 function resetRun() {
   Game.money = 0;
   Game.upgrades = { hp: 0, ki: 0, beam: 0, guard: 0 };
+  Game.controlChar = 'ren';
   saveRun();
 }
 
 const IS_TOUCH = ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
 function vibrate(ms) { if (IS_TOUCH && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* ignore */ } } }
+
+// ---------- Heroes ----------
+// Game.player is the hero you control, Game.ally the AI-controlled one (from level 6 on).
+function allHeroes() { return [Game.player, Game.ally].filter(Boolean); }
+function liveHeroes() { return allHeroes().filter((h) => h.alive); }
+function heroById(id) { return allHeroes().find((h) => h.id === id) || null; }
+// Enemies attack the closest hero that is still standing.
+function nearestHero(x) {
+  const hs = liveHeroes();
+  if (!hs.length) return Game.player;
+  let best = hs[0];
+  for (const h of hs) if (Math.abs(h.x - x) < Math.abs(best.x - x)) best = h;
+  return best;
+}

@@ -1,5 +1,6 @@
 'use strict';
-// The hero Ren: movement, punches, Ki blasts, the Ki Wave and transformations.
+// Playable heroes (Ren and Raxas): movement, attacks, Ki blasts, the Ki Wave, guard and transformations.
+// A hero is driven either by the player's Input or by an AI that produces the same kind of input.
 
 const BEAM_LEVELS = {
   1: { cost: 10, dmg: 20, len: 280, width: 18, dur: 0.35, pierce: 1, knock: 150 },
@@ -16,8 +17,25 @@ const FORMS = [
   { id: 'star', name: 'Star Form', dmg: 4, speed: 340, style: 'heroStar', beam: 'star', aura: 'rgba(255,140,220,A)', auraP: '#ffc8ee', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, lightning: true, ball: ['#ffffff', 'rgba(255,110,210,0.8)'], banner: 'Ultimate power!' },
 ];
 
+// Raxas, the former villain: a swordsman with a sword wave instead of a Ki blast.
+const RAXAS_FORMS = [
+  { id: 'base', name: 'Base Form', dmg: 1.6, speed: 270, style: 'raxasBase', beam: 'raxas', aura: 'rgba(170,80,255,A)', auraP: '#c99bff', drain: 0, kiRegen: 7, chargeRate: 1.1, widthMul: 1.1, ball: ['#e6c0ff', 'rgba(160,60,255,0.6)'] },
+  { id: 'shadow', name: 'Shadow Form', dmg: 3, speed: 330, style: 'raxasShadow', beam: 'shadow', aura: 'rgba(120,40,200,A)', auraP: '#a070ff', drain: 6.5, kiRegen: 13, chargeRate: 2, widthMul: 1.8, teleport: true, ball: ['#d8b8ff', 'rgba(110,30,220,0.75)'], banner: '+200% damage, teleport (double-tap ← or →)' },
+  { id: 'eclipse', name: 'Eclipse Form', dmg: 4, speed: 340, style: 'raxasEclipse', beam: 'eclipse', aura: 'rgba(255,200,80,A)', auraP: '#ffd98a', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, ball: ['#fff2c0', 'rgba(255,170,40,0.8)'], banner: 'Ultimate power!' },
+];
+
+const CHARACTERS = {
+  ren: { id: 'ren', name: 'REN', forms: FORMS, finalForm: 4, scale: 1, color: '#8ab4ff' },
+  raxas: { id: 'raxas', name: 'RAXAS', forms: RAXAS_FORMS, finalForm: 2, scale: 1.08, sword: true, color: '#c99bff' },
+};
+
 class Player {
-  constructor() {
+  constructor(charId = 'ren') {
+    this.char = CHARACTERS[charId];
+    this.id = charId;
+    this.forms = this.char.forms;
+    this.scale = this.char.scale;
+    this.ai = null;           // set for the AI-controlled ally
     this.x = 200; this.y = GROUND;
     this.vx = 0; this.vy = 0;
     this.w = 30; this.h = 78;
@@ -26,7 +44,7 @@ class Player {
     this.maxKi = 100; this.ki = 100;
     this.power = 0;
     this.form = 0;
-    this.unlocked = 0;        // highest unlocked form (0..3); 4 = final battle only
+    this.unlocked = 0;        // highest unlocked form; the last form is for the final battle only
     this.transformTo = 1;
     this.state = 'normal';
     this.stateT = 0;
@@ -65,16 +83,17 @@ class Player {
   // Guard is up while holding S, unless the guard was broken and has not refilled yet.
   get guarding() { return this.state === 'kicharge' && !this.guardLocked; }
 
-  get F() { return FORMS[this.form]; }
-  get dmgMult() { return this.F.dmg; }
+  get F() { return this.forms[this.form]; }
+  // the AI-controlled ally hits a bit softer, so the hero you control stays the main fighter
+  get dmgMult() { return this.F.dmg * (this.ai ? 0.75 : 1); }
   get alive() { return this.state !== 'dead'; }
 
   setState(s) { this.state = s; this.stateT = 0; }
 
-  hand() { return handOf({ x: this.x, y: this.y, facing: this.facing, pose: this.pose }); }
+  hand() { return handOf({ x: this.x, y: this.y, facing: this.facing, pose: this.pose, scale: this.scale }); }
+  get controlled() { return Game.player === this; }
 
-  update(dt) {
-    const I = Input;
+  update(dt, I = Input) {
     this.animT += dt;
     this.stateT += dt;
     this.tapT += dt;
@@ -151,8 +170,7 @@ class Player {
         while (lvl > 1 && this.ki < BEAM_LEVELS[lvl].cost) lvl--;
         if (lvl > this.beamLevel) { burst(this.hand().x, this.hand().y, '#ffffff', 10, 160, 3, 0.3); Sfx.clashTick(); }
         this.beamLevel = lvl;
-        Sfx.chargeSet(Math.min(1, this.charge / 1.5));
-        if (lvl === 3) addShake(2.5);
+        if (this.controlled) { Sfx.chargeSet(Math.min(1, this.charge / 1.5)); if (lvl === 3) addShake(2.5); }
         // particles pulled into the palms
         const h = this.hand();
         for (let i = 0; i < lvl; i++) {
@@ -192,7 +210,7 @@ class Player {
 
       case 'transform': {
         this.vx = 0;
-        const TF = FORMS[this.transformTo];
+        const TF = this.forms[this.transformTo];
         auraParticles(this.x, this.y, 100, TF.auraP, 5, 34);
         if (TF.lightning && Math.random() < 0.3) addBolt(this.x + rand(-40, 40), this.y - rand(60, 120), this.x + rand(-20, 20), this.y - rand(0, 40), TF.auraP);
         addShake(4);
@@ -311,13 +329,22 @@ class Player {
 
   doPunchHit() {
     const kick = this.comboStep === 3;
-    const w = kick ? 72 : 62;
-    const hb = { x: this.facing > 0 ? this.x : this.x - w, y: this.y - 76, w, h: 54 };
-    const dmg = (kick ? 14 : 8) * this.dmgMult;
-    const hit = hitTargets(hb, dmg, this.facing, kick ? 380 : 120, 'melee');
+    const sword = this.char.sword;
+    // Raxas' sword reaches further and hits harder than fists
+    const w = sword ? (kick ? 96 : 84) : (kick ? 72 : 62);
+    const hb = { x: this.facing > 0 ? this.x : this.x - w, y: this.y - 80, w, h: 58 };
+    const dmg = (sword ? (kick ? 16 : 10) : (kick ? 14 : 8)) * this.dmgMult;
+    if (sword) {
+      Sfx.slash();
+      for (let i = 0; i < 8; i++) {
+        const a = -0.9 + i * 0.25;
+        spawnParticle({ x: this.x + this.facing * Math.cos(a) * 60, y: this.y - 52 + Math.sin(a) * 40, vx: this.facing * 60, vy: 0, life: 0.18, size: 3, color: this.F.auraP });
+      }
+    }
+    const hit = hitTargets(hb, dmg, this.facing, kick ? 380 : 120, 'melee', this);
     if (hit) {
       Sfx.hit();
-      addHitstop(kick ? 0.08 : 0.045);
+      if (this.controlled) addHitstop(kick ? 0.08 : 0.045);
       addShake(kick ? 6 : 3);
       burst(this.x + this.facing * (w - 10), this.y - 52, '#ffffff', 8, 220, 3, 0.25);
       if (this.F.lightning) this.chainLightning(hit, dmg * 0.6);
@@ -339,7 +366,7 @@ class Player {
     if (best) {
       addBolt(from.x, from.y - 45, best.x, best.y - 45, this.F.auraP);
       const dealt = best.takeHit(dmg, sign(best.x - from.x), 80, 'melee');
-      if (dealt) onPlayerDamage(dmg);
+      if (dealt) onPlayerDamage(dmg, this);
       Sfx.zap();
     }
   }
@@ -352,9 +379,18 @@ class Player {
     this.setState('blast');
     this.pose = POSES.punch1();
     const h = this.hand();
+    if (this.char.sword) {
+      // Raxas throws a sword wave: stronger than a Ki blast (power 2)
+      Game.projectiles.push({
+        x: h.x + this.facing * 10, y: h.y, vx: this.facing * 620, vy: 0, r: 16,
+        dmg: 7 * this.dmgMult, owner: 'player', src: this, life: 1.6, type: 'crescent', power: 2, trail: this.F.auraP,
+      });
+      Sfx.slash();
+      return;
+    }
     Game.projectiles.push({
       x: h.x + this.facing * 6, y: h.y, vx: this.facing * 720, vy: 0, r: this.form > 0 ? 9 : 7,
-      dmg: 6 * this.dmgMult, owner: 'player', life: 1.6,
+      dmg: 6 * this.dmgMult, owner: 'player', src: this, life: 1.6,
       inner: this.F.ball[0], outer: this.F.ball[1], trail: this.F.auraP,
     });
     Sfx.blast();
@@ -365,7 +401,7 @@ class Player {
     this.setState('charging');
     this.charge = 0;
     this.beamLevel = 1;
-    Sfx.chargeStart();
+    if (this.controlled) Sfx.chargeStart();
   }
 
   // Fires the beam. Returns the created beam.
@@ -375,14 +411,14 @@ class Player {
     this.pose = POSES.fire();
     const h = this.hand();
     const b = {
-      owner: 'player', x: h.x, y: h.y, dir: this.facing,
+      owner: 'player', src: this, x: h.x, y: h.y, dir: this.facing,
       len: L.len, width: L.width * this.F.widthMul, dmg: L.dmg * this.dmgMult * this.beamMul,
       pierce: L.pierce, knock: L.knock, level: this.beamLevel,
       life: L.dur, max: L.dur, hit: new Set(), color: this.F.beam, clash: false,
       power: { 1: 2, 2: 5, 3: 999 }[this.beamLevel],   // how many enemy shots it can cancel
     };
     Game.beams.push(b);
-    Sfx.chargeStop();
+    if (this.controlled) Sfx.chargeStop();
     Sfx.beam(this.beamLevel);
     addShake(this.beamLevel * 3);
     this.setState(forClash ? 'clash' : 'firing');
@@ -401,10 +437,9 @@ class Player {
   startTransform(to) {
     this.transformTo = to;
     this.setState('transform');
-    Game.slowmo = 1.0;
-    Game.beams = Game.beams.filter((b) => b.owner !== 'player');
-    Sfx.chargeStop();
-    Sfx.transform();
+    if (this.controlled) Game.slowmo = 1.0;
+    Game.beams = Game.beams.filter((b) => b.src !== this);
+    if (this.controlled) { Sfx.chargeStop(); Sfx.transform(); }
   }
 
   // Final battle transformation - does not need Power.
@@ -415,6 +450,17 @@ class Player {
     this.invuln = 0;
     if (this.state === 'dead') return;
     this.startTransform(to);
+  }
+
+  // A downed hero gets back up (between waves).
+  revive(frac) {
+    if (this.alive) return;
+    this.hp = Math.round(this.maxHp * frac);
+    this.setState('normal');
+    this.vx = 0;
+    this.invuln = 1.2;
+    burst(this.x, this.y - 40, '#9fffb0', 24, 260, 4, 0.5);
+    floater(this.x, this.y - 100, this.char.name + ' is back!', '#9fffb0', 18);
   }
 
   unlock(form) {
@@ -428,6 +474,7 @@ class Player {
 
   takeHit(dmg, dir, knock = 200) {
     if (!this.alive || this.state === 'transform' || this.state === 'clash' || this.invuln > 0) return false;
+    dmg *= Game.dangerMul || 1;   // act 2 enemies hit harder
     let guardBreak = false;
     // Guard: the attack must come from the front (it pushes us backwards).
     if (this.guarding && dir === -this.facing) {
@@ -458,23 +505,22 @@ class Player {
     this.flash = 0.1;
     Game.combo = 0;
     Sfx.hurt();
-    vibrate(dmg >= 20 ? 80 : 35);
-    addShake(6);
+    if (this.controlled) { vibrate(dmg >= 20 ? 80 : 35); addShake(6); }
     floater(this.x, this.y - 90, '-' + Math.round(dmg), '#ff5555', 18);
     burst(this.x, this.y - 45, '#ff9a7a', 10, 200, 4, 0.3);
-    Sfx.chargeStop();
+    if (this.controlled) Sfx.chargeStop();
     if (this.hp <= 0) {
       this.hp = 0;
       this.setState('dead');
       this.vx = dir * 220; this.vy = -320; this.onGround = false;
-      Game.beams = Game.beams.filter((b) => b.owner !== 'player');
+      Game.beams = Game.beams.filter((b) => b.src !== this);
       return true;
     }
     this.setState('hurt');
     this.hurtDur = guardBreak ? 0.75 : 0.3;
     this.vx = dir * knock;
     this.vy = this.onGround ? -150 : this.vy;
-    Game.beams = Game.beams.filter((b) => b.owner !== 'player' || b.clash);
+    Game.beams = Game.beams.filter((b) => b.src !== this || b.clash);
     this.invuln = 0.7;
     return true;
   }
@@ -484,14 +530,20 @@ class Player {
     const F = this.F;
     if (this.form > 0 || (this.state === 'kicharge' && this.guardLocked) || this.state === 'transform' || (this.state === 'charging' && this.beamLevel >= 2)) {
       const intensity = this.state === 'transform' ? 1.6 : this.state === 'kicharge' ? 1.2 : 0.8;
-      drawAura(ctx, this.x, this.y, 110, this.state === 'transform' ? FORMS[this.transformTo].aura : F.aura, intensity, this.animT);
+      drawAura(ctx, this.x, this.y, 110, this.state === 'transform' ? this.forms[this.transformTo].aura : F.aura, intensity, this.animT);
     }
     if (this.invuln > 0 && this.alive && Math.floor(this.invuln * 20) % 2 === 0) ctx.globalAlpha = 0.45;
     let style = STYLES[F.style];
-    if (this.state === 'transform' && Math.floor(this.stateT * 14) % 2 === 1) style = STYLES[FORMS[this.transformTo].style];
-    drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, flash: this.flash > 0, t: this.animT });
+    if (this.state === 'transform' && Math.floor(this.stateT * 14) % 2 === 1) style = STYLES[this.forms[this.transformTo].style];
+    drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, scale: this.scale, flash: this.flash > 0, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.guarding) this.drawGuard(ctx);
+    // with two heroes, a small marker shows which one you control
+    if (Game.ally && this.controlled && this.alive) {
+      const top = this.y - this.h * this.scale - 30 + Math.sin(this.animT * 5) * 3;
+      ctx.fillStyle = this.char.color;
+      ctx.beginPath(); ctx.moveTo(this.x - 7, top); ctx.lineTo(this.x + 7, top); ctx.lineTo(this.x, top + 9); ctx.closePath(); ctx.fill();
+    }
     if (this.state === 'charging') {
       const h = this.hand();
       drawEnergyBall(ctx, h.x, h.y, 5 + this.beamLevel * 4 + Math.min(this.charge, 2) * 2, F.ball[0], F.ball[1], this.animT);

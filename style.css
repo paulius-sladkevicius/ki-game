@@ -77,7 +77,7 @@ html, body {
   margin-top: 1px;
 }
 
-#pauseBtn, #fsBtn {
+#pauseBtn, #fsBtn, #swBtn {
   position: absolute;
   width: 40px !important;
   height: 40px !important;
@@ -107,3 +107,6 @@ html, body {
 #touch.overlay button { background: rgba(30, 45, 90, 0.28); border-color: rgba(255, 255, 255, 0.38); }
 #touch.overlay button.big { background: rgba(40, 120, 255, 0.32); }
 #touch.overlay button.active { background: rgba(80, 160, 255, 0.6); }
+
+#swBtn { background: rgba(120, 60, 200, 0.55) !important; }
+#swBtn.off { display: none; }

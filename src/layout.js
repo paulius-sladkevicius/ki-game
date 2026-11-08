@@ -51,6 +51,7 @@ const Layout = (() => {
     const right = touch.querySelector('.pad.right');
     const pause = document.getElementById('pauseBtn');
     const fs = document.getElementById('fsBtn');
+    const sw = document.getElementById('swBtn');
     Game.safeLeft = 0;
     Game.safeRight = 0;
 
@@ -69,6 +70,7 @@ const Layout = (() => {
       place(right, { right: m, bottom: m });
       place(pause, { left: vw / 2 - 46, top: m });
       place(fs, { left: vw / 2 + 6, top: m });
+      place(sw, { left: vw / 2 + 58, top: m });
       // parts of the screen covered by the buttons, in game coordinates (the dialog box avoids them)
       const scale = W / full.w;
       Game.safeLeft = Math.max(0, (m + 3 * ob + 2 * og - cx) * scale);
@@ -83,12 +85,14 @@ const Layout = (() => {
       place(right, { right: m, bottom: m + Math.max(0, (vh - padH) * 0.15) });
       place(pause, { right: m + (rightW - 2 * m - 40) / 2, top: m });
       place(fs, { right: m + (rightW - 2 * m - 40) / 2, top: m + 48 });
+      place(sw, { right: m + (rightW - 2 * m - 40) / 2, top: m + 96 });
     } else {
       setCanvas(canvas, (vw - bottom.w) / 2, Math.max(0, (vh - barH - bottom.h) / 2), bottom.w, bottom.h);
       place(left, { left: m + 6, bottom: m });
       place(right, { right: m + 6, bottom: m + btn / 2 });
       place(pause, { left: vw / 2 - 46, bottom: m + padH / 2 - 20 });
       place(fs, { left: vw / 2 + 6, bottom: m + padH / 2 - 20 });
+      place(sw, { left: vw / 2 + 58, bottom: m + padH / 2 - 20 });
     }
   }
 

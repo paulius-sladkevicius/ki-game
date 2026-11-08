@@ -5,6 +5,7 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 Game.highScore = loadHighScore();
 Input.setupTouch();
+const swBtn = document.getElementById('swBtn');
 Layout.init();
 Sfx.music('menu');
 
@@ -18,6 +19,9 @@ function update(dt) {
   Game.stateT += dt;
   if (Game.flash > 0) Game.flash -= dt;
   if (Input.pressed.mute) { Game.muted = !Game.muted; if (Game.muted) Sfx.chargeStop(); }
+  // the ⇄ button only makes sense in a level with two heroes
+  const showSw = !!Game.ally && ['PLAY', 'DIALOG', 'PAUSE'].includes(Game.state);
+  if (swBtn && swBtn.classList.contains('off') === showSw) swBtn.classList.toggle('off', !showSw);
 
   switch (Game.state) {
     case 'MENU':
@@ -96,18 +100,37 @@ const TRAINING = [
 ];
 function trainCost(lvl) { return 100 * (lvl + 1); }
 
+// Rows of the training screen: upgrades, the lead fighter (when Raxas is with you), continue.
+function trainRows() {
+  const rows = TRAINING.map((t) => ({ kind: 'up', t }));
+  const next = LEVELS[Game.levelIndex + 1];
+  if (next && next.ally) rows.push({ kind: 'lead' });
+  rows.push({ kind: 'go' });
+  return rows;
+}
+
 function updateTraining() {
-  const n = TRAINING.length + 1;
+  const rows = trainRows();
+  const n = rows.length;
   const I = Input.pressed;
   if (I.jump || I.left) { Game.trainSel = (Game.trainSel + n - 1) % n; Sfx.select(); }
   if (I.charge || I.right) { Game.trainSel = (Game.trainSel + 1) % n; Sfx.select(); }
+  Game.trainSel = clamp(Game.trainSel, 0, n - 1);
   if ((I.confirm || I.punch) && Game.stateT > 0.3) {
-    if (Game.trainSel === TRAINING.length) {
+    const row = rows[Game.trainSel];
+    if (row.kind === 'go') {
       Sfx.select();
       startLevel(Game.levelIndex + 1);
       return;
     }
-    const t = TRAINING[Game.trainSel];
+    if (row.kind === 'lead') {
+      Game.controlChar = Game.controlChar === 'raxas' ? 'ren' : 'raxas';
+      saveRun();
+      Sfx.select();
+      Game.trainMsg = { text: `Lead fighter: ${CHARACTERS[Game.controlChar].name}`, t: 1.2, color: CHARACTERS[Game.controlChar].color };
+      return;
+    }
+    const t = row.t;
     const lvl = Game.upgrades[t.key];
     const cost = trainCost(lvl);
     if (lvl >= 5) { Sfx.deny(); Game.trainMsg = { text: 'Already at max level!', t: 1.2 }; return; }
@@ -121,6 +144,24 @@ function updateTraining() {
   }
 }
 
+// Switch which hero you control; the other one is taken over by the AI.
+function switchHero(force) {
+  const p = Game.player, a = Game.ally;
+  if (!a || !a.alive || Game.clash || Game.state !== 'PLAY') return false;
+  if (!force && Game.switchCd > 0) return false;
+  if (p.alive && ['charging', 'kicharge', 'punch', 'blast'].includes(p.state)) p.setState('normal');
+  Sfx.chargeStop();
+  Game.player = a;
+  Game.ally = p;
+  a.ai = null;
+  p.ai = new AllyAI(p);
+  Game.controlChar = a.id;
+  Game.switchCd = 0.4;
+  floater(a.x, a.y - 125, 'YOU: ' + a.char.name, a.char.color, 18);
+  Sfx.select();
+  return true;
+}
+
 function updateTimers(dt) {
   if (Game.banner) { Game.banner.t -= dt; if (Game.banner.t <= 0) Game.banner = null; }
   if (Game.hint) { Game.hint.t -= dt; if (Game.hint.t <= 0) Game.hint = null; }
@@ -131,9 +172,13 @@ function updatePlay(dt) {
   if (Game.hitstop > 0) { Game.hitstop -= dt; return; }
   let edt = dt;
   if (Game.slowmo > 0) { Game.slowmo -= dt; edt = dt * 0.3; }
+  if (Game.switchCd > 0) Game.switchCd -= dt;
+  if (Input.pressed.switch) switchHero(false);
   const p = Game.player;
+  const a = Game.ally;
 
-  p.update(p.state === 'transform' ? dt : edt);
+  p.update(p.state === 'transform' ? dt : edt, Input);
+  if (a) a.update(a.state === 'transform' ? dt : edt, a.ai.think(edt));
   for (const e of Game.enemies) e.update(edt);
   for (const b of Game.bosses) b.update(edt);
   checkClash();
@@ -141,6 +186,7 @@ function updatePlay(dt) {
   updateClash(edt);
   updateProjectiles(edt);
   updateBolts(edt);
+  updateHazards(edt);
   updateCoins(edt);
   updateParticles(edt);
   Game.enemies = Game.enemies.filter((e) => !e.remove);
@@ -149,7 +195,11 @@ function updatePlay(dt) {
 
   updateScript(dt);
 
-  if (p.state === 'dead' && p.stateT > 1.6 && Game.state === 'PLAY') {
+  // the controlled hero is down: hand control to the ally, if it is still standing
+  if (p.state === 'dead' && p.stateT > 1.2 && a && a.alive && Game.state === 'PLAY') {
+    switchHero(true);
+    showHint(`${p.char.name} is down! Now controlling ${a.char.name}`, 3);
+  } else if (p.state === 'dead' && p.stateT > 1.6 && !(a && a.alive) && Game.state === 'PLAY') {
     saveHighScore();
     Sfx.music(null);
     Sfx.lose();
@@ -160,11 +210,13 @@ function updatePlay(dt) {
 function drawWorld(ctx) {
   for (const e of Game.enemies) e.draw(ctx);
   for (const b of Game.bosses) b.draw(ctx);
+  if (Game.ally) Game.ally.draw(ctx);
   if (Game.player) Game.player.draw(ctx);
   for (const b of Game.beams) drawBeam(ctx, b);
   drawClash(ctx);
   drawBolts(ctx);
   drawCoins(ctx);
+  drawHazards(ctx);
   for (const pr of Game.projectiles) drawProjectile(ctx, pr);
   drawParticles(ctx);
   drawFloaters(ctx);

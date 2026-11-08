@@ -168,11 +168,163 @@ const LEVELS = [
       { type: 'victory' },
     ],
   },
+
+  // ================= ACT 2: THE HOLLOW KING =================
+
+  // ---------- 6. Sunken Ruins ----------
+  {
+    name: 'Sunken Ruins', theme: 'ruins', act: 2, crystals: 1, unlockStart: 3, ally: true, allyUnlockStart: 0,
+    script: [
+      { type: 'dialog', joinAlly: true, lines: [
+        L('', "One month after Vorg's defeat..."),
+        L('Master Oro', 'Ren, the Star Crystals are growing dim. Something is draining the Ki of our whole world.'),
+        L('', 'A shadow army rises from the ancient ruins in the jungle.'),
+        L('Raxas', 'Not bad, boy. But your victory woke up something far worse.'),
+        L('Ren', 'Raxas?! You came back for a rematch?'),
+        L('Raxas', 'Vorg was never conquering. He was running - from the Hollow King, who devours the Ki of entire worlds. And now he is coming here.'),
+        L('Raxas', "I'm done serving monsters. This time, I fight beside you."),
+        L('Controls', 'Raxas has joined you! Press C (or tap ⇄) to switch who you control. The other hero is controlled by the computer.'),
+      ] },
+      { type: 'wave', enemies: [['shade', 'R'], ['scout', 'L'], ['elite', 'R']] },
+      { type: 'wave', enemies: [['shade', 'L'], ['shade', 'R'], ['gunner', 'R'], ['elite', 'L']] },
+      { type: 'wave', enemies: [['shade', 'R'], ['elite', 'L'], ['shade', 'L'], ['wisp', 'R'], ['shade', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Sable', "The Hollow King's seals will not be broken by a child and a traitor."),
+        L('Raxas', 'Sable. Still hiding in the dark?'),
+        L('Tip', 'Sable raises shadow pillars under your feet - keep moving when the ground glows purple!'),
+      ] },
+      { type: 'boss', bosses: [['sable']] },
+      { type: 'dialog', lines: [
+        L('Sable', 'The King... will swallow... your light...'),
+        L('', 'The first Hollow Seal shatters. The sky grows a little brighter.'),
+        L('Raxas', 'Four seals left. Every one of them feeds his power.'),
+        L('Ren', "Then we break them all. Together."),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 7. Sky Temple ----------
+  {
+    name: 'Sky Temple', theme: 'skyisles', act: 2, crystals: 1, unlockStart: 3, ally: true, allyUnlockStart: 0, unlockText: "Raxas' Shadow Form",
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Sky Temple floats high above the clouds.'),
+        L('Ren', 'The second seal is up here... and so are his guards.'),
+        L('Tip', 'Wisps fire slow homing orbs - shoot them down or cancel the orbs with your own blasts.'),
+      ] },
+      { type: 'wave', enemies: [['wisp', 'R'], ['elite', 'L'], ['drone', 'R']] },
+      { type: 'wave', enemies: [['wisp', 'L'], ['wisp', 'R'], ['shade', 'R'], ['elite', 'L']] },
+      { type: 'dialog', unlockAlly: 1, lines: [
+        L('Raxas', 'This place... my power is answering it. The darkness I carried for Vorg - I can make it mine.'),
+        L('', "A violet aura bursts around Raxas."),
+        L('UNLOCKED', "RAXAS - SHADOW FORM: +200% damage, teleport. Switch to Raxas and press T - or let the computer use it!"),
+      ] },
+      { type: 'wave', enemies: [['wisp', 'R'], ['shade', 'L'], ['elite', 'R'], ['wisp', 'L'], ['drone', 'R'], ['shade', 'L']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Gale', 'Mortals do not walk among the clouds!'),
+        L('Ren', "We're not here to walk. We're here to fight."),
+        L('Tip', 'Gale dives from the sky and throws tornadoes. Watch for his shadow, and jump over the tornadoes.'),
+      ] },
+      { type: 'boss', bosses: [['gale']] },
+      { type: 'dialog', lines: [
+        L('Gale', 'The wind... has changed...'),
+        L('', 'The second Hollow Seal breaks apart in the wind.'),
+        L('Raxas', 'The next one is deep underground. In the Crystal Caverns.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 8. Crystal Caverns ----------
+  {
+    name: 'Crystal Caverns', theme: 'crystal', act: 2, crystals: 1, unlockStart: 3, ally: true, allyUnlockStart: 1,
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Crystal Caverns. Glowing crystals light the endless dark.'),
+        L('Raxas', 'Careful. The stone itself is alive here.'),
+        L('Tip', 'Golems are slow but hit hard around them. Keep your distance or guard when they raise their fists.'),
+      ] },
+      { type: 'wave', enemies: [['golem', 'R'], ['shade', 'L'], ['scout', 'R']] },
+      { type: 'wave', enemies: [['golem', 'L'], ['armored', 'R'], ['wisp', 'R'], ['bomber', 'L']] },
+      { type: 'wave', enemies: [['golem', 'R'], ['golem', 'L'], ['shade', 'R'], ['wisp', 'L'], ['bomber', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Quartzus', 'I... AM... THE MOUNTAIN.'),
+        L('Ren', 'Then we will move the mountain.'),
+        L('Tip', 'Quartzus blocks Ki from the front and drops crystals from the ceiling. Hit him from behind, or when he is stunned after charging into a wall!'),
+      ] },
+      { type: 'boss', bosses: [['quartzus']] },
+      { type: 'dialog', lines: [
+        L('Quartzus', 'Cracked... at last...'),
+        L('', 'The third Hollow Seal shatters into a thousand shining pieces.'),
+        L('Raxas', 'Two left. The storm on the coast is not natural - that is the fourth.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 9. Storm Coast ----------
+  {
+    name: 'Storm Coast', theme: 'coast', act: 2, crystals: 1, unlockStart: 3, ally: true, allyUnlockStart: 1,
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Storm Coast. Rain whips the cliffs and lightning splits the sky.'),
+        L('Ren', 'This storm is alive... it is watching us.'),
+      ] },
+      { type: 'wave', enemies: [['elite', 'R'], ['shade', 'L'], ['wisp', 'R'], ['brute', 'L']] },
+      { type: 'wave', enemies: [['golem', 'R'], ['wisp', 'L'], ['shade', 'R'], ['elite', 'L'], ['drone', 'R']] },
+      { type: 'wave', enemies: [['shade', 'L'], ['shade', 'R'], ['golem', 'L'], ['wisp', 'R'], ['elite', 'R'], ['bomber', 'L']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Volta', 'Two little sparks against the whole storm? How cute.'),
+        L('Raxas', "Sparks are how fires start, Volta."),
+        L('Tip', 'Volta calls lightning down on glowing spots - move away when the ground flashes yellow!'),
+      ] },
+      { type: 'boss', bosses: [['volta']] },
+      { type: 'dialog', lines: [
+        L('Volta', 'The storm... is fading...'),
+        L('', 'The fourth seal breaks. The clouds open - and behind them waits a black hole in the sky.'),
+        L('Master Oro', 'Ren, Raxas... the Hollow King is waking. This is the final battle.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 10. The Hollow Throne ----------
+  {
+    name: 'The Hollow Throne', theme: 'void', act: 2, crystals: 1, unlockStart: 3, ally: true, allyUnlockStart: 1, final: true,
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'Beyond the black hole lies the Hollow Throne, a realm of endless night.'),
+        L('Raxas', 'Whatever happens... thank you for giving me a second chance, Ren.'),
+        L('Ren', "Save it for after we win."),
+      ] },
+      { type: 'wave', enemies: [['shade', 'R'], ['shade', 'L'], ['golem', 'R'], ['wisp', 'L']] },
+      { type: 'wave', enemies: [['elite', 'L'], ['golem', 'R'], ['shade', 'R'], ['wisp', 'L'], ['shade', 'L'], ['wisp', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Hollow King', 'Light... how long since I last tasted it.'),
+        L('Hollow King', 'Vorg ran. Your gods ran. Now you two will vanish, like every world before yours.'),
+        L('Ren', 'You picked the wrong world.'),
+        L('Tip', 'The Hollow King has three phases. At the end, both heroes reach their final forms - win the Twin Wave clash by mashing L!'),
+      ] },
+      { type: 'boss', bosses: [['hollow']] },
+      { type: 'dialog', lines: [
+        L('Hollow King', 'Impossible... light and shadow... together...'),
+        L('', 'The Twin Wave tears the Hollow King apart. The last seal breaks and the void collapses.'),
+        L('Raxas', 'It is over. Really over.'),
+        L('Ren', 'Come back to the monastery with me. Master Oro will want to meet his new student.'),
+        L('Master Oro', 'Two warriors, one light. Welcome home, both of you.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
 ];
 
+// Act 1 collects Star Crystals, act 2 breaks Hollow Seals: counted per act.
+function actOf(levelIndex) { return (LEVELS[levelIndex] && LEVELS[levelIndex].act) || 1; }
 function crystalsBefore(levelIndex) {
+  const act = actOf(Math.min(levelIndex, LEVELS.length - 1));
   let n = 0;
-  for (let i = 0; i < levelIndex; i++) n += LEVELS[i].crystals;
+  for (let i = 0; i < levelIndex && i < LEVELS.length; i++) if (actOf(i) === act) n += LEVELS[i].crystals;
   return n;
 }
 
@@ -186,6 +338,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.projectiles = [];
   Game.beams = [];
   Game.bolts = [];
+  Game.hazards = [];
   Game.coins = [];
   Game.particles = [];
   Game.floaters = [];
@@ -196,7 +349,14 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.slowmo = 0;
   Game.hitstop = 0;
   Game.crystals = crystalsBefore(levelIndex);
-  Game.player = new Player();
+  // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
+  Game.enemyHpMul = lvl.act === 2 ? 1.7 : 1;
+  Game.dangerMul = lvl.act === 2 ? 1.6 : 1;
+  // heroes: Ren always, Raxas joins from level 6 on (AI-controlled unless you switch)
+  Game.player = new Player('ren');
+  Game.ally = lvl.ally ? new Player('raxas') : null;
+  if (Game.ally) { Game.ally.x = 120; Game.ally.ai = new AllyAI(Game.ally); }
+  Game.switchCd = 0;
   Game.script = lvl.script;
   if (fromStep === 0) {
     Game.levelStartScore = Game.score;
@@ -207,9 +367,26 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   }
   // forms unlocked in earlier levels and in steps already passed
   let unlocked = lvl.unlockStart;
-  for (let i = 0; i < fromStep; i++) if (lvl.script[i].unlock) unlocked = Math.max(unlocked, lvl.script[i].unlock);
+  let allyUnlocked = lvl.allyUnlockStart || 0;
+  for (let i = 0; i < fromStep; i++) {
+    if (lvl.script[i].unlock) unlocked = Math.max(unlocked, lvl.script[i].unlock);
+    if (lvl.script[i].unlockAlly) allyUnlocked = Math.max(allyUnlocked, lvl.script[i].unlockAlly);
+  }
   Game.player.unlocked = unlocked;
   if (unlocked > 0) Game.player.power = 100;
+  if (Game.ally) {
+    Game.ally.unlocked = allyUnlocked;
+    if (allyUnlocked > 0) Game.ally.power = 100;
+    // start with the hero chosen last time
+    if (Game.controlChar === 'raxas') {
+      const ren = Game.player;
+      Game.player = Game.ally; Game.player.ai = null;
+      Game.ally = ren; Game.ally.ai = new AllyAI(ren);
+      Game.player.x = 200; Game.ally.x = 120;
+    }
+  }
+  const sw = document.getElementById('swBtn');
+  if (sw) sw.classList.toggle('off', !Game.ally);
   saveProgress(levelIndex);
   saveRun();
   Sfx.music(lvl.theme);
@@ -229,10 +406,10 @@ function nextStep() {
   switch (s.type) {
     case 'dialog':
       openDialog(s.lines, () => {
-        if (s.unlock) {
-          Game.player.unlock(s.unlock);
-          showHint('Press T to transform!', 3);
-        }
+        if (s.unlock) heroById('ren').unlock(s.unlock);
+        if (s.unlockAlly && heroById('raxas')) heroById('raxas').unlock(s.unlockAlly);
+        if (s.joinAlly) showHint(IS_TOUCH ? 'Tap ⇄ to switch between Ren and Raxas' : 'Press C to switch between Ren and Raxas', 4);
+        else if (s.unlock || s.unlockAlly) showHint('Press T to transform!', 3);
         nextStep();
       });
       break;
@@ -244,9 +421,10 @@ function nextStep() {
     case 'boss': {
       const p = Game.player;
       p.x = 200; p.facing = 1;
-      p.hp = p.maxHp;
+      for (const h of allHeroes()) { h.revive(1); h.hp = h.maxHp; }
+      if (Game.ally) { Game.ally.x = 120; Game.ally.facing = 1; }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
-      Sfx.music(Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
+      Sfx.music(Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
       const names = Game.bosses.map((b) => b.name).join(' & ');
       showBanner('BOSS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'The twins', 2.0);
       break;
@@ -255,7 +433,7 @@ function nextStep() {
       collectAllCoins();
       saveRun();
       Sfx.music(null);
-      Game.crystals = crystalsBefore(Game.levelIndex + 1);
+      Game.crystals = crystalsBefore(Game.levelIndex) + LEVELS[Game.levelIndex].crystals;
       if (Game.levelIndex + 1 < LEVELS.length) saveProgress(Game.levelIndex + 1);
       saveHighScore();
       Sfx.victory();
@@ -280,10 +458,12 @@ function updateScript(dt) {
     } else if (Game.enemies.every((e) => e.dead)) {
       c.clearT += dt;
       if (c.clearT > 1.2) {
-        const p = Game.player;
-        if (p.alive && p.hp < p.maxHp) {
-          p.hp = Math.min(p.maxHp, p.hp + 15);
-          floater(p.x, p.y - 100, '+15 HP', '#6dff8a', 18);
+        for (const h of allHeroes()) {
+          if (!h.alive) h.revive(0.4);       // a downed hero gets back up after the wave
+          else if (h.hp < h.maxHp) {
+            h.hp = Math.min(h.maxHp, h.hp + 15);
+            floater(h.x, h.y - 100, '+15 HP', '#6dff8a', 18);
+          }
         }
         nextStep();
       }
@@ -296,11 +476,12 @@ function updateScript(dt) {
 
 // ---------- Dialogs ----------
 function openDialog(lines, cb) {
-  const p = Game.player;
   Sfx.chargeStop();
-  if (p && ['charging', 'firing', 'kicharge', 'punch', 'blast', 'transform', 'hurt'].includes(p.state)) {
-    if (p.state === 'transform') p.form = p.transformTo;
-    p.setState('normal');
+  for (const p of allHeroes()) {
+    if (['charging', 'firing', 'kicharge', 'punch', 'blast', 'transform', 'hurt', 'clash'].includes(p.state)) {
+      if (p.state === 'transform') p.form = p.transformTo;
+      p.setState('normal');
+    }
   }
   Game.beams = [];
   Game.projectiles = [];

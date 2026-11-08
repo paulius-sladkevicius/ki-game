@@ -1,6 +1,7 @@
 'use strict';
-// Vorg's soldiers.
-// ai: melee = hits up close, ranged = shoots from afar, elite = both, drone = flies and shoots, bomber = rolls and explodes.
+// Enemy soldiers.
+// ai: melee = hits up close, ranged = shoots from afar, elite = both, drone = flies and shoots, bomber = rolls and explodes,
+// shade = fades away and reappears behind a hero, golem = slow and heavy, slams the ground around it.
 
 const ENEMY_DEFS = {
   scout: { hp: 30, speed: 120, windup: 0.45, dmg: 6, style: 'scout', score: 100, ai: 'melee', cd: [1.2, 2.0] },
@@ -11,6 +12,10 @@ const ENEMY_DEFS = {
   brute: { hp: 45, speed: 140, windup: 0.4, dmg: 9, style: 'brute', score: 200, ai: 'melee', cd: [1.0, 1.8] },
   elite: { hp: 55, speed: 150, windup: 0.35, dmg: 9, style: 'elite', score: 300, ai: 'elite', cd: [0.9, 1.5] },
   clone: { hp: 1, speed: 120, windup: 0.5, dmg: 6, style: 'nyx', score: 50, ai: 'ranged', cd: [1.6, 2.4], life: 9 },
+  // act 2: the Hollow King's army
+  shade: { hp: 70, speed: 170, windup: 0.35, dmg: 11, style: 'shade', score: 350, ai: 'shade', cd: [1.0, 1.6] },
+  golem: { hp: 170, speed: 62, windup: 0.8, dmg: 17, style: 'golem', score: 500, ai: 'golem', cd: [1.6, 2.4], w: 46, h: 104, scale: 1.35, heavy: true },
+  wisp: { hp: 34, speed: 120, windup: 0.6, dmg: 9, score: 250, ai: 'drone', shot: 'orb', cd: [2.2, 3.2], w: 34, h: 34 },
 };
 
 class Enemy {
@@ -24,8 +29,10 @@ class Enemy {
     this.hoverY = this.y;
     this.vx = 0; this.vy = 0;
     this.w = d.w || 30; this.h = d.h || 76;
+    this.scale = d.scale || 1;
+    this.alpha = 1;
     this.facing = side === 'L' ? 1 : -1;
-    this.hp = this.maxHp = d.hp;
+    this.hp = this.maxHp = Math.round(d.hp * (Game.enemyHpMul || 1));   // act 2 enemies are tougher
     this.speed = d.speed * rand(0.85, 1.15);
     this.state = 'walk';
     this.stateT = 0;
@@ -45,7 +52,7 @@ class Enemy {
   setState(s) { this.state = s; this.stateT = 0; }
 
   update(dt) {
-    const p = Game.player;
+    const p = nearestHero(this.x);
     this.animT += dt;
     this.stateT += dt;
     this.age += dt;
@@ -100,6 +107,20 @@ class Enemy {
         this.vx *= 0.96;
         if (this.stateT >= 0.9) this.remove = true;
         break;
+
+      case 'fade':
+        // shade: vanishes, reappears behind the hero and attacks at once
+        this.vx = 0;
+        this.alpha = clamp(1 - this.stateT / 0.35, 0.08, 1);
+        if (this.stateT >= 0.55) {
+          this.x = clamp(p.x - p.facing * 55, 25, W - 25);
+          this.facing = sign(p.x - this.x);
+          burst(this.x, this.y - 40, '#7a50c0', 12, 180, 3, 0.35);
+          this.alpha = 1;
+          this.shootMode = false;
+          this.setState('windup');
+        }
+        break;
     }
 
     if (this.ai === 'drone' && this.state !== 'dying') {
@@ -148,6 +169,21 @@ class Enemy {
         if (this.atkCd <= 0 && !this.entering && p.alive) { this.shootMode = true; this.setState('windup'); }
         break;
       }
+      case 'shade':
+        if (dist > 150 && this.atkCd <= 0 && p.alive && !this.entering) { this.setState('fade'); break; }
+        if (dist > 48) this.vx = this.facing * this.speed;
+        else {
+          this.vx = 0;
+          if (this.atkCd <= 0 && p.alive && Math.abs(p.y - this.y) < 60) { this.shootMode = false; this.setState('windup'); }
+        }
+        break;
+      case 'golem':
+        if (dist > 70) this.vx = this.facing * this.speed;
+        else {
+          this.vx = 0;
+          if (this.atkCd <= 0 && p.alive) { this.shootMode = false; this.setState('windup'); }
+        }
+        break;
       case 'bomber':
         this.vx = this.facing * this.speed;
         if (dist < 50 && Math.abs(p.y - this.y) < 80 && p.alive) this.setState('windup');
@@ -158,6 +194,21 @@ class Enemy {
   doStrike(p) {
     if (this.ai === 'bomber') {
       this.explodeSelf(true);
+      return;
+    }
+    if (this.ai === 'golem') {
+      // ground slam: hits every hero on the ground nearby
+      addShake(7);
+      Sfx.boom();
+      for (let i = 0; i < 18; i++) spawnParticle({ x: this.x + this.facing * 40 + rand(-50, 50), y: GROUND - 4, vx: rand(-220, 220), vy: rand(-280, -60), life: 0.5, size: rand(3, 6), color: '#8a8f9a', grav: 700 });
+      for (const h of liveHeroes()) {
+        if (h.onGround && Math.abs(h.x - (this.x + this.facing * 30)) < 105) h.takeHit(this.def.dmg, sign(h.x - this.x) || this.facing, 320);
+      }
+      return;
+    }
+    if (this.shootMode && this.def.shot === 'orb') {
+      Game.projectiles.push({ x: this.x + this.facing * 12, y: this.y - 17, vx: this.facing * 120, vy: -40, r: 9, dmg: this.def.dmg, owner: 'enemy', type: 'orb', homing: true, speed: 150, life: 4.5, inner: '#c8f7ff', outer: 'rgba(40,160,220,0.7)', trail: '#8fe6ff' });
+      Sfx.blast();
       return;
     }
     if (this.shootMode) {
@@ -175,17 +226,20 @@ class Enemy {
       return;
     }
     const hb = { x: this.facing > 0 ? this.x : this.x - 56, y: this.y - 72, w: 56, h: 48 };
-    if (rectsOverlap(hb, boxOf(p))) p.takeHit(this.def.dmg, this.facing, 220);
+    for (const h of liveHeroes()) if (rectsOverlap(hb, boxOf(h))) h.takeHit(this.def.dmg, this.facing, 220);
     Sfx.punch();
   }
 
   // The robot explodes: hurt = whether it damages the player
   explodeSelf(hurt) {
-    const p = Game.player;
     explosion(this.x, this.y - 15, 1.1);
     Sfx.boom();
     addShake(8);
-    if (hurt && p.alive && Math.abs(p.x - this.x) < 90 && Math.abs(p.y - this.y) < 100) p.takeHit(this.def.dmg, sign(p.x - this.x), 350);
+    if (hurt) {
+      for (const h of liveHeroes()) {
+        if (Math.abs(h.x - this.x) < 90 && Math.abs(h.y - this.y) < 100) h.takeHit(this.def.dmg, sign(h.x - this.x), 350);
+      }
+    }
     this.dead = true;
     this.remove = true;
   }
@@ -203,6 +257,8 @@ class Enemy {
   // Returns the damage dealt (a number) or false.
   takeHit(dmg, dir, knock, kind = 'melee') {
     if (this.dead) return false;
+    if (this.state === 'fade') return false;      // a fading shade cannot be hit
+    if (this.def.heavy) knock *= 0.3;              // golems barely move
     // armored soldiers block Ki from the front (except a level 3 wave)
     if (this.def.block && (kind === 'blast' || kind === 'beam') && this.facing === -dir && this.state !== 'stun') {
       dmg *= 0.15;
@@ -226,7 +282,7 @@ class Enemy {
       addShake(5);
       return dmg;
     }
-    if (knock > 0 && this.ai !== 'bomber') {
+    if (knock > 0 && this.ai !== 'bomber' && !(this.def.heavy && knock < 120)) {
       this.setState('stun');
       this.stunT = knock > 200 ? 0.5 : 0.28;
       this.vx = dir * knock;
@@ -239,10 +295,12 @@ class Enemy {
     if (this.state === 'dying') ctx.globalAlpha = clamp(1 - (this.stateT - 0.5) / 0.4, 0, 1);
     if (this.type === 'clone') ctx.globalAlpha *= 0.65 + Math.sin(this.animT * 10) * 0.15;
     const fl = this.flash > 0;
-    drawShadow(ctx, this.x, this.y, 20);
-    if (this.ai === 'drone') drawDrone(ctx, this.x, this.y, this.facing, this.animT, fl);
+    drawShadow(ctx, this.x, this.y, 20 * this.scale);
+    ctx.globalAlpha *= this.alpha;
+    if (this.type === 'wisp') drawWisp(ctx, this.x, this.y, this.facing, this.animT, fl);
+    else if (this.ai === 'drone') drawDrone(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'bomber') drawBomber(ctx, this.x, this.y, this.facing, this.animT, fl, this.state === 'windup');
-    else drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.def.style], flash: fl, t: this.animT });
+    else drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.def.style], scale: this.scale, flash: fl, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.state === 'windup') text(ctx, '!', this.x, this.y - this.h - 22, 26, '#ff4040', 'center', '900');
     if (!this.dead && this.hp < this.maxHp && this.maxHp > 1) {

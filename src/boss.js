@@ -14,6 +14,19 @@ const BOSS_DEFS = {
     attacks: ['teleport', 'fingers', 'clones'], rage: ['beam', 'teleport'], beamColor: 'boss', aura: 'rgba(210,60,170,A)' },
   vorg: { name: 'VORG', title: 'Tyrant of the stars', style: 'vorg', hp: 1300, scale: 1.25, score: 6000, phases: true,
     attacks: ['fingers', 'dash', 'teleport'], rage: ['beam', 'summon', 'leap', 'fingers'], beamColor: 'boss', aura: 'rgba(255,40,100,A)' },
+  // ----- act 2: the Hollow King and his heralds -----
+  sable: { name: 'SABLE', title: 'Assassin of the dark', style: 'sable', hp: 1500, scale: 1.1, score: 3500, coins: 220, pillarKind: 'shadow', alwaysAura: true,
+    attacks: ['dash', 'pillars', 'teleport'], rage: ['beam', 'pillars', 'fingers'], beamColor: 'shadow', aura: 'rgba(120,40,200,A)' },
+  gale: { name: 'GALE', title: 'Monk of the four winds', style: 'gale', hp: 1650, scale: 1.1, score: 4000, coins: 240, want: 300,
+    attacks: ['tornado', 'dive', 'fingers'], rage: ['beam', 'tornado', 'dive'], beamColor: 'sky', aura: 'rgba(40,220,190,A)' },
+  quartzus: { name: 'QUARTZUS', title: 'The crystal titan', style: 'quartz', hp: 2200, scale: 1.6, score: 4500, coins: 260, shield: true, speed: 100,
+    attacks: ['rain', 'charge', 'quake'], rage: ['beam', 'rain'], beamColor: 'crystal', aura: 'rgba(90,200,255,A)' },
+  volta: { name: 'VOLTA', title: 'Queen of the storm', style: 'volta', hp: 2100, scale: 1.1, score: 5000, coins: 280, pillarKind: 'lightning', summonType: 'shade', want: 280,
+    attacks: ['lightning', 'fingers', 'teleport'], rage: ['beam', 'lightning', 'summon'], beamColor: 'storm', aura: 'rgba(255,230,90,A)' },
+  hollow: { name: 'HOLLOW KING', title: 'Devourer of worlds', style: 'hollow', hp: 4200, scale: 1.35, score: 10000, phases: true, alwaysAura: true, pillarKind: 'shadow', summonType: 'shade',
+    phase2Style: 'hollow2', phase2Scale: 1.6, phase2Text: 'The void tears open!', phaseColor: '#ff40a0',
+    finalText: 'Light and shadow, side by side!',
+    attacks: ['orbs', 'teleport', 'pillars'], rage: ['beam', 'summon', 'rain', 'dive', 'orbs'], beamColor: 'void', aura: 'rgba(160,40,255,A)' },
 };
 
 class Boss {
@@ -61,7 +74,9 @@ class Boss {
   hand() { return handOf({ x: this.x, y: this.y, facing: this.facing, pose: this.pose, scale: this.scale }); }
 
   update(dt) {
-    const p = Game.player;
+    // the boss focuses one hero at a time (picked again before each attack)
+    if (!this.target || !this.target.alive || !allHeroes().includes(this.target)) this.target = nearestHero(this.x);
+    const p = this.target;
     this.animT += dt;
     this.stateT += dt;
     if (this.flash > 0) this.flash -= dt;
@@ -232,8 +247,9 @@ class Boss {
       case 'summon_tell':
         this.vx = 0;
         if (this.stateT >= 0.6) {
-          const elites = Game.enemies.filter((e) => e.type === 'elite' && !e.dead).length;
-          for (let i = 0; i < 2 - elites; i++) Game.enemies.push(new Enemy('elite', i === 0 ? 'L' : 'R'));
+          const type = this.def.summonType || 'elite';
+          const alive = Game.enemies.filter((e) => e.type === type && !e.dead).length;
+          for (let i = 0; i < 2 - alive; i++) Game.enemies.push(new Enemy(type, i === 0 ? 'L' : 'R'));
           floater(this.x, this.y - this.h - 20, 'Guards, attack!', '#ff9090', 18);
           this.recover(0.4);
         }
@@ -266,14 +282,14 @@ class Boss {
       case 'phase':
         this.vx = 0;
         addShake(4);
-        auraParticles(this.x, this.y, this.h + 20, '#ff4080', 4, 40);
+        auraParticles(this.x, this.y, this.h + 20, this.def.phaseColor || '#ff4080', 4, 40);
         if (this.stateT >= 1.8) {
-          this.style = 'vorg2';
-          this.setScale(1.45);
+          this.style = this.def.phase2Style || 'vorg2';
+          this.setScale(this.def.phase2Scale || 1.45);
           Game.flash = 0.6;
           explosion(this.x, this.y - 60, 1.4);
           Sfx.explode();
-          showBanner('VORG: SECOND FORM', "Now he's really angry!", 1.8);
+          showBanner(`${this.name}: SECOND FORM`, this.def.phase2Text || "Now he's really angry!", 1.8);
           this.recover(0.3);
         }
         break;
@@ -288,20 +304,99 @@ class Boss {
           spawnParticle({ x: h.x + Math.cos(a) * r, y: h.y + Math.sin(a) * r, vx: -Math.cos(a) * r * 3, vy: -Math.sin(a) * r * 3, life: 0.3, size: 3, color: '#ff80c0' });
         }
         addShake(3);
-        if (this.stateT >= 3.2 && p.alive && p.state !== 'transform') {
-          p.facing = sign(this.x - p.x);
-          p.beamLevel = 3;
-          p.pose = POSES.fire();
+        // the final clash is fought by the hero you control (the ally joins in startClash)
+        const cp = Game.player;
+        const busy = liveHeroes().some((h) => h.state === 'transform');
+        if (this.stateT >= 3.2 && cp.alive && !busy) {
+          this.facing = sign(cp.x - this.x);
+          cp.facing = sign(this.x - cp.x);
+          cp.beamLevel = 3;
+          cp.pose = POSES.fire();
           this.setState('beam');
           this.pose = this.computePose();
           const bb = this.makeBeam(80, 99, 40);
           Game.beams.push(bb);
-          const pb = p.releaseBeam(true);
+          const pb = cp.releaseBeam(true);
           startClash(pb, bb, { final: true, rate: 0.3 });
           showHint('FINAL BEAM CLASH! MASH L!', 2.5);
         }
         break;
       }
+
+      // ----- pillars of shadow / lightning bolts under the heroes -----
+      case 'pillars_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.35) {
+          const kind = this.def.pillarKind || 'shadow';
+          const xs = liveHeroes().map((h) => h.x);
+          if (this.enraged) xs.push(...xs.map((x) => x + rand(-160, 160)));
+          for (const x of xs) addHazard(clamp(x, 30, W - 30), kind, this);
+          Sfx.slash();
+          this.recover(0.4);
+        }
+        break;
+
+      // ----- crystal rain from the ceiling -----
+      case 'rain_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.5) {
+          const n = this.enraged ? 11 : 7;
+          const hs = liveHeroes();
+          for (let i = 0; i < n; i++) {
+            const h = hs[i % hs.length];
+            Game.projectiles.push({ x: clamp(h.x + rand(-260, 260), 20, W - 20), y: -30 - i * 55, vx: 0, vy: 430, r: 11, dmg: 10, owner: 'enemy', type: 'shard', life: 4 });
+          }
+          Sfx.boom();
+          this.recover(0.4);
+        }
+        break;
+
+      // ----- dive: jump out of sight, then crash down on a hero -----
+      case 'dive_up':
+        this.vx = 0;
+        this.y -= 1500 * dt;
+        this.onGround = false;
+        if (this.y < -200) { this.setState('dive_aim'); this.diveX = clamp(p.x, 60, W - 60); }
+        break;
+      case 'dive_aim':
+        this.y = -200;
+        this.diveX = lerp(this.diveX, clamp(p.x, 60, W - 60), Math.min(1, dt * 3));
+        if (this.stateT >= (this.enraged ? 0.55 : 0.75)) { this.x = this.diveX; this.setState('dive_down'); }
+        break;
+      case 'dive_down':
+        this.y += 1700 * dt;
+        if (this.y >= GROUND) {
+          this.y = GROUND; this.onGround = true;
+          this.groundSlam(120, 16);
+          this.recover(0.5);
+        }
+        break;
+
+      // ----- tornado rolling along the ground -----
+      case 'tornado_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.4) {
+          const dirs = this.enraged ? [-1, 1] : [this.facing];
+          for (const d of dirs) Game.projectiles.push({ x: this.x + d * 40, y: GROUND - 42, vx: d * 270, vy: 0, r: 26, dmg: 11, owner: 'enemy', type: 'tornado', life: 4, power: 3 });
+          Sfx.slash();
+          this.recover(0.35);
+        }
+        break;
+
+      // ----- slow homing orbs -----
+      case 'orbs_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.4) {
+          const n = this.enraged ? 4 : 3;
+          const h0 = this.hand();
+          for (let i = 0; i < n; i++) {
+            const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.6;
+            Game.projectiles.push({ x: h0.x, y: h0.y, vx: Math.cos(a) * 160 + this.facing * 60, vy: Math.sin(a) * 160, r: 11, dmg: 9, owner: 'enemy', type: 'orb', homing: true, speed: 175, life: 5, inner: '#e0c0ff', outer: 'rgba(70,0,140,0.75)', trail: '#a070ff' });
+          }
+          Sfx.blast();
+          this.recover(0.4);
+        }
+        break;
 
       case 'recover':
         this.vx *= 0.85;
@@ -331,7 +426,12 @@ class Boss {
         break;
     }
 
-    // physics
+    // physics (the dive moves the boss by itself)
+    if (this.state === 'dive_up' || this.state === 'dive_aim' || this.state === 'dive_down') {
+      this.x = clamp(this.x, 30, W - 30);
+      this.pose = this.computePose();
+      return;
+    }
     if (!this.onGround) this.vy += GRAVITY * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -345,20 +445,23 @@ class Boss {
   }
 
   contactHit(dmg, knock) {
-    const p = Game.player;
-    if (!this.hasHit && rectsOverlap(boxOf(this), boxOf(p))) {
-      this.hasHit = true;
-      p.takeHit(dmg, this.facing, knock);
+    if (this.hasHit) return;
+    for (const h of liveHeroes()) {
+      if (rectsOverlap(boxOf(this), boxOf(h))) {
+        this.hasHit = true;
+        h.takeHit(dmg, this.facing, knock);
+      }
     }
   }
 
   groundSlam(radius, dmg) {
-    const p = Game.player;
     addShake(9);
     Sfx.boom();
     for (let i = 0; i < 24; i++) spawnParticle({ x: this.x + rand(-60, 60), y: GROUND - 4, vx: rand(-260, 260), vy: rand(-300, -60), life: 0.6, size: rand(3, 6), color: '#c9a27a', grav: 700 });
     burst(this.x, GROUND - 10, '#ffffff', 12, 300, 5, 0.4);
-    if (radius && p.onGround && Math.abs(p.x - this.x) < radius) p.takeHit(dmg, sign(p.x - this.x), 300);
+    if (radius) {
+      for (const h of liveHeroes()) if (h.onGround && Math.abs(h.x - this.x) < radius) h.takeHit(dmg, sign(h.x - this.x), 300);
+    }
   }
 
   makeBeam(width, life, dmg) {
@@ -371,10 +474,15 @@ class Boss {
 
   chooseAttack(dist) {
     const d = this.def;
+    // pick the hero to attack: usually the closest, sometimes the other one
+    const hs = liveHeroes();
+    if (hs.length > 1 && Math.random() < 0.35) this.target = hs[Math.floor(Math.random() * hs.length)];
+    else this.target = nearestHero(this.x);
+    dist = Math.abs(this.target.x - this.x);
     if (d.phases && this.phase >= 3) { this.startFinalTell(); return; }
     if (this.enraged && d.rage.includes('beam') && this.beamCd <= 0 && Math.random() < 0.5) {
       this.setState('beam_tell');
-      this.facing = sign(Game.player.x - this.x);
+      this.facing = sign(this.target.x - this.x);
       this.beamCd = 7;
       showHint(`${this.name} is charging! Hold L for a beam clash!`, 2.2);
       return;
@@ -386,6 +494,7 @@ class Boss {
     const map = {
       dash: 'dash_tell', slash: 'slash_tell', leap: 'leap', fingers: 'fingers_tell', teleport: 'tp_out',
       charge: 'charge_tell', quake: 'quake_tell', clones: 'clones_tell', summon: 'summon_tell',
+      pillars: 'pillars_tell', lightning: 'pillars_tell', rain: 'rain_tell', dive: 'dive_up', tornado: 'tornado_tell', orbs: 'orbs_tell',
     };
     this.setState(map[pick] || 'dash_tell');
   }
@@ -408,12 +517,15 @@ class Boss {
     Game.beams = Game.beams.filter((b) => b.src !== this);
     Game.projectiles = Game.projectiles.filter((pr) => pr.owner !== 'enemy');
     for (const e of Game.enemies) if (!e.dead) { e.dead = true; e.setState('dying'); explosion(e.x, e.y - 40, 0.6); }
-    const p = Game.player;
-    if (p.form !== 4 && p.alive) {
-      p.forceForm(4);
-      showBanner('STAR FORM!', "The whole planet's Ki is with you!", 2.2);
+    let changed = false;
+    for (const h of liveHeroes()) {
+      if (h.form !== h.char.finalForm) { h.forceForm(h.char.finalForm); changed = true; }
+    }
+    if (changed) {
+      const names = liveHeroes().map((h) => h.forms[h.char.finalForm].name.toUpperCase());
+      showBanner(names.join(' & ') + '!', this.def.finalText || "The whole planet's Ki is with you!", 2.2);
     } else {
-      showHint('Vorg is charging the sphere again! Get ready!', 2.5);
+      showHint(`${this.name} is charging again! Get ready!`, 2.5);
     }
   }
 
@@ -425,7 +537,7 @@ class Boss {
       this.hp = this.maxHp * 0.66;
       Game.beams = Game.beams.filter((b) => b.src !== this);
       this.setState('phase');
-      showBanner('VORG IS TRANSFORMING!', '', 1.6);
+      showBanner(`${this.name} IS TRANSFORMING!`, '', 1.6);
       return true;
     }
     if (this.phase === 2 && this.hp <= this.maxHp * 0.25) {
@@ -439,7 +551,11 @@ class Boss {
 
   computePose() {
     switch (this.state) {
-      case 'dash_tell': case 'slash_tell': case 'quake_tell': case 'clones_tell': case 'summon_tell': case 'final_tell': return POSES.swordRaise();
+      case 'dash_tell': case 'slash_tell': case 'quake_tell': case 'clones_tell': case 'summon_tell': case 'final_tell':
+      case 'pillars_tell': case 'rain_tell': case 'orbs_tell': return POSES.swordRaise();
+      case 'tornado_tell': return POSES.swordSlash();
+      case 'dive_up': case 'dive_aim': return POSES.jump();
+      case 'dive_down': return POSES.dash();
       case 'dash': case 'charge': return POSES.dash();
       case 'charge_tell': return POSES.windup();
       case 'slash': case 'quake': return POSES.swordSlash();
@@ -511,7 +627,7 @@ class Boss {
   draw(ctx) {
     drawShadow(ctx, this.x, this.y, 28 * this.scale / 1.15);
     ctx.globalAlpha = this.alpha;
-    if ((this.enraged || this.state === 'phase') && !this.dead) drawAura(ctx, this.x, this.y, this.h + 30, this.def.aura, this.state === 'phase' ? 1.6 : 0.8, this.animT);
+    if ((this.enraged || this.def.alwaysAura || this.state === 'phase') && !this.dead) drawAura(ctx, this.x, this.y, this.h + 30, this.def.aura, this.state === 'phase' ? 1.6 : 0.8, this.animT);
     const tell = ['dash_tell', 'slash_tell', 'charge_tell', 'quake_tell'].includes(this.state) && Math.floor(this.stateT * 18) % 2 === 0;
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.style], scale: this.scale, flash: this.flash > 0 || tell, t: this.animT });
     ctx.globalAlpha = 1;

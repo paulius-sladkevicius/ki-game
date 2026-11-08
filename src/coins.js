@@ -1,7 +1,7 @@
 'use strict';
 // Coins: dropped by enemies, after a moment they fly to the hero.
 
-const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0 };
+const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0, shade: 30, golem: 45, wisp: 25 };
 
 function spawnCoins(x, y, value) {
   if (value <= 0) return;
@@ -18,8 +18,8 @@ function collectAllCoins() {
 }
 
 function updateCoins(dt) {
-  const p = Game.player;
   for (const c of Game.coins) {
+    const p = nearestHero(c.x);
     c.age += dt;
     c.spin += dt * 10;
     if (c.age > 0.6 && p && p.alive) {

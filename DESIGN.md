@@ -95,6 +95,26 @@ Each level: 2–3 enemy waves, then a boss.
 
 ---
 
+## 4b. Act 2: the Hollow King
+
+After Vorg's defeat the Star Crystals start to dim: Vorg was never conquering – he was fleeing the **Hollow King**, an ancient being that devours the Ki of whole worlds. **Raxas**, the swordsman from level 1, returns and joins Ren. Together they must break the King's **5 Hollow Seals**.
+
+| # | Location | New enemies | Boss | Reward |
+|---|---|---|---|---|
+| 6 | **Sunken Ruins** | shades (fade away, reappear behind you) | **Sable** – shadow pillars, teleport | seal; Raxas joins |
+| 7 | **Sky Temple** | wisps (homing orbs) | **Gale** – tornadoes, dive from the sky | seal + Raxas' **Shadow Form** |
+| 8 | **Crystal Caverns** | stone golems (slow, ground slam) | **Quartzus** – crystal rain, shield, charge | seal |
+| 9 | **Storm Coast** | everything mixed | **Volta** – lightning strikes, summons shades | seal |
+| 10 | **The Hollow Throne** | elite mix | **Hollow King** – 3 phases, homing orbs, final **Twin Wave** clash | the end |
+
+### Two heroes
+- **C / ⇄** switches which hero you control; the other is driven by an AI that uses exactly the same moves (it attacks, guards against telegraphed attacks, flies over boss beams, transforms).
+- **Raxas:** sword combo with longer reach, a sword wave (power 2) instead of a Ki blast, his own beam. Forms: Base → Shadow Form (+200%, teleport) → Eclipse Form (final battle only).
+- If the hero you control falls, control passes to the other one; a fallen hero gets back up after the wave (40% HP) and fully before the boss. Game over only when both are down.
+- Enemies attack the closest hero; bosses pick a target before each attack (usually the closest, sometimes the other one).
+- The AI ally deals 75% damage, and act 2 enemies have more HP and hit harder, so the fights stay challenging with two heroes.
+- **Final Twin Wave:** in the last phase both heroes reach their final forms (Star Form and Eclipse Form) and fire together into the Hollow King's beam.
+
 ## 5. Score and progress
 - Points for enemies, combos and bosses.
 - **Combo counter:** every 10 hits in a row gives +10% Power.
@@ -114,7 +134,7 @@ Each level: 2–3 enemy waves, then a boss.
 
 **Technology:** plain HTML5 + JavaScript (Canvas 2D), no server. Open `index.html` and play. Can be hosted on GitHub Pages.
 
-**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`).
+**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`). 10 levels in two acts.
 
 ---
 
@@ -123,4 +143,5 @@ Each level: 2–3 enemy waves, then a boss.
 1. ✅ **MVP (level 1):** the hero moves, jumps and punches; Ki Wave with 3 charge levels; 1 enemy type; Flame transformation; a simple boss.
 2. ✅ **Content:** all 5 levels, all forms, beam clashes.
 3. ✅ **Polish:** sounds, particles, dialogs, training screen, mobile controls.
-4. **Publishing:** GitHub Pages.
+4. ✅ **Publishing:** GitHub Pages.
+5. ✅ **Act 2:** 5 more levels, the ally Raxas, switching between heroes.
