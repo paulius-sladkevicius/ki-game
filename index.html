@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="lt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Ki Banga</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div id="touch" class="hidden">
+      <div class="pad left">
+        <button data-a="left">◀</button>
+        <button data-a="jump">▲</button>
+        <button data-a="right">▶</button>
+        <button data-a="charge">▼</button>
+      </div>
+      <div class="pad right">
+        <button data-a="punch">J</button>
+        <button data-a="blast">K</button>
+        <button data-a="beam" class="big">L</button>
+        <button data-a="transform">T</button>
+      </div>
+      <button id="pauseBtn" data-a="pause">II</button>
+    </div>
+  </div>
+
+  <script src="src/core.js"></script>
+  <script src="src/input.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/particles.js"></script>
+  <script src="src/draw.js"></script>
+  <script src="src/player.js"></script>
+  <script src="src/enemies.js"></script>
+  <script src="src/boss.js"></script>
+  <script src="src/combat.js"></script>
+  <script src="src/level.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>

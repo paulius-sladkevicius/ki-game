@@ -1,0 +1,63 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #05060d;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#wrap {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game {
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  image-rendering: auto;
+  display: block;
+}
+
+#touch.hidden { display: none; }
+
+#touch .pad {
+  position: absolute;
+  bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 52px);
+  gap: 10px;
+}
+#touch .pad.left { left: 16px; grid-template-columns: repeat(3, 48px); }
+#touch .pad.left button[data-a="charge"] { grid-column: 2; }
+#touch .pad.right { right: 16px; }
+
+#touch button {
+  width: 100%;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: rgba(20, 30, 60, 0.3);
+  color: #fff;
+  font: bold 20px system-ui, sans-serif;
+  touch-action: none;
+}
+#touch button.active { background: rgba(80, 160, 255, 0.6); }
+#touch button.big { background: rgba(40, 120, 255, 0.45); }
+
+#pauseBtn {
+  position: absolute;
+  top: 12px;
+  right: 50%;
+  transform: translateX(50%);
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 16px !important;
+}
