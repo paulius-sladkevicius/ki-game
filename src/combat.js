@@ -66,14 +66,32 @@ function updateBeams(dt) {
           Sfx.hit();
         }
       }
-      // the beam destroys enemy projectiles
+      // the beam and enemy projectiles cancel each other: each shot uses up some of the beam's power
       for (const pr of Game.projectiles) {
-        if (pr.owner === 'enemy' && pr.type !== 'groundwave' && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
+        if (b.power <= 0) break;
+        if (pr.owner === 'enemy' && pr.life > 0 && pr.type !== 'groundwave' && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
+          const used = Math.min(b.power, pr.power || 1);
+          b.power -= used;
+          pr.power = (pr.power || 1) - used;
+          if (pr.power <= 0) pr.life = 0;
+          burst(pr.x, pr.y, '#ffffff', 8, 180, 3, 0.25);
+          Sfx.cancel();
+          if (b.power <= 0) {
+            // the beam is spent: it stops at the collision point and fades out
+            b.len = Math.abs(pr.x - b.x);
+            b.life = Math.min(b.life, 0.12);
+            floater(pr.x, pr.y - 20, 'CANCELLED', '#ffffff', 14);
+          }
+        }
+      }
+    } else if (b.owner === 'boss') {
+      // a boss beam swallows the player's Ki blasts
+      for (const pr of Game.projectiles) {
+        if (pr.owner === 'player' && pr.life > 0 && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
           pr.life = 0;
           burst(pr.x, pr.y, '#ffffff', 6, 150, 3, 0.25);
         }
       }
-    } else if (b.owner === 'boss') {
       if (!b.hit.has(p) && p.alive && rectsOverlap(r, boxOf(p))) {
         if (p.takeHit(b.dmg, b.dir, b.knock)) b.hit.add(p);
       }
@@ -82,8 +100,36 @@ function updateBeams(dt) {
   Game.beams = Game.beams.filter((b) => b.life > 0);
 }
 
+// Player shots and enemy shots that meet cancel each other out.
+// Every shot has a power (default 1, a boss sword wave 2): the weaker one disappears,
+// the stronger one loses that much power; equal shots both disappear.
+function collideProjectiles() {
+  const mine = Game.projectiles.filter((pr) => pr.owner === 'player' && pr.life > 0);
+  if (!mine.length) return;
+  const theirs = Game.projectiles.filter((pr) => pr.owner === 'enemy' && pr.life > 0 && pr.type !== 'groundwave');
+  for (const a of mine) {
+    for (const b of theirs) {
+      if (a.life <= 0) break;
+      if (b.life <= 0) continue;
+      const rr = a.r + b.r;
+      if ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 > rr * rr) continue;
+      const pa = a.power || 1, pb = b.power || 1;
+      const used = Math.min(pa, pb);
+      a.power = pa - used;
+      b.power = pb - used;
+      if (a.power <= 0) a.life = 0;
+      if (b.power <= 0) b.life = 0;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      burst(mx, my, '#ffffff', 10, 220, 3, 0.3);
+      burst(mx, my, a.trail || '#bfe6ff', 6, 160, 3, 0.3);
+      Sfx.cancel();
+    }
+  }
+}
+
 function updateProjectiles(dt) {
   const p = Game.player;
+  collideProjectiles();
   for (const pr of Game.projectiles) {
     pr.x += pr.vx * dt;
     pr.y += pr.vy * dt;

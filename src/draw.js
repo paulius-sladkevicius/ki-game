@@ -59,6 +59,7 @@ const POSES = {
   charge: () => ({ crouch: 9, lean: -0.15, fl: [0.55, -0.5], bl: [-0.55, -0.3], fa: [-0.7, 1.3], ba: [-0.8, 1.4] }),
   fire: () => ({ crouch: 8, lean: 0.12, fl: [0.6, -0.4], bl: [-0.6, -0.2], fa: [1.55, 0.05], ba: [1.5, 0.1] }),
   kicharge: (t) => ({ crouch: 10 + Math.sin(t * 30) * 0.6, lean: -0.05, fl: [0.45, -0.6], bl: [-0.45, -0.4], fa: [0.45, 0.6], ba: [-0.45, 0.6], scream: true }),
+  guard: (t) => ({ crouch: 8 + Math.sin(t * 6) * 0.5, lean: 0.05, fl: [0.5, -0.5], bl: [-0.5, -0.3], fa: [1.25, 1.75], ba: [1.05, 1.9] }),
   hurt: () => ({ crouch: 2, lean: -0.45, fl: [0.3, -0.3], bl: [-0.4, -0.2], fa: [-0.8, 0.6], ba: [-1.2, 0.4] }),
   transform: (t) => ({ crouch: 10 + Math.sin(t * 40), lean: -0.2, fl: [0.5, -0.5], bl: [-0.5, -0.3], fa: [0.7, 0.4], ba: [-0.7, 0.4], scream: true }),
   windup: () => ({ crouch: 4, lean: -0.1, fl: [0.4, -0.3], bl: [-0.4, -0.2], fa: [-0.9, 1.7], ba: [0.5, 1.8] }),
@@ -365,7 +366,8 @@ function drawProjectile(ctx, p) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.translate(p.x, p.y);
-    ctx.scale(sign(p.vx), 1);
+    const k = p.power === 1 ? 0.65 : 1;   // a weakened sword wave is smaller
+    ctx.scale(sign(p.vx) * k, k);
     ctx.fillStyle = 'rgba(190,110,255,0.5)';
     ctx.beginPath(); ctx.arc(-10, 0, 24, -1.2, 1.2); ctx.arc(-22, 0, 22, 1.1, -1.1, true); ctx.fill();
     ctx.fillStyle = 'rgba(245,225,255,0.95)';

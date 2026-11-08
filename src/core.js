@@ -17,7 +17,7 @@ const Game = {
   levelIndex: 0,
   crystals: 0,
   money: 0,
-  upgrades: { hp: 0, ki: 0, beam: 0 },
+  upgrades: { hp: 0, ki: 0, beam: 0, guard: 0 },
   coins: [],
   projectiles: [],
   beams: [],
@@ -114,7 +114,7 @@ function loadRun() {
     const r = JSON.parse(localStorage.getItem('kiwave_run') || 'null');
     if (r && r.upgrades) {
       Game.money = Math.max(0, r.money | 0);
-      Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5) };
+      Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5), guard: clamp(r.upgrades.guard | 0, 0, 5) };
       return;
     }
   } catch (e) { /* ignore */ }
@@ -122,7 +122,7 @@ function loadRun() {
 }
 function resetRun() {
   Game.money = 0;
-  Game.upgrades = { hp: 0, ki: 0, beam: 0 };
+  Game.upgrades = { hp: 0, ki: 0, beam: 0, guard: 0 };
   saveRun();
 }
 

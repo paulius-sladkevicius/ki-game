@@ -92,6 +92,7 @@ const TRAINING = [
   { key: 'hp', name: 'Health', desc: '+20 max HP', color: '#4cd964' },
   { key: 'ki', name: 'Ki', desc: '+20 max Ki, +15% regeneration', color: '#3aa0ff' },
   { key: 'beam', name: 'Ki Wave', desc: '+15% wave damage', color: '#ffd34a' },
+  { key: 'guard', name: 'Guard', desc: '+20 max guard, +15% refill', color: '#7fe8ff' },
 ];
 function trainCost(lvl) { return 100 * (lvl + 1); }
 

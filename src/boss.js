@@ -393,7 +393,7 @@ class Boss {
   fireCrescent(y, speedMul = 1) {
     Game.projectiles.push({
       x: this.x + this.facing * 40, y, vx: this.facing * 470 * speedMul, vy: 0, r: 18, dmg: 12,
-      owner: 'enemy', type: 'crescent', life: 3,
+      owner: 'enemy', type: 'crescent', life: 3, power: 2,
     });
   }
 

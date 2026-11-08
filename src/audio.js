@@ -192,7 +192,10 @@ const Sfx = (() => {
     teleport() { tone(1200, 0.12, 'sine', 0.12, 300); },
     zap() { noise(0.12, 0.3, 5000, 'highpass'); tone(1800, 0.08, 'square', 0.05, 600); },
     boom() { noise(0.25, 0.45, 800, 'lowpass', 100); tone(60, 0.3, 'sine', 0.3, 25); },
-    clashTick() { tone(rand(200, 400), 0.05, 'square', 0.06); },
+    block() { tone(1400, 0.07, 'triangle', 0.12, 900); noise(0.08, 0.2, 5000, 'highpass'); },
+    guardBreak() { noise(0.35, 0.4, 3000, 'bandpass', 300); tone(700, 0.3, 'sawtooth', 0.12, 120); },
+    cancel() { noise(0.1, 0.25, 2500, 'bandpass', 600); tone(500, 0.06, 'square', 0.05, 250); },
+        clashTick() { tone(rand(200, 400), 0.05, 'square', 0.06); },
     victory() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, 'square', 0.12, null, i * 0.15)); },
     lose() { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.3, 'triangle', 0.15, null, i * 0.2)); },
   };

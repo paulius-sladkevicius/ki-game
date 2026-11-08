@@ -53,7 +53,17 @@ class Player {
     this.maxKi = this.ki = 100 + up.ki * 20;
     this.kiRegenMul = 1 + up.ki * 0.15;
     this.beamMul = 1 + up.beam * 0.15;
+    // guard energy: blocks hits from the front, refills over time
+    this.maxGuard = this.guard = 100 + (up.guard || 0) * 20;
+    this.guardRegenMul = 1 + (up.guard || 0) * 0.15;
+    this.guardIdle = 0;
+    this.guardLocked = false;
+    this.guardFlash = 0;
+    this.hurtDur = 0.3;
   }
+
+  // Guard is up while holding S, unless the guard was broken and has not refilled yet.
+  get guarding() { return this.state === 'kicharge' && !this.guardLocked; }
 
   get F() { return FORMS[this.form]; }
   get dmgMult() { return this.F.dmg; }
@@ -72,6 +82,17 @@ class Player {
     if (this.flash > 0) this.flash -= dt;
     if (this.blastCd > 0) this.blastCd -= dt;
     if (this.comboWindow > 0) this.comboWindow -= dt; else this.comboStep = 0;
+    if (this.guardFlash > 0) this.guardFlash -= dt;
+
+    // Guard energy refills after a short pause without guarding.
+    if (this.state !== 'kicharge') this.guardIdle += dt;
+    if (this.guardIdle > 0.8 && this.guard < this.maxGuard) {
+      this.guard = Math.min(this.maxGuard, this.guard + 16 * this.guardRegenMul * dt);
+    }
+    if (this.guardLocked && this.guard >= this.maxGuard * 0.35) {
+      this.guardLocked = false;
+      floater(this.x, this.y - 100, 'Guard ready', '#7fe8ff', 15);
+    }
 
     // A transformation lasts while there is Power left.
     if (this.form > 0 && this.state !== 'transform' && this.state !== 'clash') {
@@ -149,7 +170,13 @@ class Player {
 
       case 'kicharge':
         this.vx = 0;
-        this.ki = Math.min(this.maxKi, this.ki + 35 * dt);
+        if (move) this.facing = move;   // turn to face the enemy without moving
+        this.ki = Math.min(this.maxKi, this.ki + 30 * dt);
+        this.guardIdle = 0;
+        if (!this.guardLocked) {
+          this.guard -= 7 * dt;
+          if (this.guard <= 0) { this.guard = 0; this.guardLocked = true; floater(this.x, this.y - 100, 'Guard empty', '#7fe8ff', 15); }
+        }
         auraParticles(this.x, this.y, 80, this.F.auraP, 2);
         if (Math.random() < dt * 8) spawnParticle({ x: this.x + rand(-40, 40), y: GROUND - 2, vx: rand(-60, 60), vy: rand(-120, -40), life: 0.5, size: 3, color: '#c9a27a', grav: 300 });
         if (!I.down.charge) this.setState('normal');
@@ -160,7 +187,7 @@ class Player {
 
       case 'hurt':
         this.vx *= 0.9;
-        if (this.stateT >= 0.3) this.setState('normal');
+        if (this.stateT >= this.hurtDur) { this.hurtDur = 0.3; this.setState('normal'); }
         break;
 
       case 'transform': {
@@ -236,7 +263,7 @@ class Player {
       case 'blast': return POSES.punch1();
       case 'charging': return POSES.charge();
       case 'firing': case 'clash': return POSES.fire();
-      case 'kicharge': return POSES.kicharge(t);
+      case 'kicharge': return this.guardLocked ? POSES.kicharge(t) : POSES.guard(t);
       case 'hurt': return POSES.hurt();
       case 'transform': return POSES.transform(t);
       case 'dead': return this.onGround ? POSES.dead() : POSES.hurt();
@@ -352,6 +379,7 @@ class Player {
       len: L.len, width: L.width * this.F.widthMul, dmg: L.dmg * this.dmgMult * this.beamMul,
       pierce: L.pierce, knock: L.knock, level: this.beamLevel,
       life: L.dur, max: L.dur, hit: new Set(), color: this.F.beam, clash: false,
+      power: { 1: 2, 2: 5, 3: 999 }[this.beamLevel],   // how many enemy shots it can cancel
     };
     Game.beams.push(b);
     Sfx.chargeStop();
@@ -400,7 +428,31 @@ class Player {
 
   takeHit(dmg, dir, knock = 200) {
     if (!this.alive || this.state === 'transform' || this.state === 'clash' || this.invuln > 0) return false;
-    if (this.state === 'kicharge') { dmg *= 0.5; knock *= 0.3; }
+    let guardBreak = false;
+    // Guard: the attack must come from the front (it pushes us backwards).
+    if (this.guarding && dir === -this.facing) {
+      const cost = Math.max(8, dmg * 3);
+      if (this.guard >= cost) {
+        this.guard -= cost;
+        this.guardFlash = 0.18;
+        this.vx = dir * Math.min(140, knock * 0.4);
+        this.invuln = 0.2;
+        this.gainPower(dmg * 0.3);
+        Sfx.block();
+        addShake(3);
+        floater(this.x, this.y - 95, 'BLOCK', '#7fe8ff', 16);
+        burst(this.x + this.facing * 34, this.y - 45, '#bff4ff', 10, 220, 3, 0.25);
+        return true;
+      }
+      // not enough energy: the guard breaks and the rest of the hit goes through
+      dmg *= 1 - this.guard / cost;
+      this.guard = 0;
+      this.guardLocked = true;
+      guardBreak = true;
+      Sfx.guardBreak();
+      floater(this.x, this.y - 115, 'GUARD BREAK!', '#ff9a40', 20);
+      for (let i = 0; i < 16; i++) spawnParticle({ x: this.x + this.facing * 34, y: this.y - rand(15, 80), vx: rand(-200, 200) + this.facing * 120, vy: rand(-250, 50), life: 0.5, size: rand(2, 5), color: '#7fe8ff', grav: 600 });
+    }
     this.hp -= dmg;
     this.gainPower(dmg * 0.8);
     this.flash = 0.1;
@@ -418,12 +470,11 @@ class Player {
       Game.beams = Game.beams.filter((b) => b.owner !== 'player');
       return true;
     }
-    if (this.state !== 'kicharge') {
-      this.setState('hurt');
-      this.vx = dir * knock;
-      this.vy = this.onGround ? -150 : this.vy;
-      Game.beams = Game.beams.filter((b) => b.owner !== 'player' || b.clash);
-    }
+    this.setState('hurt');
+    this.hurtDur = guardBreak ? 0.75 : 0.3;
+    this.vx = dir * knock;
+    this.vy = this.onGround ? -150 : this.vy;
+    Game.beams = Game.beams.filter((b) => b.owner !== 'player' || b.clash);
     this.invuln = 0.7;
     return true;
   }
@@ -431,7 +482,7 @@ class Player {
   draw(ctx) {
     drawShadow(ctx, this.x, this.y, 22);
     const F = this.F;
-    if (this.form > 0 || this.state === 'kicharge' || this.state === 'transform' || (this.state === 'charging' && this.beamLevel >= 2)) {
+    if (this.form > 0 || (this.state === 'kicharge' && this.guardLocked) || this.state === 'transform' || (this.state === 'charging' && this.beamLevel >= 2)) {
       const intensity = this.state === 'transform' ? 1.6 : this.state === 'kicharge' ? 1.2 : 0.8;
       drawAura(ctx, this.x, this.y, 110, this.state === 'transform' ? FORMS[this.transformTo].aura : F.aura, intensity, this.animT);
     }
@@ -440,9 +491,29 @@ class Player {
     if (this.state === 'transform' && Math.floor(this.stateT * 14) % 2 === 1) style = STYLES[FORMS[this.transformTo].style];
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, flash: this.flash > 0, t: this.animT });
     ctx.globalAlpha = 1;
+    if (this.guarding) this.drawGuard(ctx);
     if (this.state === 'charging') {
       const h = this.hand();
       drawEnergyBall(ctx, h.x, h.y, 5 + this.beamLevel * 4 + Math.min(this.charge, 2) * 2, F.ball[0], F.ball[1], this.animT);
     }
+  }
+
+  // Energy shield in front of the hero; brighter when it blocks a hit, fainter when low.
+  drawGuard(ctx) {
+    const k = this.guard / this.maxGuard;
+    const cx = this.x + this.facing * 4, cy = this.y - 42;
+    const a0 = this.facing > 0 ? -1.15 : Math.PI - 1.15;
+    const pulse = 1 + Math.sin(this.animT * 12) * 0.03;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.35 + 0.45 * k + (this.guardFlash > 0 ? 0.4 : 0);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(80,200,255,0.5)';
+    ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.arc(cx, cy, 46 * pulse, a0, a0 + 2.3); ctx.stroke();
+    ctx.strokeStyle = this.guardFlash > 0 ? '#ffffff' : '#bff4ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, 46 * pulse, a0, a0 + 2.3); ctx.stroke();
+    ctx.restore();
   }
 }

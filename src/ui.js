@@ -50,9 +50,12 @@ function drawHUD(ctx) {
   text(ctx, 'HP', 288, 46, 11, '#d0ffd8');
   text(ctx, 'KI', 288, 63, 11, '#bfe0ff');
   text(ctx, 'POWER', 288, 78, 11, '#fff2b0');
+  const gk = p.guard / p.maxGuard;
+  bar(ctx, 20, 84, 260, 7, gk, p.guardLocked ? '#5a6a78' : '#7fe8ff', 'rgba(0,0,0,0.55)', p.guarding);
+  text(ctx, p.guardLocked ? 'GUARD (broken)' : 'GUARD', 288, 92, 11, p.guardLocked ? '#ff9a40' : '#bff4ff');
   const canUp = p.unlocked > p.form && p.form < 4 && (p.form === 0 ? full : p.power >= 50);
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
-    text(ctx, 'T - ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 100, 16, FORMS[p.unlocked].auraP);
+    text(ctx, 'T - ' + FORMS[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, FORMS[p.unlocked].auraP);
   }
 
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
@@ -132,7 +135,7 @@ function drawDialog(ctx) {
     tx = x + 122;
   }
   if (line.who) {
-    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff' };
+    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff' };
     text(ctx, line.who, tx, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -171,7 +174,7 @@ function drawMenu(ctx) {
     '← → move · ↑ jump / fly',
     'J punch · K Ki blast',
     'L hold and release - KI WAVE',
-    'S / ↓ charge Ki · T transform',
+    'S / ↓ guard + charge Ki · T transform',
     'P pause · M sound',
   ];
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -214,32 +217,33 @@ function drawTraining(ctx) {
 
   text(ctx, 'TRAINING', 650, 80, 48, '#ffe14d', 'center', '900');
   text(ctx, `Before level ${Game.levelIndex + 2}: ${LEVELS[Game.levelIndex + 1].name}`, 650, 110, 16, '#ffffff', 'center', '600');
-  text(ctx, `${Game.money} coins`, 650, 145, 24, '#ffe680', 'center', '800');
+  text(ctx, `${Game.money} coins`, 650, 143, 24, '#ffe680', 'center', '800');
 
+  const rowH = 62, top0 = 166;
   TRAINING.forEach((tr, i) => {
-    const y = 180 + i * 70;
+    const y = top0 + i * rowH;
     const on = Game.trainSel === i;
     const lvl = Game.upgrades[tr.key];
     ctx.fillStyle = on ? 'rgba(255,225,77,0.16)' : 'rgba(0,0,0,0.4)';
-    ctx.fillRect(470, y, 360, 60);
-    if (on) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 60); }
-    text(ctx, tr.name, 486, y + 25, 19, tr.color, 'left', '800');
-    text(ctx, tr.desc, 486, y + 47, 13, '#cfd8ff', 'left', '600');
+    ctx.fillRect(470, y, 360, 54);
+    if (on) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 54); }
+    text(ctx, tr.name, 486, y + 23, 18, tr.color, 'left', '800');
+    text(ctx, tr.desc, 486, y + 43, 13, '#cfd8ff', 'left', '600');
     for (let k = 0; k < 5; k++) {
       ctx.fillStyle = k < lvl ? tr.color : 'rgba(255,255,255,0.15)';
       ctx.fillRect(660 + k * 16, y + 14, 12, 12);
     }
     const cost = lvl >= 5 ? 'MAX' : trainCost(lvl) + ' c';
-    text(ctx, cost, 818, y + 48, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
+    text(ctx, cost, 818, y + 44, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
   });
-  const y = 180 + TRAINING.length * 70;
+  const y = top0 + TRAINING.length * rowH;
   const on = Game.trainSel === TRAINING.length;
   ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
-  ctx.fillRect(470, y, 360, 46);
-  if (on) { ctx.strokeStyle = '#9fe6ff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 46); }
-  text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 30, 19, '#9fe6ff', 'center', '800');
-  text(ctx, '↑ ↓ choose · ENTER / J buy', 650, y + 80, 14, '#cfd8ff', 'center', '600');
-  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, y + 108, 20, Game.trainMsg.color || '#ff8080', 'center', '800');
+  ctx.fillRect(470, y, 360, 42);
+  if (on) { ctx.strokeStyle = '#9fe6ff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, 42); }
+  text(ctx, (on ? '▶ ' : '') + 'Continue to the next level', 650, y + 28, 19, '#9fe6ff', 'center', '800');
+  text(ctx, '↑ ↓ choose · ENTER / J buy', 650, y + 64, 14, '#cfd8ff', 'center', '600');
+  if (Game.trainMsg) text(ctx, Game.trainMsg.text, 650, y + 92, 20, Game.trainMsg.color || '#ff8080', 'center', '800');
 }
 
 function drawUI(ctx) {

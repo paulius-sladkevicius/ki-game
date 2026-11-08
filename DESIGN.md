@@ -26,7 +26,7 @@ A simple 2D action game for the browser (side view, arena fights). The hero, a y
 | K | Small Ki blast (fast, cheap) |
 | **L (hold → release)** | **Ki Wave**: the longer you hold, the stronger it is |
 | **T** | **Transform** (when the Power bar is full) |
-| S / ↓ | Block / charge Ki |
+| S / ↓ | Guard (blocks hits, uses Guard energy) / charge Ki |
 | P / Esc | Pause |
 
 Mobile: virtual buttons on the left and action buttons on the right.
@@ -39,8 +39,20 @@ Mobile: virtual buttons on the left and action buttons on the right.
 - **Health (HP):** goes down when you get hit.
 - **Ki (blue):** spent on blasts, waves and flight. Regenerates slowly, or quickly while holding "charge" (S).
 - **Power (yellow):** rises when you hit enemies and take damage. When full, you can transform.
+- **Guard (cyan):** spent on blocking. Refills over time when you are not guarding.
 
-### 3.2. Ki Wave (main weapon)
+### 3.2. Guard
+- Hold **S**: an energy shield appears in front of the hero. Hits from the front are fully neutralized; hits from behind are not.
+- Every blocked hit costs Guard energy (3x the hit's damage, at least 8), and holding the guard drains it slowly (7/s).
+- The bar refills (16/s) after 0.8 s without guarding.
+- **Guard break:** if a hit costs more than the energy left, the shield shatters, the rest of the damage goes through and the hero is stunned for 0.75 s. The guard stays locked until the bar refills to 35%.
+- While guarding, the hero also charges Ki.
+
+### 3.3. Shot collisions
+- Player shots and enemy shots that meet cancel each other out. Each shot has a power (normal shots 1, a boss sword wave 2): the weaker shot disappears and the stronger one loses that much power.
+- A Ki Wave cancels enemy shots until its power is used up: level 1 – 2 shots, level 2 – 5 shots, level 3 – unlimited. A boss beam swallows the player's Ki blasts; two beams meeting start a beam clash.
+
+### 3.4. Ki Wave (main weapon)
 1. Hold **L**: the hero cups his hands, a glowing ball grows between them and the screen shakes.
 2. Charge levels:
    - **Level 1** (up to 0.5 s): short beam, 20 damage.
@@ -49,7 +61,7 @@ Mobile: virtual buttons on the left and action buttons on the right.
 3. While charging, the hero cannot move – it is a risk.
 4. **Beam clash:** if a boss fires its own beam at the same time, the beams collide. Mash **L** quickly – whoever pushes harder wins.
 
-### 3.3. Transformations
+### 3.5. Transformations
 Each form is unlocked during a level, right before its boss. A transformation lasts a limited time (until the Power bar runs out), then the hero returns to his base form.
 
 | Form | Unlocked | Look | Effect |
@@ -86,7 +98,7 @@ Each level: 2–3 enemy waves, then a boss.
 ## 5. Score and progress
 - Points for enemies, combos and bosses.
 - **Combo counter:** every 10 hits in a row gives +10% Power.
-- **Training screen** between levels: spend coins to upgrade HP, Ki or wave strength.
+- **Training screen** between levels: spend coins to upgrade HP, Ki, wave strength or guard.
 - Best score and progress are saved in `localStorage`.
 
 ---
