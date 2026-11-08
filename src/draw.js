@@ -32,6 +32,8 @@ const STYLES = {
   nyx: { gi: '#2a1a3a', under: '#d040a0', belt: '#d040a0', pants: '#1a1028', boots: '#d040a0', arm: '#d8c8f0', skin: '#d8c8f0', band: '#d040a0', hair: 'long', hairColor: '#8a2be2' },
   vorg: { gi: '#e8e0f0', under: '#5a2a8a', belt: '#5a2a8a', pants: '#5a2a8a', boots: '#e8e0f0', arm: '#c8a8e8', skin: '#c8a8e8', band: '#5a2a8a', hair: 'horns', hairColor: '#5a2a8a' },
   vorg2: { gi: '#2a0a22', under: '#ff3060', belt: '#ffd040', pants: '#1a0614', boots: '#ffd040', arm: '#e05a8a', skin: '#e05a8a', band: '#ffd040', hair: 'horns', hairColor: '#ffd040' },
+  master: { gi: '#e08a2a', under: '#f5d6a0', belt: '#7a3a10', pants: '#e08a2a', boots: '#5a3a20', arm: '#e08a2a', skin: '#e8c8a8', band: '#7a3a10', hair: 'beard', hairColor: '#f0f0f0' },
+  villager: { gi: '#3a6aa8', under: '#e8e8f0', belt: '#8a5a2a', pants: '#2a3a5a', boots: '#5a3a20', arm: '#3a6aa8', skin: '#f0d0b0', band: '#e8e8f0', hair: 'long', hairColor: '#7a4a2a' },
   flash: { gi: '#ffffff', under: '#ffffff', belt: '#ffffff', pants: '#ffffff', boots: '#ffffff', arm: '#ffffff', skin: '#ffffff', band: '#ffffff', hair: null, hairColor: '#ffffff', visor: '#ffffff' },
 };
 
@@ -126,6 +128,7 @@ const HAIR = {
   storm: [[8, -3], [15, -12], [6, -11], [11, -24], [2, -14], [2, -30], [-4, -14], [-12, -27], [-8, -10], [-21, -18], [-10, -4], [-22, -2], [-10, 2], [-18, 8], [-6, 8]],
   mohawk: [[6, -6], [8, -14], [3, -10], [2, -19], [-3, -11], [-6, -18], [-8, -8], [-13, -12], [-9, -2], [-4, -6]],
   horns: [[8, -5], [12, -18], [4, -9], [-4, -9], [-10, -22], [-8, -6], [-9, 0], [-5, -6], [4, -6]],
+  beard: [[7, 3], [10, 8], [7, 15], [2, 20], [-1, 13], [-3, 6], [0, 4]],
   long: [[9, -4], [9, -11], [2, -12], [-6, -10], [-10, -5], [-20, 2], [-30, 12], [-18, 7], [-12, 9], [-6, 8]],
 };
 

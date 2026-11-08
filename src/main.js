@@ -5,6 +5,7 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 Game.highScore = loadHighScore();
 Input.setupTouch();
+Sfx.music('menu');
 
 function anyConfirm() {
   const I = Input.pressed;
@@ -33,6 +34,12 @@ function update(dt) {
       break;
     case 'PAUSE':
       if (Input.pressed.pause || Input.pressed.confirm) setState('PLAY');
+      else if (Input.pressed.quit || Input.pressed.punch) { Game.theme = 'monastery'; setState('MENU'); Sfx.music('menu'); }
+      break;
+    case 'TRAINING':
+      updateParticles(dt);
+      if (Game.trainMsg) { Game.trainMsg.t -= dt; if (Game.trainMsg.t <= 0) Game.trainMsg = null; }
+      updateTraining();
       break;
     case 'GAMEOVER':
       updateParticles(dt);
@@ -47,8 +54,8 @@ function update(dt) {
       if (Math.random() < dt * 6) explosion(rand(100, W - 100), rand(80, 300), 0.5);
       if (Game.stateT > 1.5 && (Input.pressed.confirm || Input.pressed.jump)) {
         Sfx.select();
-        if (Game.levelIndex + 1 < LEVELS.length) startLevel(Game.levelIndex + 1);
-        else { Game.theme = 'monastery'; setState('MENU'); }
+        if (Game.levelIndex + 1 < LEVELS.length) { setState('TRAINING'); Game.trainSel = 0; Sfx.music('menu'); }
+        else { Game.theme = 'monastery'; setState('MENU'); Sfx.music('menu'); }
       }
       break;
   }
@@ -73,7 +80,42 @@ function updateMenu() {
   if ((I.confirm || I.punch) && Game.stateT > 0.2) {
     Sfx.unlock(); Sfx.select();
     Game.score = 0;
-    startLevel(opts[Game.menuSel].level);
+    const o = opts[Game.menuSel];
+    if (o.level === 0) resetRun(); else loadRun();
+    startLevel(o.level);
+  }
+}
+
+// Treniruotės tarp lygių: už Zenu gerinami HP, Ki ir Ki Banga.
+const TRAINING = [
+  { key: 'hp', name: 'Gyvybė', desc: '+20 maks. HP', color: '#4cd964' },
+  { key: 'ki', name: 'Ki', desc: '+20 maks. Ki, +15 % atsistatymas', color: '#3aa0ff' },
+  { key: 'beam', name: 'Ki Banga', desc: '+15 % bangos žala', color: '#ffd34a' },
+];
+function trainCost(lvl) { return 100 * (lvl + 1); }
+
+function updateTraining() {
+  const n = TRAINING.length + 1;
+  const I = Input.pressed;
+  if (I.jump || I.left) { Game.trainSel = (Game.trainSel + n - 1) % n; Sfx.select(); }
+  if (I.charge || I.right) { Game.trainSel = (Game.trainSel + 1) % n; Sfx.select(); }
+  if ((I.confirm || I.punch) && Game.stateT > 0.3) {
+    if (Game.trainSel === TRAINING.length) {
+      Sfx.select();
+      startLevel(Game.levelIndex + 1);
+      return;
+    }
+    const t = TRAINING[Game.trainSel];
+    const lvl = Game.upgrades[t.key];
+    const cost = trainCost(lvl);
+    if (lvl >= 5) { Sfx.deny(); Game.trainMsg = { text: 'Jau maksimalus lygis!', t: 1.2 }; return; }
+    if (Game.zenu < cost) { Sfx.deny(); Game.trainMsg = { text: 'Trūksta Zenu!', t: 1.2 }; return; }
+    Game.zenu -= cost;
+    Game.upgrades[t.key]++;
+    saveRun();
+    Sfx.buy();
+    Game.trainMsg = { text: `${t.name}: ${Game.upgrades[t.key]} lygis!`, t: 1.2, color: t.color };
+    burst(250, 360, t.color, 30, 300, 5, 0.6);
   }
 }
 
@@ -97,6 +139,7 @@ function updatePlay(dt) {
   updateClash(edt);
   updateProjectiles(edt);
   updateBolts(edt);
+  updateCoins(edt);
   updateParticles(edt);
   Game.enemies = Game.enemies.filter((e) => !e.remove);
 
@@ -106,6 +149,7 @@ function updatePlay(dt) {
 
   if (p.state === 'dead' && p.stateT > 1.6 && Game.state === 'PLAY') {
     saveHighScore();
+    Sfx.music(null);
     Sfx.lose();
     setState('GAMEOVER');
   }
@@ -118,6 +162,7 @@ function drawWorld(ctx) {
   for (const b of Game.beams) drawBeam(ctx, b);
   drawClash(ctx);
   drawBolts(ctx);
+  drawCoins(ctx);
   for (const pr of Game.projectiles) drawProjectile(ctx, pr);
   drawParticles(ctx);
   drawFloaters(ctx);
@@ -138,7 +183,7 @@ function render() {
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = clamp((now - last) / 1000, 0, 0.05);
   last = now;
   try {
     update(dt);

@@ -61,3 +61,30 @@ html, body {
   height: 44px !important;
   font-size: 16px !important;
 }
+
+#touch button small {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-top: -2px;
+}
+
+#rotate {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #05060d;
+  color: #ffe14d;
+  font: 700 20px system-ui, sans-serif;
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+#rotate .phone { font-size: 64px; animation: spin 2s ease-in-out infinite; }
+@keyframes spin { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (pointer: coarse) {
+  #rotate { display: flex; }
+}

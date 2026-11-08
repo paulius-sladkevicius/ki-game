@@ -21,6 +21,7 @@ const Sfx = (() => {
         for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       }
       if (ctx.state === 'suspended') ctx.resume();
+      if (musicWanted && musicNow !== musicWanted) startMusic();
     } catch (e) { /* garsas neprivalomas */ }
   }
 
@@ -86,8 +87,98 @@ const Sfx = (() => {
     } catch (e) { /* nieko */ }
   }
 
+  // ---------- Muzika: paprastas 16-ųjų žingsnių sekvenceris ----------
+  // lead – pustoniai virš (root + 12), null – pauzė; prog – akordų šaknys kiekvienam taktui.
+  const _ = null;
+  const TRACKS = {
+    menu: { bpm: 100, root: 57, prog: [0, -4, -2, -5], drums: 'half',
+      lead: [0, _, 3, 5, 7, _, 5, 3, 5, _, 7, 10, 7, _, _, _, 12, _, 10, 7, 5, _, 7, _, 3, _, 5, 3, 0, _, _, _] },
+    monastery: { bpm: 122, root: 57, prog: [0, -4, -2, -5], drums: 'rock',
+      lead: [0, _, 3, 5, 7, _, 5, 3, 5, _, 7, 10, 7, _, _, _, 12, _, 10, 7, 5, _, 7, _, 3, _, 5, 3, 0, _, _, _] },
+    desert: { bpm: 130, root: 50, prog: [0, 1, 0, -2], drums: 'rock',
+      lead: [7, 5, 7, _, 10, _, 7, 5, 3, _, 5, 7, _, _, 0, _, 7, 5, 7, _, 12, _, 10, 7, 5, _, 3, 0, _, _, _, _] },
+    ice: { bpm: 112, root: 52, prog: [0, -4, 3, -2], drums: 'half',
+      lead: [12, _, 7, _, 10, _, 7, _, 5, _, 7, _, 3, _, _, _, 12, _, 15, _, 14, _, 10, _, 12, _, _, _, 7, _, _, _] },
+    volcano: { bpm: 142, root: 48, prog: [0, 0, -4, -2], drums: 'rock',
+      lead: [0, 0, 3, 0, 5, 0, 6, 5, 3, _, 0, _, 10, _, 7, _, 0, 0, 3, 0, 5, 0, 6, 7, 10, _, 12, _, 7, _, _, _] },
+    ship: { bpm: 136, root: 47, prog: [0, -4, -7, -2], drums: 'rock',
+      lead: [0, _, 12, _, 10, 7, _, 5, 7, _, 3, _, 5, _, _, _, 0, _, 12, _, 15, 14, _, 12, 10, _, 7, _, 12, _, _, _] },
+    boss: { bpm: 152, root: 52, prog: [0, 1, 0, -2], drums: 'fast',
+      lead: [0, 3, 7, 3, 0, 3, 8, 7, 0, 3, 7, 3, 10, 8, 7, 3, 0, 3, 7, 3, 0, 3, 8, 7, 12, 10, 8, 7, 8, 7, 3, _] },
+    final: { bpm: 164, root: 47, prog: [0, 1, -2, -4], drums: 'fast',
+      lead: [12, _, 15, 12, 19, _, 17, 15, 12, _, 15, 17, 15, _, 12, 10, 12, _, 15, 12, 20, _, 19, 17, 15, 17, 15, 12, 10, _, _, _] },
+  };
+  let musicWanted = null, musicNow = null, musicTimer = null, musicStep = 0, musicNext = 0, musicGain = null;
+  const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+
+  function mNote(freq, t, dur, type, vol) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(musicGain);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function mNoise(t, dur, vol, type, freq) {
+    const s = ctx.createBufferSource();
+    s.buffer = noiseBuf;
+    const fl = ctx.createBiquadFilter();
+    fl.type = type; fl.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    s.connect(fl); fl.connect(g); g.connect(musicGain);
+    s.start(t, Math.random() * 0.5); s.stop(t + dur);
+  }
+  function scheduleStep(tr, step, t, stepDur) {
+    const bar = Math.floor(step / 16) % tr.prog.length;
+    const chord = tr.root + tr.prog[(Math.floor(step / 8)) % tr.prog.length];
+    void bar;
+    const s16 = step % 16;
+    // bosas
+    if (step % 2 === 0) mNote(midi(chord - 12 + (step % 4 === 2 ? 12 : 0)), t, stepDur * 1.8, 'triangle', 0.22);
+    // melodija
+    const n = tr.lead[step % tr.lead.length];
+    if (n !== null && n !== undefined) mNote(midi(tr.root + 12 + n), t, stepDur * 1.6, 'square', 0.06);
+    // būgnai
+    const kick = tr.drums === 'fast' ? s16 % 4 === 0 : (s16 === 0 || s16 === 8 || (tr.drums === 'rock' && s16 === 10));
+    const snare = tr.drums === 'half' ? s16 === 8 : (s16 === 4 || s16 === 12);
+    if (kick) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.15); }
+    if (snare) mNoise(t, 0.12, 0.25, 'bandpass', 1800);
+    if (s16 % 2 === 1 || tr.drums === 'fast') mNoise(t, 0.03, 0.07, 'highpass', 7000);
+  }
+  function musicTick() {
+    if (!ctx || !musicNow) return;
+    const tr = TRACKS[musicNow];
+    const stepDur = 60 / tr.bpm / 4;
+    if (musicNext < ctx.currentTime) musicNext = ctx.currentTime + 0.05;
+    while (musicNext < ctx.currentTime + 0.15) {
+      if (!Game.muted && document.visibilityState !== 'hidden') scheduleStep(tr, musicStep, musicNext, stepDur);
+      musicNext += stepDur;
+      musicStep = (musicStep + 1) % 32;
+    }
+  }
+  function startMusic() {
+    if (!ctx || musicNow === musicWanted) return;
+    musicNow = musicWanted;
+    musicStep = 0;
+    musicNext = ctx.currentTime + 0.08;
+    if (!musicGain) { musicGain = ctx.createGain(); musicGain.gain.value = 0.32; musicGain.connect(master); }
+    if (!musicTimer) musicTimer = setInterval(musicTick, 40);
+  }
+  function music(name) {
+    musicWanted = name;
+    if (!name) { musicNow = null; return; }
+    startMusic();
+  }
+
   return {
-    unlock, chargeStart, chargeSet, chargeStop,
+    unlock, chargeStart, chargeSet, chargeStop, music,
+    coin() { tone(1320, 0.05, 'square', 0.05); tone(1760, 0.07, 'square', 0.05, null, 0.05); },
+    buy() { [660, 880, 1320].forEach((f, i) => tone(f, 0.1, 'square', 0.1, null, i * 0.07)); },
+    deny() { tone(200, 0.15, 'square', 0.1, 150); },
     punch() { noise(0.06, 0.25, 2500); tone(180, 0.06, 'square', 0.06, 90); },
     hit() { noise(0.12, 0.4, 1800, 'lowpass', 300); tone(120, 0.1, 'square', 0.15, 60); },
     blast() { tone(600, 0.15, 'sawtooth', 0.08, 1200); noise(0.1, 0.12, 4000); },

@@ -215,6 +215,7 @@ class Enemy {
     floater(this.x, this.y - 88, String(Math.round(dmg)), '#ffffff', 16);
     if (this.hp <= 0) {
       Game.score += this.def.score;
+      spawnCoins(this.x, this.y - 40, ZENU_VALUES[this.type] || 0);
       if (this.ai === 'bomber') { this.explodeSelf(false); return dmg; }
       this.dead = true;
       this.setState('dying');

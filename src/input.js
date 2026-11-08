@@ -11,6 +11,7 @@ const Input = (() => {
     KeyP: 'pause', Escape: 'pause',
     Enter: 'confirm', NumpadEnter: 'confirm',
     KeyM: 'mute',
+    KeyQ: 'quit',
   };
   const down = {};
   const pressed = {};
@@ -35,13 +36,24 @@ const Input = (() => {
   });
   window.addEventListener('blur', () => { for (const k in down) down[k] = false; });
 
+  let triedFs = false;
+  function goFullscreen() {
+    if (triedFs) return;
+    triedFs = true;
+    const el = document.documentElement;
+    try {
+      const r = (el.requestFullscreen || el.webkitRequestFullscreen || (() => null)).call(el);
+      if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* nieko */ } }).catch(() => {});
+    } catch (e) { /* nieko */ }
+  }
+
   function setupTouch() {
     const touch = document.getElementById('touch');
     const isTouch = ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
     if (isTouch) touch.classList.remove('hidden');
     touch.querySelectorAll('button[data-a]').forEach((btn) => {
       const a = btn.dataset.a;
-      const on = (e) => { e.preventDefault(); Sfx.unlock(); press(a); if (a === 'punch' || a === 'jump') pressed.confirm = true; btn.classList.add('active'); };
+      const on = (e) => { e.preventDefault(); Sfx.unlock(); goFullscreen(); press(a); if (a === 'punch' || a === 'jump') pressed.confirm = true; btn.classList.add('active'); };
       const off = (e) => { e.preventDefault(); release(a); btn.classList.remove('active'); };
       btn.addEventListener('pointerdown', on);
       btn.addEventListener('pointerup', off);
@@ -49,7 +61,7 @@ const Input = (() => {
       btn.addEventListener('pointerleave', off);
     });
     const canvas = document.getElementById('game');
-    canvas.addEventListener('pointerdown', () => { Sfx.unlock(); pressed.confirm = true; });
+    canvas.addEventListener('pointerdown', () => { Sfx.unlock(); if (isTouch) goFullscreen(); pressed.confirm = true; });
   }
 
   function endFrame() { for (const k in pressed) delete pressed[k]; }

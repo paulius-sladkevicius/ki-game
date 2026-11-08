@@ -16,6 +16,9 @@ const Game = {
   bolts: [],
   levelIndex: 0,
   crystals: 0,
+  zenu: 0,
+  upgrades: { hp: 0, ki: 0, beam: 0 },
+  coins: [],
   projectiles: [],
   beams: [],
   particles: [],
@@ -101,3 +104,27 @@ function liveBosses() { return Game.bosses.filter((b) => !b.dead); }
 function addBolt(x1, y1, x2, y2, color = '#fff27a') {
   Game.bolts.push({ x1, y1, x2, y2, color, life: 0.18, max: 0.18, seed: Math.random() * 1000 });
 }
+
+// Žaidimo eiga (Zenu ir patobulinimai) – kad „Tęsti“ išsaugotų treniruotes.
+function saveRun() {
+  try { localStorage.setItem('kibanga_run', JSON.stringify({ zenu: Game.zenu, upgrades: Game.upgrades })); } catch (e) { /* nieko */ }
+}
+function loadRun() {
+  try {
+    const r = JSON.parse(localStorage.getItem('kibanga_run') || 'null');
+    if (r && r.upgrades) {
+      Game.zenu = Math.max(0, r.zenu | 0);
+      Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5) };
+      return;
+    }
+  } catch (e) { /* nieko */ }
+  resetRun();
+}
+function resetRun() {
+  Game.zenu = 0;
+  Game.upgrades = { hp: 0, ki: 0, beam: 0 };
+  saveRun();
+}
+
+const IS_TOUCH = ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+function vibrate(ms) { if (IS_TOUCH && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* nieko */ } } }

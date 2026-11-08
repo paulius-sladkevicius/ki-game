@@ -15,7 +15,7 @@ Atsidaryk `index.html` naršyklėje (serverio nereikia). Telefone rodomi lietimo
 | L (laikyti → paleisti) | Ki Banga: 3 krūvio lygiai |
 | S / ↓ | kaupti Ki (ir blokuoti pusę žalos) |
 | T | transformacija (kai pilna Jėgos juosta) |
-| P / Esc | pauzė |
+| P / Esc | pauzė (pauzėje Q – į meniu) |
 | M | garsas įjungti / išjungti |
 
 ## Kas yra žaidime
@@ -29,6 +29,10 @@ Atsidaryk `index.html` naršyklėje (serverio nereikia). Telefone rodomi lietimo
   - Audros forma (3 lygis): +100 % žala, smūgiai skelia žaibus į kitus priešus;
   - Dangaus forma (5 lygis): +200 % žala, teleportas dvigubu ← / →;
   - Žvaigždžių forma: finalinėje kovoje su Vorgu.
+- **Zenu ir treniruotės:** iš priešų krenta Zenu monetos. Tarp lygių už jas galima pagerinti gyvybę, Ki arba Ki Bangos žalą (po 5 lygius).
+- **Muzika:** kiekvienas lygis turi savo melodiją, bosai ir finalas – atskirą. Viskas generuojama Web Audio API.
+- Dialogai su kalbančiųjų portretais.
+- **Telefonui:** lietimo mygtukai su užrašais, viso ekrano režimas, prašymas pasukti telefoną horizontaliai, vibracija gavus smūgį.
 - 7 Žvaigždžių kristalai, taškai, kombinacijos, rekordas, progreso išsaugojimas (meniu „Tęsti“), kontrolinis taškas prieš bosą.
 - Visa grafika piešiama Canvas API, garsai generuojami Web Audio API – jokių išorinių failų.
 
@@ -38,8 +42,9 @@ Atsidaryk `index.html` naršyklėje (serverio nereikia). Telefone rodomi lietimo
 index.html, style.css
 src/core.js       bendra būsena, pagalbinės funkcijos
 src/input.js      klaviatūra ir lietimas
-src/audio.js      garso efektai
+src/audio.js      garso efektai ir muzika
 src/particles.js  dalelės, skraidantys skaičiai
+src/coins.js      Zenu monetos
 src/draw.js       figūrėlės, pozos, fonas, bangos
 src/player.js     herojus, Ki Banga, transformacija
 src/enemies.js    Vorgo kariai

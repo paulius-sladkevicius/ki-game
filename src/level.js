@@ -185,6 +185,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.projectiles = [];
   Game.beams = [];
   Game.bolts = [];
+  Game.coins = [];
   Game.particles = [];
   Game.floaters = [];
   Game.clash = null;
@@ -209,6 +210,8 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.player.unlocked = unlocked;
   if (unlocked > 0) Game.player.power = 100;
   saveProgress(levelIndex);
+  saveRun();
+  Sfx.music(lvl.theme);
   Game.step = fromStep - 1;
   setState('PLAY');
   showBanner(`${levelIndex + 1} LYGIS`, lvl.name, 2.0);
@@ -242,11 +245,15 @@ function nextStep() {
       p.x = 200; p.facing = 1;
       p.hp = p.maxHp;
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
+      Sfx.music(Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
       const names = Game.bosses.map((b) => b.name).join(' IR ');
       showBanner('BOSAS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'Dvyniai', 2.0);
       break;
     }
     case 'victory':
+      collectAllCoins();
+      saveRun();
+      Sfx.music(null);
       Game.crystals = crystalsBefore(Game.levelIndex + 1);
       if (Game.levelIndex + 1 < LEVELS.length) saveProgress(Game.levelIndex + 1);
       saveHighScore();

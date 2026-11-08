@@ -47,6 +47,12 @@ class Player {
     this.tapDir = 0;
     this.tapT = 0;
     this.pose = POSES.idle(0);
+    // treniruočių patobulinimai
+    const up = Game.upgrades;
+    this.maxHp = this.hp = 100 + up.hp * 20;
+    this.maxKi = this.ki = 100 + up.ki * 20;
+    this.kiRegenMul = 1 + up.ki * 0.15;
+    this.beamMul = 1 + up.beam * 0.15;
   }
 
   get F() { return FORMS[this.form]; }
@@ -79,7 +85,7 @@ class Player {
     }
 
     if (!['charging', 'firing', 'kicharge', 'clash'].includes(this.state) && !this.flying) {
-      this.ki = Math.min(this.maxKi, this.ki + this.F.kiRegen * dt);
+      this.ki = Math.min(this.maxKi, this.ki + this.F.kiRegen * this.kiRegenMul * dt);
     }
 
     let move = 0;
@@ -343,7 +349,7 @@ class Player {
     const h = this.hand();
     const b = {
       owner: 'player', x: h.x, y: h.y, dir: this.facing,
-      len: L.len, width: L.width * this.F.widthMul, dmg: L.dmg * this.dmgMult,
+      len: L.len, width: L.width * this.F.widthMul, dmg: L.dmg * this.dmgMult * this.beamMul,
       pierce: L.pierce, knock: L.knock, level: this.beamLevel,
       life: L.dur, max: L.dur, hit: new Set(), color: this.F.beam, clash: false,
     };
@@ -400,6 +406,7 @@ class Player {
     this.flash = 0.1;
     Game.combo = 0;
     Sfx.hurt();
+    vibrate(dmg >= 20 ? 80 : 35);
     addShake(6);
     floater(this.x, this.y - 90, '-' + Math.round(dmg), '#ff5555', 18);
     burst(this.x, this.y - 45, '#ff9a7a', 10, 200, 4, 0.3);

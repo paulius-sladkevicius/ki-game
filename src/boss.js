@@ -2,15 +2,15 @@
 // Bosai. Kiekvienas aprašomas BOSS_DEFS, o elgesys – bendra atakų būsenų mašina.
 
 const BOSS_DEFS = {
-  raxas: { name: 'RAXAS', title: 'Greičiausias Vorgo kardas', style: 'boss', hp: 450, scale: 1.15, score: 2000,
+  raxas: { name: 'RAXAS', title: 'Greičiausias Vorgo kardas', style: 'boss', hp: 450, scale: 1.15, score: 2000, zenu: 150,
     attacks: ['dash', 'slash', 'leap'], rage: ['beam'], beamColor: 'boss', aura: 'rgba(170,80,255,A)' },
-  zul: { name: 'ZUL', title: 'Raudonasis dvynys', style: 'twinRed', hp: 210, scale: 1.05, score: 1500,
+  zul: { name: 'ZUL', title: 'Raudonasis dvynys', style: 'twinRed', hp: 210, scale: 1.05, score: 1500, zenu: 100,
     attacks: ['dash', 'leap', 'dash'], rage: ['fingers', 'beam'], beamColor: 'red', aura: 'rgba(255,70,50,A)' },
-  zel: { name: 'ZEL', title: 'Mėlynasis dvynys', style: 'twinBlue', hp: 210, scale: 1.05, score: 1500, want: 320,
+  zel: { name: 'ZEL', title: 'Mėlynasis dvynys', style: 'twinBlue', hp: 210, scale: 1.05, score: 1500, zenu: 100, want: 320,
     attacks: ['fingers', 'fingers', 'teleport'], rage: ['beam', 'dash'], beamColor: 'sky', aura: 'rgba(60,170,255,A)' },
-  krag: { name: 'GENEROLAS KRAG', title: 'Milžinas su skydu', style: 'krag', hp: 700, scale: 1.45, score: 3000, shield: true, speed: 110,
+  krag: { name: 'GENEROLAS KRAG', title: 'Milžinas su skydu', style: 'krag', hp: 700, scale: 1.45, score: 3000, zenu: 200, shield: true, speed: 110,
     attacks: ['charge', 'quake', 'leap'], rage: ['beam'], beamColor: 'red', aura: 'rgba(255,60,60,A)' },
-  nyx: { name: 'NYX', title: 'Iliuzionistė', style: 'nyx', hp: 560, scale: 1.05, score: 3000, want: 280,
+  nyx: { name: 'NYX', title: 'Iliuzionistė', style: 'nyx', hp: 560, scale: 1.05, score: 3000, zenu: 200, want: 280,
     attacks: ['teleport', 'fingers', 'clones'], rage: ['beam', 'teleport'], beamColor: 'boss', aura: 'rgba(210,60,170,A)' },
   vorg: { name: 'VORGAS', title: 'Kosmoso tironas', style: 'vorg', hp: 1300, scale: 1.25, score: 6000, phases: true,
     attacks: ['fingers', 'dash', 'teleport'], rage: ['beam', 'summon', 'leap', 'fingers'], beamColor: 'boss', aura: 'rgba(255,40,100,A)' },
@@ -492,6 +492,7 @@ class Boss {
     Game.slowmo = 1.4;
     Game.flash = 0.6;
     Game.score += this.def.score;
+    spawnCoins(this.x, this.y - 60, this.def.zenu || 0);
     Game.beams = Game.beams.filter((b) => b.src !== this);
     const others = liveBosses();
     if (others.length === 0) {
