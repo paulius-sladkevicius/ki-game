@@ -6,68 +6,82 @@ html, body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
+/* Fixed to the visible viewport (100vh on mobile includes the area behind the address bar). */
 #wrap {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
 }
 
+/* Size and position are set by src/layout.js. */
 #game {
-  width: min(100vw, calc(100vh * 16 / 9));
-  height: auto;
-  aspect-ratio: 16 / 9;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
   background: #000;
-  image-rendering: auto;
   display: block;
 }
 
 #touch.hidden { display: none; }
 
+#touch {
+  --btn: 52px;
+  --gap: 8px;
+}
+
 #touch .pad {
   position: absolute;
-  bottom: 16px;
   display: grid;
-  grid-template-columns: repeat(2, 52px);
-  gap: 10px;
+  gap: var(--gap);
+  grid-template-columns: repeat(3, var(--btn));
+  grid-auto-rows: var(--btn);
 }
-#touch .pad.left { left: 16px; grid-template-columns: repeat(3, 48px); }
-#touch .pad.left button[data-a="charge"] { grid-column: 2; }
-#touch .pad.right { right: 16px; }
+#touch .pad.right { grid-template-columns: repeat(2, var(--btn)); }
+
+/* D-pad as a cross */
+#touch [data-a="jump"] { grid-column: 2; grid-row: 1; }
+#touch [data-a="left"] { grid-column: 1; grid-row: 2; }
+#touch [data-a="right"] { grid-column: 3; grid-row: 2; }
+#touch [data-a="charge"] { grid-column: 2; grid-row: 3; }
+/* Actions: K T on top, J L below */
+#touch [data-a="blast"] { grid-column: 1; grid-row: 1; }
+#touch [data-a="transform"] { grid-column: 2; grid-row: 1; }
+#touch [data-a="punch"] { grid-column: 1; grid-row: 2; }
+#touch [data-a="beam"] { grid-column: 2; grid-row: 2; }
 
 #touch button {
-  width: 100%;
-  height: 48px;
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  background: rgba(20, 30, 60, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(30, 45, 90, 0.55);
   color: #fff;
-  font: bold 20px system-ui, sans-serif;
+  font: bold calc(var(--btn) * 0.36) system-ui, sans-serif;
+  line-height: 1;
   touch-action: none;
 }
-#touch button.active { background: rgba(80, 160, 255, 0.6); }
-#touch button.big { background: rgba(40, 120, 255, 0.45); }
-
-#pauseBtn {
-  position: absolute;
-  top: 12px;
-  right: 50%;
-  transform: translateX(50%);
-  width: 44px !important;
-  height: 44px !important;
-  font-size: 16px !important;
-}
+#touch button.active { background: rgba(80, 160, 255, 0.75); }
+#touch button.big { background: rgba(40, 120, 255, 0.6); }
 
 #touch button small {
   display: block;
-  font-size: 9px;
+  font-size: calc(var(--btn) * 0.17);
   font-weight: 600;
-  opacity: 0.8;
-  margin-top: -2px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+#pauseBtn {
+  position: absolute;
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 14px !important;
 }
 
 #rotate {

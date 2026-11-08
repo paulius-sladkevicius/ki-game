@@ -5,6 +5,7 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 Game.highScore = loadHighScore();
 Input.setupTouch();
+Layout.init();
 Sfx.music('menu');
 
 function anyConfirm() {
