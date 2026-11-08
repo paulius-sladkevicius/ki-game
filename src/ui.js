@@ -70,7 +70,7 @@ function drawHUD(ctx) {
   }
 
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
-  text(ctx, 'BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, '#cfd8ff', 'right', '600');
+  text(ctx, diff().name.toUpperCase() + ' · BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, diff().color, 'right', '600');
   text(ctx, actOf(Game.levelIndex) === 2 ? `LEVEL ${Game.levelIndex + 1} · ◆ ${Game.crystals}/5 seals` : `LEVEL ${Game.levelIndex + 1} · ★ ${Game.crystals}/5`, W - 20, 66, 12, '#ffd34a', 'right', '600');
   text(ctx, `${Game.money} coins`, W - 20, 82, Game.moneyFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
   if (Game.combo >= 3) {
@@ -198,26 +198,105 @@ function drawMenu(ctx) {
   lines.forEach((l, i) => text(ctx, l, 470, 216 + i * 23, 15, '#e6ecff', 'left', '600'));
 
   const opts = menuOptions();
-  const sel = clamp(Game.menuSel === undefined ? opts.length - 1 : Game.menuSel, 0, opts.length - 1);
+  const sel = clamp(Game.menuSel === undefined ? 0 : Game.menuSel, 0, opts.length - 1);
+  const y0 = 352, gap = 33;
   opts.forEach((o, i) => {
-    const y = 370 + i * 36;
+    const y = y0 + i * gap;
     const on = i === sel;
     if (on) {
       ctx.fillStyle = 'rgba(255,225,77,0.18)';
-      ctx.fillRect(400, y - 24, 440, 34);
+      ctx.fillRect(400, y - 23, 440, 31);
     }
-    text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 21 : 18, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
+    if (o.kind === 'diff') {
+      const d = diff();
+      text(ctx, (on ? '▶ ' : '') + 'Difficulty:  ◀ ' + d.name + ' ▶', 620, y, on ? 20 : 17, on ? d.color : '#cfd8ff', 'center', on ? '800' : '600');
+    } else {
+      text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 20 : 17, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
+    }
   });
-  if (Math.floor(t * 2) % 2 === 0) text(ctx, '↑ ↓ choose · ENTER / J start', 620, 370 + opts.length * 36 + 8, 15, '#9fe6ff', 'center', '600');
-  if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 520, 15, '#ffd34a', 'center', '600');
+  const hint = opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : '↑ ↓ choose · ENTER / J start';
+  if (Math.floor(t * 2) % 2 === 0) text(ctx, hint, 620, y0 + opts.length * gap + 4, 14, '#9fe6ff', 'center', '600');
+  if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 530, 14, '#ffd34a', 'center', '600');
 }
 
-function drawOverlay(ctx, title, sub, lines, color) {
+// Stars as text: filled ★ in gold, empty ☆ in grey.
+function drawStars(ctx, x, y, n, size, align = 'center') {
+  const str = '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n);
+  ctx.save();
+  ctx.font = `900 ${size}px system-ui, sans-serif`;
+  const w = ctx.measureText('★★★').width;
+  let sx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  for (let i = 0; i < 3; i++) {
+    const ch = str[i];
+    ctx.lineWidth = Math.max(3, size / 7);
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.strokeText(ch, sx, y);
+    ctx.fillStyle = i < n ? '#ffd34a' : '#6a6a78';
+    ctx.fillText(ch, sx, y);
+    sx += w / 3;
+  }
+  ctx.restore();
+}
+
+const RANK_COLORS = { S: '#ff80e0', A: '#ffd34a', B: '#9fe6ff', C: '#cfd8ff' };
+
+function drawLevelSelect(ctx) {
+  ctx.fillStyle = 'rgba(5,6,20,0.72)';
+  ctx.fillRect(0, 0, W, H);
+  const d = diff();
+  text(ctx, 'SELECT LEVEL', W / 2, 70, 44, '#ffe14d', 'center', '900');
+  text(ctx, `Difficulty: ${d.name} - stars are saved for each difficulty`, W / 2, 100, 15, d.color, 'center', '600');
+  const prog = loadProgress();
+  const cw = 160, ch = 150, gapX = 18, gapY = 22;
+  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = 130;
+  LEVELS.forEach((lvl, i) => {
+    const x = x0 + (i % 5) * (cw + gapX);
+    const y = yTop + Math.floor(i / 5) * (ch + gapY);
+    const locked = i > prog;
+    const on = i === Game.lsSel;
+    ctx.fillStyle = locked ? 'rgba(40,40,50,0.7)' : on ? 'rgba(255,225,77,0.2)' : 'rgba(20,24,48,0.85)';
+    ctx.fillRect(x, y, cw, ch);
+    ctx.strokeStyle = on ? '#ffe14d' : 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = on ? 3 : 1;
+    ctx.strokeRect(x, y, cw, ch);
+    text(ctx, `${i + 1}`, x + cw / 2, y + 42, 34, locked ? '#666677' : '#ffffff', 'center', '900');
+    const words = lvl.name.replace("Vorg's Ship in Orbit", "Vorg's Ship");
+    text(ctx, words, x + cw / 2, y + 68, 13, locked ? '#666677' : '#cfd8ff', 'center', '700');
+    text(ctx, lvl.act === 2 ? 'Act 2' : 'Act 1', x + cw / 2, y + 86, 11, locked ? '#555566' : '#8a8fb0', 'center', '600');
+    if (locked) {
+      text(ctx, 'LOCKED', x + cw / 2, y + 124, 15, '#666677', 'center', '800');
+    } else {
+      const best = bestResult(i);
+      drawStars(ctx, x + cw / 2, y + 120, best ? best.stars : 0, 24);
+      if (best) text(ctx, best.rank, x + cw - 14, y + 26, 20, RANK_COLORS[best.rank], 'right', '900');
+    }
+  });
+  text(ctx, '← → ↑ ↓ choose · ENTER / J play · P / Esc back', W / 2, 500, 15, '#9fe6ff', 'center', '600');
+  text(ctx, '★ complete   ★ no defeat   ★ little damage   ·   S = 3 stars + fast', W / 2, 524, 13, '#cfd8ff', 'center', '600');
+}
+
+function drawOverlay(ctx, title, sub, lines, color, top = 275) {
   ctx.fillStyle = 'rgba(5,6,20,0.65)';
   ctx.fillRect(0, 0, W, H);
-  text(ctx, title, W / 2, 170, 60, color, 'center', '900');
-  if (sub) text(ctx, sub, W / 2, 215, 22, '#ffffff', 'center', '600');
-  lines.forEach((l, i) => text(ctx, l, W / 2, 275 + i * 32, 20, i === lines.length - 1 ? '#9fe6ff' : '#e6ecff', 'center', '600'));
+  text(ctx, title, W / 2, top === 275 ? 170 : 110, 60, color, 'center', '900');
+  if (sub) text(ctx, sub, W / 2, top === 275 ? 215 : 152, 22, '#ffffff', 'center', '600');
+  lines.forEach((l, i) => text(ctx, l, W / 2, top + i * 30, 19, i === lines.length - 1 ? '#9fe6ff' : '#e6ecff', 'center', '600'));
+}
+
+// Star rating block on the victory screen.
+function drawResult(ctx, y) {
+  const r = Game.result;
+  if (!r) return;
+  drawStars(ctx, W / 2 - 60, y, r.stars, 46);
+  text(ctx, r.rank, W / 2 + 90, y, 50, RANK_COLORS[r.rank], 'center', '900');
+  const mm = Math.floor(r.time / 60), ss = String(Math.floor(r.time % 60)).padStart(2, '0');
+  const parts = [
+    (r.noDefeat ? '✔' : '✘') + ' no defeat',
+    (r.lowDamage ? '✔' : '✘') + ` damage ${r.dmgTaken} / ${r.dmgLimit}`,
+    `time ${mm}:${ss}` + (r.stars === 3 ? (r.rank === 'S' ? ' (S!)' : ` (S under ${Math.floor(r.par / 60)}:${String(r.par % 60).padStart(2, '0')})`) : ''),
+  ];
+  text(ctx, parts.join('   ·   '), W / 2, y + 30, 15, '#cfd8ff', 'center', '600');
+  if (r.newBest) text(ctx, `NEW BEST on ${diff().name}!`, W / 2, y + 52, 15, '#9fffb0', 'center', '800');
 }
 
 function drawTraining(ctx) {
@@ -285,6 +364,9 @@ function drawUI(ctx) {
     case 'TRAINING':
       drawTraining(ctx);
       break;
+    case 'LEVELSELECT':
+      drawLevelSelect(ctx);
+      break;
     case 'PLAY':
       drawHUD(ctx);
       break;
@@ -318,7 +400,8 @@ function drawUI(ctx) {
           recLine,
           'Thanks for playing!',
           go ? 'ENTER - back to menu' : '',
-        ], '#ffe14d');
+        ], '#ffe14d', 300);
+        drawResult(ctx, 205);
       } else {
         const act2 = actOf(Game.levelIndex) === 2;
         const actEnd = actOf(Game.levelIndex + 1) !== actOf(Game.levelIndex);
@@ -328,7 +411,8 @@ function drawUI(ctx) {
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);
         lines.push(go ? 'ENTER - go to training' : '');
-        drawOverlay(ctx, actEnd ? 'ACT 1 COMPLETE!' : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? 'Vorg is defeated - the Star Crystals are safe' : lvl.name + ' is safe', lines, '#ffe14d');
+        drawOverlay(ctx, actEnd ? 'ACT 1 COMPLETE!' : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? 'Vorg is defeated - the Star Crystals are safe' : lvl.name + ' is safe', lines, '#ffe14d', 300);
+        drawResult(ctx, 205);
       }
       break;
     }

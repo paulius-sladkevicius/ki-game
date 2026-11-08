@@ -47,7 +47,20 @@ class Enemy {
     this.stunT = 0;
     this.shootMode = false;
     this.pose = POSES.walk(0);
+    this.dodgeCd = 0;
+    // champion: a stronger golden enemy (more often on harder difficulties)
+    this.champion = type !== 'clone' && Math.random() < diff().champion;
+    this.dmgMul = 1;
+    if (this.champion) {
+      this.hp = this.maxHp = Math.round(this.maxHp * 1.6);
+      this.dmgMul = 1.3;
+      this.speed *= 1.1;
+    }
   }
+
+  get dmg() { return this.def.dmg * this.dmgMul; }
+  // smart ground fighters: can dodge beams, block punches and jump at flying heroes
+  get smart() { return ['melee', 'elite', 'shade', 'ranged'].includes(this.ai) && this.type !== 'clone' && !this.def.heavy; }
 
   setState(s) { this.state = s; this.stateT = 0; }
 
@@ -58,6 +71,7 @@ class Enemy {
     this.age += dt;
     if (this.flash > 0) this.flash -= dt;
     if (this.atkCd > 0) this.atkCd -= dt;
+    if (this.dodgeCd > 0) this.dodgeCd -= dt;
     const dx = p.x - this.x;
     const dist = Math.abs(dx);
 
@@ -70,6 +84,7 @@ class Enemy {
     switch (this.state) {
       case 'walk':
         this.facing = sign(dx);
+        if (this.smart && this.tryDodge(dt)) break;
         this.think(p, dx, dist);
         if (this.ai !== 'drone') {
           for (const o of Game.enemies) {
@@ -81,7 +96,7 @@ class Enemy {
       case 'windup':
         this.vx = 0;
         if (this.ai === 'bomber' && Math.random() < 0.4) spawnParticle({ x: this.x, y: this.y - 34, vx: rand(-30, 30), vy: -60, life: 0.3, size: 3, color: '#ff4020' });
-        if (this.stateT >= this.def.windup) {
+        if (this.stateT >= this.def.windup * diff().tell) {
           this.setState('strike');
           this.struck = false;
         }
@@ -106,6 +121,26 @@ class Enemy {
       case 'dying':
         this.vx *= 0.96;
         if (this.stateT >= 0.9) this.remove = true;
+        break;
+
+      case 'dodge':
+        // jumped over a beam; back to walking after landing
+        if (this.y >= GROUND && this.stateT > 0.15) this.setState('walk');
+        break;
+
+      case 'block':
+        this.vx = 0;
+        if (this.stateT >= 0.35) { this.setState('walk'); this.atkCd = Math.min(this.atkCd, 0.2); }
+        break;
+
+      case 'jumpstrike':
+        // jumping attack against a hero hovering above
+        if (!this.struck) {
+          for (const h of liveHeroes()) {
+            if (rectsOverlap(boxOf(this), boxOf(h))) { this.struck = true; h.takeHit(this.dmg, this.facing, 250); break; }
+          }
+        }
+        if (this.y >= GROUND && this.stateT > 0.2) { this.setState('walk'); this.atkCd = rand(this.def.cd[0], this.def.cd[1]); }
         break;
 
       case 'fade':
@@ -141,7 +176,26 @@ class Enemy {
     this.pose = this.computePose();
   }
 
+  // Jump when a hero facing us is charging a Ki Wave (chance per second depends on the difficulty).
+  tryDodge(dt) {
+    if (this.dodgeCd > 0 || this.y < GROUND || this.entering) return false;
+    const threat = liveHeroes().some((h) => h.state === 'charging' && h.charge > 0.25 && h.facing === sign(this.x - h.x) && Math.abs(h.x - this.x) < 750 && h.onGround);
+    if (!threat || Math.random() > diff().dodge * dt) return false;
+    this.vy = -680;
+    this.dodgeCd = 1.6;
+    this.setState('dodge');
+    return true;
+  }
+
   think(p, dx, dist) {
+    // anti-air: jump at a hero hovering right above
+    if (this.smart && diff().antiAir && this.ai !== 'ranged' && !p.onGround && p.y < this.y - 70 && dist < 90 && this.atkCd <= 0 && this.y >= GROUND && p.alive) {
+      this.vy = -780;
+      this.vx = sign(dx) * 140;
+      this.struck = false;
+      this.setState('jumpstrike');
+      return;
+    }
     switch (this.ai) {
       case 'melee':
         if (dist > 48) this.vx = this.facing * this.speed;
@@ -202,12 +256,12 @@ class Enemy {
       Sfx.boom();
       for (let i = 0; i < 18; i++) spawnParticle({ x: this.x + this.facing * 40 + rand(-50, 50), y: GROUND - 4, vx: rand(-220, 220), vy: rand(-280, -60), life: 0.5, size: rand(3, 6), color: '#8a8f9a', grav: 700 });
       for (const h of liveHeroes()) {
-        if (h.onGround && Math.abs(h.x - (this.x + this.facing * 30)) < 105) h.takeHit(this.def.dmg, sign(h.x - this.x) || this.facing, 320);
+        if (h.onGround && Math.abs(h.x - (this.x + this.facing * 30)) < 105) h.takeHit(this.dmg, sign(h.x - this.x) || this.facing, 320);
       }
       return;
     }
     if (this.shootMode && this.def.shot === 'orb') {
-      Game.projectiles.push({ x: this.x + this.facing * 12, y: this.y - 17, vx: this.facing * 120, vy: -40, r: 9, dmg: this.def.dmg, owner: 'enemy', type: 'orb', homing: true, speed: 150, life: 4.5, inner: '#c8f7ff', outer: 'rgba(40,160,220,0.7)', trail: '#8fe6ff' });
+      Game.projectiles.push({ x: this.x + this.facing * 12, y: this.y - 17, vx: this.facing * 120, vy: -40, r: 9, dmg: this.dmg, owner: 'enemy', type: 'orb', homing: true, speed: 150, life: 4.5, inner: '#c8f7ff', outer: 'rgba(40,160,220,0.7)', trail: '#8fe6ff' });
       Sfx.blast();
       return;
     }
@@ -217,7 +271,7 @@ class Enemy {
       const ang = Math.atan2(ty - h.y, p.x - h.x);
       const elite = this.ai === 'elite';
       Game.projectiles.push({
-        x: h.x, y: h.y, vx: Math.cos(ang) * (elite ? 420 : 340), vy: Math.sin(ang) * (elite ? 420 : 340), r: 7, dmg: this.def.dmg,
+        x: h.x, y: h.y, vx: Math.cos(ang) * (elite ? 420 : 340), vy: Math.sin(ang) * (elite ? 420 : 340), r: 7, dmg: this.dmg,
         owner: 'enemy', life: 3,
         inner: this.type === 'clone' ? '#ffb0f0' : elite ? '#ff9090' : '#ffd27a',
         outer: this.type === 'clone' ? 'rgba(210,60,170,0.6)' : elite ? 'rgba(255,30,60,0.6)' : 'rgba(255,90,20,0.6)',
@@ -226,7 +280,7 @@ class Enemy {
       return;
     }
     const hb = { x: this.facing > 0 ? this.x : this.x - 56, y: this.y - 72, w: 56, h: 48 };
-    for (const h of liveHeroes()) if (rectsOverlap(hb, boxOf(h))) h.takeHit(this.def.dmg, this.facing, 220);
+    for (const h of liveHeroes()) if (rectsOverlap(hb, boxOf(h))) h.takeHit(this.dmg, this.facing, 220);
     Sfx.punch();
   }
 
@@ -237,7 +291,7 @@ class Enemy {
     addShake(8);
     if (hurt) {
       for (const h of liveHeroes()) {
-        if (Math.abs(h.x - this.x) < 90 && Math.abs(h.y - this.y) < 100) h.takeHit(this.def.dmg, sign(h.x - this.x), 350);
+        if (Math.abs(h.x - this.x) < 90 && Math.abs(h.y - this.y) < 100) h.takeHit(this.dmg, sign(h.x - this.x), 350);
       }
     }
     this.dead = true;
@@ -249,6 +303,9 @@ class Enemy {
       case 'windup': return POSES.windup();
       case 'strike': return POSES.punch1();
       case 'stun': return POSES.hurt();
+      case 'block': return POSES.guard(this.animT);
+      case 'dodge': return POSES.jump();
+      case 'jumpstrike': return POSES.kick();
       case 'dying': return this.y >= GROUND && this.stateT > 0.2 ? POSES.dead() : POSES.hurt();
       default: return Math.abs(this.vx) > 10 ? POSES.walk(this.animT) : POSES.idle(this.animT);
     }
@@ -266,12 +323,24 @@ class Enemy {
       floater(this.x, this.y - 100, 'BLOCK', '#9fe6ff', 15);
       burst(this.x + this.facing * 18, this.y - 50, '#9fe6ff', 6, 150, 3, 0.25);
     }
+    // smart enemies sometimes block a punch from the front
+    // (while already blocking, every punch from the front is stopped; a stunned enemy can block once it starts recovering)
+    const canBlock = this.state === 'block' || ((this.state === 'walk' || (this.state === 'stun' && this.stateT > 0.15)) && Math.random() < diff().block);
+    if (kind === 'melee' && this.smart && this.y >= GROUND && this.facing === -dir && canBlock) {
+      const already = this.state === 'block';
+      dmg *= 0.2;
+      knock = 0;
+      if (!already) this.setState('block');
+      this.vx = 0;
+      floater(this.x, this.y - 100, 'BLOCK', '#ffd0a0', 15);
+      burst(this.x + this.facing * 18, this.y - 50, '#ffd0a0', 6, 150, 3, 0.25);
+    }
     this.hp -= dmg;
     this.flash = 0.12;
     floater(this.x, this.y - 88, String(Math.round(dmg)), '#ffffff', 16);
     if (this.hp <= 0) {
       Game.score += this.def.score;
-      spawnCoins(this.x, this.y - 40, COIN_VALUES[this.type] || 0);
+      spawnCoins(this.x, this.y - 40, (COIN_VALUES[this.type] || 0) * (this.champion ? 2.5 : 1));
       if (this.ai === 'bomber') { this.explodeSelf(false); return dmg; }
       this.dead = true;
       this.setState('dying');
@@ -297,12 +366,14 @@ class Enemy {
     const fl = this.flash > 0;
     drawShadow(ctx, this.x, this.y, 20 * this.scale);
     ctx.globalAlpha *= this.alpha;
+    if (this.champion && !this.dead) drawAura(ctx, this.x, this.y, this.h * this.scale + 30, 'rgba(255,210,60,A)', 0.9, this.animT);
     if (this.type === 'wisp') drawWisp(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'drone') drawDrone(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'bomber') drawBomber(ctx, this.x, this.y, this.facing, this.animT, fl, this.state === 'windup');
     else drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.def.style], scale: this.scale, flash: fl, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.state === 'windup') text(ctx, '!', this.x, this.y - this.h - 22, 26, '#ff4040', 'center', '900');
+    if (this.champion && !this.dead) text(ctx, '★', this.x, this.y - this.h - 26, 14, '#ffd34a', 'center');
     if (!this.dead && this.hp < this.maxHp && this.maxHp > 1) {
       const top = this.y - this.h - 18;
       ctx.fillStyle = 'rgba(0,0,0,0.6)';

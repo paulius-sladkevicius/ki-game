@@ -146,3 +146,47 @@ function nearestHero(x) {
   for (const h of hs) if (Math.abs(h.x - x) < Math.abs(best.x - x)) best = h;
   return best;
 }
+
+// ---------- Difficulty ----------
+// hp/dmg: enemy & boss multipliers, bossAtk: how often bosses attack, tell: length of attack warnings,
+// heal: HP after each wave, bossHeal: share of max HP healed before the boss, guardCost/beamCost: cost multipliers, extra: extra enemies per wave,
+// champion: chance of a stronger golden enemy, dodge/block/interrupt: how smart enemies are (chance per second / per hit),
+// antiAir: melee enemies jump at heroes hovering above them.
+const DIFFICULTIES = [
+  { id: 'easy', name: 'Easy', color: '#9fffb0', hp: 0.7, dmg: 0.6, bossAtk: 0.75, tell: 1.25, heal: 25, bossHeal: 1, guardCost: 0.8, beamCost: 0.9, extra: 0, champion: 0, dodge: 0, block: 0, interrupt: 0, antiAir: false, coins: 1 },
+  { id: 'normal', name: 'Normal', color: '#9fe6ff', hp: 1, dmg: 1, bossAtk: 1, tell: 1, heal: 15, bossHeal: 1, guardCost: 1, beamCost: 1, extra: 0, champion: 0.05, dodge: 0.2, block: 0.1, interrupt: 0.2, antiAir: true, coins: 1 },
+  { id: 'hard', name: 'Hard', color: '#ffb060', hp: 1.3, dmg: 1.25, bossAtk: 1.2, tell: 0.9, heal: 5, bossHeal: 0.6, guardCost: 1.15, beamCost: 1.15, extra: 1, champion: 0.1, dodge: 0.45, block: 0.25, interrupt: 0.45, antiAir: true, coins: 1.25 },
+  { id: 'veryhard', name: 'Very Hard', color: '#ff6060', hp: 1.7, dmg: 1.55, bossAtk: 1.4, tell: 0.8, heal: 0, bossHeal: 0.4, guardCost: 1.35, beamCost: 1.3, extra: 2, champion: 0.2, dodge: 0.9, block: 0.4, interrupt: 0.9, antiAir: true, coins: 1.5 },
+];
+function loadDifficulty() {
+  try { return clamp(parseInt(localStorage.getItem('kiwave_diff') || '1', 10), 0, DIFFICULTIES.length - 1); } catch (e) { return 1; }
+}
+function saveDifficulty() {
+  try { localStorage.setItem('kiwave_diff', String(Game.diffIndex)); } catch (e) { /* ignore */ }
+}
+Game.diffIndex = loadDifficulty();
+function diff() { return DIFFICULTIES[Game.diffIndex] || DIFFICULTIES[1]; }
+
+// ---------- Stars per level ----------
+// Best result per difficulty and level: { stars: 0..3, rank: 'S'|'A'|'B'|'C' }.
+function loadStars() {
+  try { return JSON.parse(localStorage.getItem('kiwave_stars') || '{}') || {}; } catch (e) { return {}; }
+}
+function bestResult(levelIndex, diffId = diff().id) {
+  const all = loadStars();
+  return (all[diffId] && all[diffId][levelIndex]) || null;
+}
+const RANK_ORDER = { C: 1, B: 2, A: 3, S: 4 };
+// Saves the result if it is better; returns true for a new best.
+function saveResult(levelIndex, res) {
+  const all = loadStars();
+  const d = diff().id;
+  all[d] = all[d] || {};
+  const old = all[d][levelIndex];
+  const better = !old || res.stars > old.stars || (res.stars === old.stars && RANK_ORDER[res.rank] > RANK_ORDER[old.rank]);
+  if (better) {
+    all[d][levelIndex] = { stars: res.stars, rank: res.rank };
+    try { localStorage.setItem('kiwave_stars', JSON.stringify(all)); } catch (e) { /* ignore */ }
+  }
+  return better;
+}

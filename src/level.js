@@ -350,14 +350,20 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.hitstop = 0;
   Game.crystals = crystalsBefore(levelIndex);
   // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
-  Game.enemyHpMul = lvl.act === 2 ? 1.7 : 1;
-  Game.dangerMul = lvl.act === 2 ? 1.6 : 1;
+  Game.enemyHpMul = (lvl.act === 2 ? 1.7 : 1) * diff().hp;
+  Game.dangerMul = (lvl.act === 2 ? 1.6 : 1) * diff().dmg;
   // heroes: Ren always, Raxas joins from level 6 on (AI-controlled unless you switch)
   Game.player = new Player('ren');
   Game.ally = lvl.ally ? new Player('raxas') : null;
   if (Game.ally) { Game.ally.x = 120; Game.ally.ai = new AllyAI(Game.ally); }
   Game.switchCd = 0;
   Game.script = lvl.script;
+  // level statistics for the star rating (kept when retrying after a defeat)
+  if (fromStep === 0 || !Game.stats || Game.stats.level !== levelIndex) {
+    Game.stats = { level: levelIndex, time: 0, dmgTaken: 0, defeats: 0 };
+  } else {
+    Game.stats.defeats++;
+  }
   if (fromStep === 0) {
     Game.levelStartScore = Game.score;
     Game.checkpoint = 0;
@@ -421,7 +427,8 @@ function nextStep() {
     case 'boss': {
       const p = Game.player;
       p.x = 200; p.facing = 1;
-      for (const h of allHeroes()) { h.revive(1); h.hp = h.maxHp; }
+      // before the boss: full HP on Easy/Normal, only part of it on Hard and Very Hard
+      for (const h of allHeroes()) { h.revive(diff().bossHeal); h.hp = Math.min(h.maxHp, h.hp + h.maxHp * diff().bossHeal); }
       if (Game.ally) { Game.ally.x = 120; Game.ally.facing = 1; }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
       Sfx.music(Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
@@ -430,6 +437,8 @@ function nextStep() {
       break;
     }
     case 'victory':
+      Game.result = rateLevel();
+      Game.result.newBest = saveResult(Game.levelIndex, Game.result);
       collectAllCoins();
       saveRun();
       Sfx.music(null);
@@ -448,10 +457,18 @@ function updateScript(dt) {
   const s = c.s;
   c.t += dt;
   if (s.type === 'wave') {
-    if (c.spawned < s.enemies.length) {
+    if (!c.list) {
+      // harder difficulties add extra enemies picked from the same wave
+      c.list = s.enemies.slice();
+      for (let i = 0; i < diff().extra; i++) {
+        const [type] = s.enemies[Math.floor(Math.random() * s.enemies.length)];
+        c.list.push([type, Math.random() < 0.5 ? 'L' : 'R']);
+      }
+    }
+    if (c.spawned < c.list.length) {
       c.spawnT -= dt;
       if (c.spawnT <= 0 && c.t > 1.2) {
-        const [type, side] = s.enemies[c.spawned++];
+        const [type, side] = c.list[c.spawned++];
         Game.enemies.push(new Enemy(type, side));
         c.spawnT = 0.9;
       }
@@ -460,9 +477,9 @@ function updateScript(dt) {
       if (c.clearT > 1.2) {
         for (const h of allHeroes()) {
           if (!h.alive) h.revive(0.4);       // a downed hero gets back up after the wave
-          else if (h.hp < h.maxHp) {
-            h.hp = Math.min(h.maxHp, h.hp + 15);
-            floater(h.x, h.y - 100, '+15 HP', '#6dff8a', 18);
+          else if (h.hp < h.maxHp && diff().heal > 0) {
+            h.hp = Math.min(h.maxHp, h.hp + diff().heal);
+            floater(h.x, h.y - 100, `+${diff().heal} HP`, '#6dff8a', 18);
           }
         }
         nextStep();
@@ -509,4 +526,19 @@ function updateDialog(dt) {
       }
     }
   }
+}
+
+// ---------- Star rating ----------
+// ★ level complete, ★ no defeat in this level, ★ took little damage.
+// Rank: S = 3 stars and fast, A = 3 stars, B = 2 stars, C = 1 star.
+function rateLevel() {
+  const st = Game.stats || { time: 0, dmgTaken: 0, defeats: 0 };
+  const act2 = actOf(Game.levelIndex) === 2;
+  const dmgLimit = act2 ? 70 : 50;
+  const par = act2 ? 150 : 120;
+  const noDefeat = st.defeats === 0;
+  const lowDamage = st.dmgTaken <= dmgLimit;
+  const stars = 1 + (noDefeat ? 1 : 0) + (lowDamage ? 1 : 0);
+  const rank = stars === 3 ? (st.time <= par ? 'S' : 'A') : stars === 2 ? 'B' : 'C';
+  return { stars, rank, noDefeat, lowDamage, dmgLimit, par, time: st.time, dmgTaken: Math.round(st.dmgTaken), defeats: st.defeats };
 }

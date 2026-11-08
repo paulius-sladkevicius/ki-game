@@ -41,6 +41,9 @@ function update(dt) {
       if (Input.pressed.pause || Input.pressed.confirm) setState('PLAY');
       else if (Input.pressed.quit || Input.pressed.punch) { Game.theme = 'monastery'; setState('MENU'); Sfx.music('menu'); }
       break;
+    case 'LEVELSELECT':
+      updateLevelSelect();
+      break;
     case 'TRAINING':
       updateParticles(dt);
       if (Game.trainMsg) { Game.trainMsg.t -= dt; if (Game.trainMsg.t <= 0) Game.trainMsg = null; }
@@ -67,27 +70,60 @@ function update(dt) {
   Game.shake = Math.max(0, Game.shake - 40 * dt);
 }
 
-// Menu: ↑ ↓ to choose, Enter / J / tap to confirm.
+// Menu: ↑ ↓ to choose, ← → to change the difficulty, Enter / J / tap to confirm.
 function menuOptions() {
-  const opts = [{ label: 'New game', level: 0 }];
+  const opts = [{ kind: 'start', label: 'New game', level: 0 }];
   const prog = loadProgress();
-  if (prog > 0) opts.push({ label: `Continue: level ${prog + 1} - ${LEVELS[prog].name}`, level: prog });
+  if (prog > 0) {
+    opts.push({ kind: 'start', label: `Continue: level ${prog + 1} - ${LEVELS[prog].name}`, level: prog, cont: true });
+    opts.push({ kind: 'select', label: 'Select level' });
+  }
+  opts.push({ kind: 'diff', label: 'Difficulty' });
   return opts;
+}
+
+function changeDifficulty(step) {
+  Game.diffIndex = (Game.diffIndex + step + DIFFICULTIES.length) % DIFFICULTIES.length;
+  saveDifficulty();
+  Sfx.unlock(); Sfx.select();
 }
 
 function updateMenu() {
   const opts = menuOptions();
-  if (Game.menuSel === undefined) Game.menuSel = opts.length - 1;
+  if (Game.menuSel === undefined) Game.menuSel = opts.findIndex((o) => o.cont) >= 0 ? opts.findIndex((o) => o.cont) : 0;
   Game.menuSel = clamp(Game.menuSel, 0, opts.length - 1);
   const I = Input.pressed;
-  if (I.jump || I.left) { Game.menuSel = (Game.menuSel + opts.length - 1) % opts.length; Sfx.unlock(); Sfx.select(); }
-  if (I.charge || I.right) { Game.menuSel = (Game.menuSel + 1) % opts.length; Sfx.unlock(); Sfx.select(); }
+  const cur = opts[Game.menuSel];
+  if (I.jump) { Game.menuSel = (Game.menuSel + opts.length - 1) % opts.length; Sfx.unlock(); Sfx.select(); }
+  if (I.charge) { Game.menuSel = (Game.menuSel + 1) % opts.length; Sfx.unlock(); Sfx.select(); }
+  if (cur.kind === 'diff' && (I.left || I.right)) changeDifficulty(I.left ? -1 : 1);
   if ((I.confirm || I.punch) && Game.stateT > 0.2) {
     Sfx.unlock(); Sfx.select();
+    if (cur.kind === 'diff') { changeDifficulty(1); return; }
+    if (cur.kind === 'select') { Game.lsSel = loadProgress(); setState('LEVELSELECT'); return; }
     Game.score = 0;
-    const o = opts[Game.menuSel];
-    if (o.level === 0) resetRun(); else loadRun();
-    startLevel(o.level);
+    if (cur.level === 0) resetRun(); else loadRun();
+    startLevel(cur.level);
+  }
+}
+
+// Level select: replay any level you have reached (for better stars).
+function updateLevelSelect() {
+  const I = Input.pressed;
+  const prog = loadProgress();
+  const n = LEVELS.length;
+  if (I.left) Game.lsSel = (Game.lsSel + n - 1) % n;
+  if (I.right) Game.lsSel = (Game.lsSel + 1) % n;
+  if (I.jump) Game.lsSel = (Game.lsSel + n - 5) % n;
+  if (I.charge) Game.lsSel = (Game.lsSel + 5) % n;
+  if (I.left || I.right || I.jump || I.charge) Sfx.select();
+  if (I.pause || I.quit) { setState('MENU'); Sfx.select(); return; }
+  if ((I.confirm || I.punch) && Game.stateT > 0.2) {
+    if (Game.lsSel > prog) { Sfx.deny(); return; }
+    Sfx.select();
+    Game.score = 0;
+    loadRun();
+    startLevel(Game.lsSel);
   }
 }
 
@@ -169,6 +205,7 @@ function updateTimers(dt) {
 
 function updatePlay(dt) {
   updateTimers(dt);
+  if (Game.stats) Game.stats.time += dt;
   if (Game.hitstop > 0) { Game.hitstop -= dt; return; }
   let edt = dt;
   if (Game.slowmo > 0) { Game.slowmo -= dt; edt = dt * 0.3; }
@@ -226,7 +263,7 @@ function render() {
   ctx.save();
   if (Game.shake > 0) ctx.translate(rand(-Game.shake, Game.shake), rand(-Game.shake, Game.shake));
   drawBackground(ctx);
-  if (Game.state !== 'MENU') drawWorld(ctx);
+  if (Game.state !== 'MENU' && Game.state !== 'LEVELSELECT') drawWorld(ctx);
   ctx.restore();
   if (Game.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${clamp(Game.flash, 0, 0.8)})`;

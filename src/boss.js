@@ -41,7 +41,7 @@ class Boss {
     this.vx = 0; this.vy = 0;
     this.setScale(d.scale);
     this.facing = -1;
-    this.maxHp = d.hp; this.hp = d.hp;
+    this.maxHp = this.hp = Math.round(d.hp * diff().hp);
     this.state = 'intro';
     this.stateT = 0;
     this.animT = 0;
@@ -79,6 +79,8 @@ class Boss {
     const p = this.target;
     this.animT += dt;
     this.stateT += dt;
+    // shorter attack warnings on harder difficulties
+    if (this.state.endsWith('_tell') && this.state !== 'final_tell') this.stateT += dt * (1 / diff().tell - 1);
     if (this.flash > 0) this.flash -= dt;
     if (this.beamCd > 0) this.beamCd -= dt;
     const dx = p.x - this.x;
@@ -99,6 +101,15 @@ class Boss {
         else this.vx = Math.sin(this.animT * 2) * 60;
         if (this.x < 60 || this.x > W - 60) this.vx = sign(W / 2 - this.x) * speed;
         this.nextAtk -= dt;
+        // a hero charging a Ki Wave in front of the boss gets interrupted with quick shots
+        const charger = liveHeroes().find((h) => h.state === 'charging' && h.charge > 0.3 && Math.abs(h.x - this.x) < 700);
+        if (charger && this.nextAtk > 0 && Math.random() < diff().interrupt * dt) {
+          this.target = charger;
+          this.facing = sign(charger.x - this.x);
+          this.setState('fingers_tell');
+          floater(this.x, this.y - this.h - 20, 'Too slow!', '#ff9090', 15);
+          break;
+        }
         if (this.nextAtk <= 0 && p.alive) this.chooseAttack(dist);
         break;
       }
@@ -403,7 +414,7 @@ class Boss {
         this.alpha = 1;
         if (this.stateT >= this.recoverT) {
           this.setState('idle');
-          this.nextAtk = this.enraged ? rand(0.4, 0.8) : rand(0.8, 1.4);
+          this.nextAtk = (this.enraged ? rand(0.4, 0.8) : rand(0.8, 1.4)) / diff().bossAtk;
         }
         break;
 

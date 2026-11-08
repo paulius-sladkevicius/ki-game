@@ -8,6 +8,9 @@ const BEAM_LEVELS = {
   3: { cost: 45, dmg: 120, len: 1200, width: 54, dur: 0.9, pierce: 99, knock: 450 },
 };
 
+// Ki cost of a beam level (higher difficulties make the Ki Wave more expensive)
+function beamCost(level) { return Math.round(BEAM_LEVELS[level].cost * diff().beamCost); }
+
 // ball/blast: [inner, outer] color
 const FORMS = [
   { id: 'base', name: 'Base Form', dmg: 1, speed: 250, style: 'heroBase', beam: 'base', aura: 'rgba(170,210,255,A)', auraP: '#bfe0ff', drain: 0, kiRegen: 6, chargeRate: 1, widthMul: 1, ball: ['#9fdcff', 'rgba(40,140,255,0.6)'] },
@@ -167,7 +170,7 @@ class Player {
         if (move) this.facing = move;
         this.charge += dt * this.F.chargeRate;
         let lvl = this.charge < 0.5 ? 1 : this.charge < 1.5 ? 2 : 3;
-        while (lvl > 1 && this.ki < BEAM_LEVELS[lvl].cost) lvl--;
+        while (lvl > 1 && this.ki < beamCost(lvl)) lvl--;
         if (lvl > this.beamLevel) { burst(this.hand().x, this.hand().y, '#ffffff', 10, 160, 3, 0.3); Sfx.clashTick(); }
         this.beamLevel = lvl;
         if (this.controlled) { Sfx.chargeSet(Math.min(1, this.charge / 1.5)); if (lvl === 3) addShake(2.5); }
@@ -192,7 +195,7 @@ class Player {
         this.ki = Math.min(this.maxKi, this.ki + 30 * dt);
         this.guardIdle = 0;
         if (!this.guardLocked) {
-          this.guard -= 7 * dt;
+          this.guard -= 7 * diff().guardCost * dt;
           if (this.guard <= 0) { this.guard = 0; this.guardLocked = true; floater(this.x, this.y - 100, 'Guard empty', '#7fe8ff', 15); }
         }
         auraParticles(this.x, this.y, 80, this.F.auraP, 2);
@@ -397,7 +400,7 @@ class Player {
   }
 
   startCharge() {
-    if (this.ki < BEAM_LEVELS[1].cost) { floater(this.x, this.y - 95, 'Not enough Ki! (hold S)', '#7fc8ff', 15); return; }
+    if (this.ki < beamCost(1)) { floater(this.x, this.y - 95, 'Not enough Ki! (hold S)', '#7fc8ff', 15); return; }
     this.setState('charging');
     this.charge = 0;
     this.beamLevel = 1;
@@ -407,7 +410,7 @@ class Player {
   // Fires the beam. Returns the created beam.
   releaseBeam(forClash = false) {
     const L = BEAM_LEVELS[this.beamLevel];
-    this.ki = Math.max(0, this.ki - L.cost);
+    this.ki = Math.max(0, this.ki - beamCost(this.beamLevel));
     this.pose = POSES.fire();
     const h = this.hand();
     const b = {
@@ -478,7 +481,7 @@ class Player {
     let guardBreak = false;
     // Guard: the attack must come from the front (it pushes us backwards).
     if (this.guarding && dir === -this.facing) {
-      const cost = Math.max(8, dmg * 3);
+      const cost = Math.max(8, dmg * 3) * diff().guardCost;
       if (this.guard >= cost) {
         this.guard -= cost;
         this.guardFlash = 0.18;
@@ -501,6 +504,7 @@ class Player {
       for (let i = 0; i < 16; i++) spawnParticle({ x: this.x + this.facing * 34, y: this.y - rand(15, 80), vx: rand(-200, 200) + this.facing * 120, vy: rand(-250, 50), life: 0.5, size: rand(2, 5), color: '#7fe8ff', grav: 600 });
     }
     this.hp -= dmg;
+    if (Game.stats) Game.stats.dmgTaken += dmg;   // for the star rating
     this.gainPower(dmg * 0.8);
     this.flash = 0.1;
     Game.combo = 0;

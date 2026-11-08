@@ -4,6 +4,7 @@
 const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0, shade: 30, golem: 45, wisp: 25 };
 
 function spawnCoins(x, y, value) {
+  value = Math.round(value * diff().coins);   // harder difficulties pay more
   if (value <= 0) return;
   const n = clamp(Math.ceil(value / 10), 1, 14);
   const each = Math.ceil(value / n);

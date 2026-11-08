@@ -123,6 +123,20 @@ After Vorg's defeat the Star Crystals start to dim: Vorg was never conquering �
 
 ---
 
+## 5b. Difficulty and stars
+
+| | Easy | Normal | Hard | Very Hard |
+|---|---|---|---|---|
+| Enemy / boss HP | ×0.7 | ×1 | ×1.3 | ×1.7 |
+| Enemy damage | ×0.6 | ×1 | ×1.25 | ×1.55 |
+| Boss attack rate / warnings | slower / longer | normal | faster / shorter | much faster / much shorter |
+| Heal after a wave / before a boss | +25 / full | +15 / full | +5 / +60% | 0 / +40% |
+| Guard and Ki Wave cost | cheaper | normal | +15% | +30–35% |
+| Extra enemies per wave / champions | 0 / – | 0 / 5% | +1 / 10% | +2 / 20% |
+| Smart enemies (dodge beams, block, interrupt, anti-air) | no | a little | often | very often |
+
+**Stars per level:** ★ complete, ★ no defeat in the level, ★ little damage (≤ 50 in act 1, ≤ 70 in act 2). **Rank:** S = 3 stars and under the par time (2:00 in act 1, 2:30 in act 2), A = 3 stars, B = 2, C = 1. Saved per difficulty; levels can be replayed from **Select level**.
+
 ## 6. Graphics and sound
 - **Style:** colorful vector shapes with bright auras, everything drawn with the Canvas API, no images.
 - **Effects:** particle system for auras, screen shake, hit-stop (a short freeze on hit), flash when transforming.
