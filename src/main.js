@@ -107,6 +107,7 @@ function menuOptions() {
   }
   opts.push({ kind: 'diff', label: 'Difficulty' });
   if (prog >= 5) opts.push({ kind: 'helper', label: 'Helper friend' });
+  opts.push({ kind: 'dialogs', label: 'Dialogs' });
   return opts;
 }
 
@@ -126,10 +127,12 @@ function updateMenu() {
   if (I.charge) { Game.menuSel = (Game.menuSel + 1) % opts.length; Sfx.unlock(); Sfx.select(); }
   if (cur.kind === 'diff' && (I.left || I.right)) changeDifficulty(I.left ? -1 : 1);
   if (cur.kind === 'helper' && (I.left || I.right)) { cycleHelper(I.left ? -1 : 1); Sfx.unlock(); Sfx.select(); }
+  if (cur.kind === 'dialogs' && (I.left || I.right)) { Game.dialogsOn = !Game.dialogsOn; saveDialogsOn(); Sfx.unlock(); Sfx.select(); }
   if ((I.confirm || I.punch) && Game.stateT > 0.2) {
     Sfx.unlock(); Sfx.select();
     if (cur.kind === 'diff') { changeDifficulty(1); return; }
     if (cur.kind === 'helper') { cycleHelper(1); return; }
+    if (cur.kind === 'dialogs') { Game.dialogsOn = !Game.dialogsOn; saveDialogsOn(); return; }
     if (cur.kind === 'select') { Game.lsSel = loadProgress(); setState('LEVELSELECT'); return; }
     if (cur.kind === 'techs') { openTechs('MENU'); return; }
     Game.score = 0;

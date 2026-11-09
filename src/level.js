@@ -676,6 +676,19 @@ function openDialog(lines, cb) {
   Game.projectiles = [];
   Game.dialog = { lines, i: 0, chars: 0, cb };
   setState('DIALOG');
+  if (!Game.dialogsOn) skipDialog();
+}
+
+// Skips the whole dialog: its effects (unlocks, the next step) still happen,
+// and anything that was unlocked is announced with a short banner instead.
+function skipDialog() {
+  const d = Game.dialog;
+  if (!d) return;
+  Game.dialog = null;
+  setState('PLAY');
+  const un = d.lines.find((l) => l.who === 'UNLOCKED');
+  d.cb();
+  if (un) showBanner(un.text.split(':')[0] + ' UNLOCKED!', 'Press T to transform', 2.2);
 }
 
 function updateDialog(dt) {
@@ -684,6 +697,8 @@ function updateDialog(dt) {
   const line = d.lines[d.i];
   d.chars += 70 * dt;
   const I = Input.pressed;
+  // P / Esc (or the II button) skips the whole dialog
+  if (I.pause && Game.stateT > 0.15) { Sfx.select(); skipDialog(); return; }
   if ((I.confirm || I.jump || I.punch) && Game.stateT > 0.15) {
     if (d.chars < line.text.length) {
       d.chars = line.text.length;

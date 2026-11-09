@@ -229,3 +229,12 @@ function friendFor(lvl) {
   if (h === 'auto') return lvl.friend || 'raxas';
   return h;
 }
+
+// ---------- Dialogs on / off ----------
+function loadDialogsOn() {
+  try { return localStorage.getItem('kiwave_dialogs') !== 'off'; } catch (e) { return true; }
+}
+function saveDialogsOn() {
+  try { localStorage.setItem('kiwave_dialogs', Game.dialogsOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
+}
+Game.dialogsOn = loadDialogsOn();

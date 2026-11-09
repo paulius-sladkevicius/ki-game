@@ -167,6 +167,7 @@ function drawDialog(ctx) {
   if (d.chars >= line.text.length && Math.floor(Game.time * 3) % 2 === 0) {
     text(ctx, '▼ Enter / Space', x + w - 20, y + h - 12, 13, '#ffe14d', 'right', '600');
   }
+  text(ctx, IS_TOUCH ? 'II - skip' : 'P / Esc - skip', x + w - 20, y + 22, 12, '#9fa8c8', 'right', '600');
   ctx.restore();
 }
 
@@ -198,12 +199,14 @@ function drawMenu(ctx) {
     'I / O techniques · P pause · M sound',
   ];
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(455, 192, 330, 132);
-  lines.forEach((l, i) => text(ctx, l, 470, 216 + i * 23, 15, '#e6ecff', 'left', '600'));
+  ctx.fillRect(455, 190, 330, 120);
+  lines.forEach((l, i) => text(ctx, l, 470, 211 + i * 22, 15, '#e6ecff', 'left', '600'));
 
   const opts = menuOptions();
   const sel = clamp(Game.menuSel === undefined ? 0 : Game.menuSel, 0, opts.length - 1);
-  const y0 = opts.length > 5 ? 338 : opts.length > 4 ? 344 : 352, gap = opts.length > 5 ? 27 : opts.length > 4 ? 30 : 33;
+  const n = opts.length;
+  const y0 = n > 6 ? 336 : n > 5 ? 340 : n > 4 ? 344 : 352, gap = n > 6 ? 25 : n > 5 ? 27 : n > 4 ? 30 : 33;
+  const fs = n > 6 ? 16 : 17;
   opts.forEach((o, i) => {
     const y = y0 + i * gap;
     const on = i === sel;
@@ -214,13 +217,15 @@ function drawMenu(ctx) {
     if (o.kind === 'diff') {
       const d = diff();
       text(ctx, (on ? '▶ ' : '') + 'Difficulty:  ◀ ' + d.name + ' ▶', 620, y, on ? 20 : 17, on ? d.color : '#cfd8ff', 'center', on ? '800' : '600');
+    } else if (o.kind === 'dialogs') {
+      text(ctx, (on ? '▶ ' : '') + 'Dialogs:  ◀ ' + (Game.dialogsOn ? 'On' : 'Off') + ' ▶', 620, y, on ? 19 : fs, on ? '#9fffb0' : '#cfd8ff', 'center', on ? '800' : '600');
     } else if (o.kind === 'helper') {
       text(ctx, (on ? '▶ ' : '') + 'Helper friend:  ◀ ' + HELPER_NAMES[Game.helper] + ' ▶', 620, y, on ? 20 : 17, on ? '#c99bff' : '#cfd8ff', 'center', on ? '800' : '600');
     } else {
-      text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 20 : 17, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
+      text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 19 : fs, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
     }
   });
-  const hint = opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : opts[sel] && opts[sel].kind === 'helper' ? '← → who helps you from level 6 on (Auto = story friend, None = alone)' : '↑ ↓ choose · ENTER / J start';
+  const hint = opts[sel] && opts[sel].kind === 'dialogs' ? '← → show the story dialogs or skip them (P / Esc also skips one)' : opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : opts[sel] && opts[sel].kind === 'helper' ? '← → who helps you from level 6 on (Auto = story friend, None = alone)' : '↑ ↓ choose · ENTER / J start';
   if (Math.floor(t * 2) % 2 === 0) text(ctx, hint, 620, y0 + opts.length * gap + 4, 14, '#9fe6ff', 'center', '600');
   if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 530, 14, '#ffd34a', 'center', '600');
 }
