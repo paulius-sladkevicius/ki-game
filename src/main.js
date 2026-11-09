@@ -9,20 +9,21 @@ const swBtn = document.getElementById('swBtn');
 const spBtns = [1, 2].map((k) => document.querySelector(`#touch [data-a="special${k}"]`));
 
 // Touch buttons ① ② show how far the technique has recharged.
+// The button is only restyled when its value changes; 'ready' (exactly 0) is its own value,
+// so the last small part of the ring is always cleared when the technique is ready again.
 function updateSpecialButtons() {
   const p = Game.player;
   spBtns.forEach((btn, i) => {
     if (!btn) return;
     const slot = i + 1;
     const id = Game.equip && Game.equip[slot];
-    let pct = 0;
-    if (p && id) pct = clamp(p.specialCd[slot] / specialCooldown(SPECIAL_BY_ID[id]), 0, 1);
-    const key = id ? Math.round(pct * 40) : -1;
-    if (btn.dataset.k === String(key)) return;
-    btn.dataset.k = String(key);
+    const pct = p && id ? techCooldownFrac(p, id) : 0;
+    const key = !id ? 'none' : pct <= 0 ? 'ready' : String(Math.ceil(pct * 90));
+    if (btn.dataset.k === key) return;
+    btn.dataset.k = key;
     btn.style.opacity = id ? '1' : '0.35';
-    btn.style.setProperty('--cd', `${Math.round(pct * 360)}deg`);
-    btn.classList.toggle('ready', !!id && pct === 0);
+    btn.style.setProperty('--cd', key === 'ready' || key === 'none' ? '0deg' : `${Math.ceil(pct * 90) * 4}deg`);
+    btn.classList.toggle('ready', key === 'ready');
   });
 }
 Layout.init();
@@ -59,10 +60,15 @@ function update(dt) {
       break;
     case 'PAUSE':
       if (Input.pressed.pause || Input.pressed.confirm) setState('PLAY');
+      else if (Input.pressed.special1) { Sfx.select(); openTechs('PAUSE'); }
       else if (Input.pressed.quit || Input.pressed.punch) { Game.theme = 'monastery'; setState('MENU'); Sfx.music('menu'); }
       break;
     case 'LEVELSELECT':
       updateLevelSelect();
+      break;
+    case 'TECHS':
+      if (Game.trainMsg) { Game.trainMsg.t -= dt; if (Game.trainMsg.t <= 0) Game.trainMsg = null; }
+      updateTechs();
       break;
     case 'TRAINING':
       updateParticles(dt);
@@ -97,6 +103,7 @@ function menuOptions() {
   if (prog > 0) {
     opts.push({ kind: 'start', label: `Continue: level ${prog + 1} - ${LEVELS[prog].name}`, level: prog, cont: true });
     opts.push({ kind: 'select', label: 'Select level' });
+    opts.push({ kind: 'techs', label: 'Techniques' });
   }
   opts.push({ kind: 'diff', label: 'Difficulty' });
   if (prog >= 5) opts.push({ kind: 'helper', label: 'Helper friend' });
@@ -124,10 +131,49 @@ function updateMenu() {
     if (cur.kind === 'diff') { changeDifficulty(1); return; }
     if (cur.kind === 'helper') { cycleHelper(1); return; }
     if (cur.kind === 'select') { Game.lsSel = loadProgress(); setState('LEVELSELECT'); return; }
+    if (cur.kind === 'techs') { openTechs('MENU'); return; }
     Game.score = 0;
     if (cur.level === 0) resetRun(); else loadRun();
     startLevel(cur.level);
   }
+}
+
+// Techniques screen: choose which learned techniques go into slots ① and ②.
+function openTechs(ret) {
+  if (ret === 'MENU') loadRun();
+  ensureTechs();
+  Game.techsReturn = ret;
+  const eq = SPECIALS.findIndex((sp) => sp.id === Game.equip[1]);
+  Game.techSel = eq >= 0 ? eq : 0;
+  Game.trainMsg = null;
+  setState('TECHS');
+}
+
+function updateTechs() {
+  const I = Input.pressed;
+  const n = SPECIALS.length;
+  if (I.left) Game.techSel = (Game.techSel + n - 1) % n;
+  if (I.right) Game.techSel = (Game.techSel + 1) % n;
+  if (I.jump) Game.techSel = (Game.techSel + n - 5) % n;
+  if (I.charge) Game.techSel = (Game.techSel + 5) % n;
+  if (I.left || I.right || I.jump || I.charge) Sfx.select();
+  if ((I.pause || I.quit) && Game.stateT > 0.15) { Sfx.select(); Game.trainMsg = null; setState(Game.techsReturn || 'MENU'); return; }
+  if (Game.stateT < 0.2) return;
+  const sp = SPECIALS[Game.techSel];
+  let slot = 0;
+  if (I.punch || I.special1) slot = 1;
+  else if (I.blast || I.special2) slot = 2;
+  else if (I.confirm) slot = Game.equip[1] === sp.id ? 2 : 1;
+  if (!slot) return;
+  if (!(Game.techs || []).includes(sp.id)) {
+    Sfx.deny();
+    Game.trainMsg = { text: `Not learned yet - finish level ${sp.unlock + 1} to learn ${sp.name}`, t: 1.6 };
+    return;
+  }
+  equipTech(slot, sp.id);
+  saveRun();
+  Sfx.buy();
+  Game.trainMsg = { text: `${sp.name} is now in slot ${slot === 1 ? '①' : '②'}`, t: 1.4, color: sp.color };
 }
 
 // Level select: replay any level you have reached (for better stars).
@@ -172,7 +218,7 @@ function trainRows() {
   const next = LEVELS[Game.levelIndex + 1];
   if (next && next.ally) rows.push({ kind: 'helper' });
   if (next && friendFor(next)) rows.push({ kind: 'lead' });
-  rows.push({ kind: 'slot', slot: 1 }, { kind: 'slot', slot: 2 });
+  rows.push({ kind: 'techs' });
   rows.push({ kind: 'go' });
   return rows;
 }
@@ -193,19 +239,7 @@ function updateTraining() {
     return;
   }
   if (cur.kind === 'lead' && (I.left || I.right)) Input.pressed.confirm = true;
-  // technique slots: ← → (or Enter) change the equipped technique
-  if (cur.kind === 'slot' && (I.left || I.right || ((I.confirm || I.punch) && Game.stateT > 0.3))) {
-    if (cycleEquip(cur.slot, I.left ? -1 : 1)) {
-      saveRun();
-      Sfx.select();
-      const sp = SPECIAL_BY_ID[Game.equip[cur.slot]];
-      Game.trainMsg = { text: `Slot ${cur.slot}: ${sp.name}`, t: 1.2, color: sp.color };
-    } else {
-      Sfx.deny();
-      Game.trainMsg = { text: 'No techniques for this slot yet - finish more levels!', t: 1.4 };
-    }
-    return;
-  }
+  if (cur.kind === 'techs' && (I.confirm || I.punch || I.right) && Game.stateT > 0.3) { Sfx.select(); openTechs('TRAINING'); return; }
   if ((I.confirm || I.punch) && Game.stateT > 0.3) {
     const row = rows[Game.trainSel];
     if (row.kind === 'go') {
@@ -323,7 +357,7 @@ function render() {
   ctx.save();
   if (Game.shake > 0) ctx.translate(rand(-Game.shake, Game.shake), rand(-Game.shake, Game.shake));
   drawBackground(ctx);
-  if (Game.state !== 'MENU' && Game.state !== 'LEVELSELECT') drawWorld(ctx);
+  if (Game.state !== 'MENU' && Game.state !== 'LEVELSELECT' && !(Game.state === 'TECHS' && Game.techsReturn === 'MENU')) drawWorld(ctx);
   if (Game.heroSlowT > 0 && Game.state === 'PLAY') { ctx.fillStyle = 'rgba(90,140,255,0.13)'; ctx.fillRect(0, 0, W, H); }
   ctx.restore();
   if (Game.flash > 0) {

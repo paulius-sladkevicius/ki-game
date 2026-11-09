@@ -203,7 +203,7 @@ function drawMenu(ctx) {
 
   const opts = menuOptions();
   const sel = clamp(Game.menuSel === undefined ? 0 : Game.menuSel, 0, opts.length - 1);
-  const y0 = opts.length > 4 ? 344 : 352, gap = opts.length > 4 ? 30 : 33;
+  const y0 = opts.length > 5 ? 338 : opts.length > 4 ? 344 : 352, gap = opts.length > 5 ? 27 : opts.length > 4 ? 30 : 33;
   opts.forEach((o, i) => {
     const y = y0 + i * gap;
     const on = i === sel;
@@ -236,7 +236,7 @@ function drawSpecialSlots(ctx, p, y) {
     ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2); ctx.fill();
     if (id) {
       const sp = SPECIAL_BY_ID[id];
-      const left = clamp(p.specialCd[slot] / specialCooldown(sp), 0, 1);
+      const left = techCooldownFrac(p, id);
       const ready = left <= 0;
       ctx.fillStyle = ready ? sp.color : 'rgba(255,255,255,0.15)';
       ctx.globalAlpha = ready ? 0.35 + 0.15 * Math.sin(Game.time * 6) : 1;
@@ -250,7 +250,7 @@ function drawSpecialSlots(ctx, p, y) {
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.stroke();
       text(ctx, sp.icon, x, y + 7, 19, ready ? '#ffffff' : '#a0a0b0', 'center', '900');
-      if (!ready) text(ctx, String(Math.ceil(p.specialCd[slot])), x + 14, y + 18, 11, '#ffffff', 'center', '700');
+      if (!ready) text(ctx, String(Math.ceil(techCooldown(p, id))), x + 14, y + 18, 11, '#ffffff', 'center', '700');
     } else {
       text(ctx, '·', x, y + 6, 18, '#666677', 'center');
     }
@@ -276,6 +276,48 @@ function drawStars(ctx, x, y, n, size, align = 'center') {
     sx += w / 3;
   }
   ctx.restore();
+}
+
+// Techniques screen: all 10 techniques, learned ones can be put into slot ① or ②.
+function drawTechs(ctx) {
+  ctx.fillStyle = 'rgba(5,6,20,0.82)';
+  ctx.fillRect(0, 0, W, H);
+  text(ctx, 'TECHNIQUES', W / 2, 58, 42, '#ffb060', 'center', '900');
+  const e1 = Game.equip[1] ? SPECIAL_BY_ID[Game.equip[1]] : null, e2 = Game.equip[2] ? SPECIAL_BY_ID[Game.equip[2]] : null;
+  text(ctx, `① ${e1 ? e1.icon + ' ' + e1.name : '—'}        ② ${e2 ? e2.icon + ' ' + e2.name : '—'}`, W / 2, 92, 17, '#ffffff', 'center', '700');
+  const cw = 172, ch = 168, gap = 12;
+  const x0 = W / 2 - (5 * cw + 4 * gap) / 2, y0 = 112;
+  SPECIALS.forEach((sp, i) => {
+    const x = x0 + (i % 5) * (cw + gap), y = y0 + Math.floor(i / 5) * (ch + gap);
+    const owned = (Game.techs || []).includes(sp.id);
+    const on = i === Game.techSel;
+    const slot = Game.equip[1] === sp.id ? 1 : Game.equip[2] === sp.id ? 2 : 0;
+    ctx.fillStyle = !owned ? 'rgba(40,40,50,0.75)' : on ? 'rgba(255,170,80,0.2)' : 'rgba(20,24,48,0.9)';
+    ctx.fillRect(x, y, cw, ch);
+    ctx.strokeStyle = on ? '#ffb060' : slot ? '#ffd34a' : 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = on ? 3 : slot ? 2 : 1;
+    ctx.strokeRect(x, y, cw, ch);
+    const c = owned ? sp.color : '#555566';
+    text(ctx, sp.icon, x + cw / 2, y + 44, 34, c, 'center', '900');
+    text(ctx, sp.name, x + cw / 2, y + 70, 14, owned ? '#ffffff' : '#666677', 'center', '800');
+    text(ctx, (sp.slot === 2 ? 'ULTIMATE' : 'quick') + ` · ↻ ${Math.round(specialCooldown(sp))} s`, x + cw / 2, y + 88, 11, owned ? (sp.slot === 2 ? '#ff9a60' : '#9fe6ff') : '#555566', 'center', '700');
+    if (owned) {
+      ctx.font = '600 11px system-ui, -apple-system, Segoe UI, sans-serif';
+      wrapLines(ctx, sp.desc, cw - 16).slice(0, 3).forEach((l, k) => text(ctx, l, x + cw / 2, y + 108 + k * 14, 11, '#cfd8ff', 'center', '600'));
+    } else {
+      text(ctx, 'LOCKED', x + cw / 2, y + 116, 14, '#666677', 'center', '800');
+      text(ctx, `finish level ${sp.unlock + 1}`, x + cw / 2, y + 134, 11, '#666677', 'center', '600');
+    }
+    if (slot) {
+      ctx.fillStyle = '#ffd34a';
+      ctx.beginPath(); ctx.arc(x + cw - 16, y + 16, 11, 0, Math.PI * 2); ctx.fill();
+      text(ctx, slot === 1 ? '1' : '2', x + cw - 16, y + 21, 13, '#2a1a00', 'center', '900');
+    }
+  });
+  const keys = IS_TOUCH ? '◀ ▶ ▲ ▼ choose · J / ① put in slot ① · K / ② put in slot ② · II back' : '← → ↑ ↓ choose · J / I put in slot ① · K / O put in slot ② · Esc back';
+  text(ctx, keys, W / 2, 486, 14, '#9fe6ff', 'center', '600');
+  text(ctx, 'Any technique fits any slot - the recharge time belongs to the technique.', W / 2, 508, 12, '#cfd8ff', 'center', '600');
+  if (Game.trainMsg) text(ctx, Game.trainMsg.text, W / 2, 532, 16, Game.trainMsg.color || '#ff8080', 'center', '800');
 }
 
 const RANK_COLORS = { S: '#ff80e0', A: '#ffd34a', B: '#9fe6ff', C: '#cfd8ff' };
@@ -399,15 +441,14 @@ function drawTraining(ctx) {
       text(ctx, f ? `${CHARACTERS[f].name} fights with you` : 'you fight alone', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
       text(ctx, (on ? '◀ ' : '') + HELPER_NAMES[Game.helper] + (on ? ' ▶' : ''), 818, y + boxH * 0.55, small ? 14 : 17, f ? CHARACTERS[f].color : '#cfd8ff', 'right', '800');
       y += rowH;
-    } else if (row.kind === 'slot') {
-      const sp = Game.equip && Game.equip[row.slot] ? SPECIAL_BY_ID[Game.equip[row.slot]] : null;
+    } else if (row.kind === 'techs') {
       ctx.fillStyle = on ? 'rgba(255,170,80,0.2)' : 'rgba(0,0,0,0.4)';
       ctx.fillRect(470, y, 360, boxH);
       if (on) { ctx.strokeStyle = '#ffb060'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
-      const label = row.slot === 1 ? 'Technique ① (I)' : 'Ultimate ② (O)';
-      text(ctx, label, 486, y + boxH * 0.45, small ? 15 : 18, '#ffb060', 'left', '800');
-      text(ctx, sp ? sp.desc : 'finish levels to learn techniques', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
-      text(ctx, sp ? (on ? '◀ ' : '') + sp.icon + ' ' + sp.name + (on ? ' ▶' : '') : '—', 818, y + boxH * 0.45, small ? 13 : 15, sp ? sp.color : '#888888', 'right', '800');
+      const n1 = Game.equip[1] ? SPECIAL_BY_ID[Game.equip[1]] : null, n2 = Game.equip[2] ? SPECIAL_BY_ID[Game.equip[2]] : null;
+      text(ctx, 'Techniques', 486, y + boxH * 0.45, small ? 15 : 18, '#ffb060', 'left', '800');
+      text(ctx, `① ${n1 ? n1.name : '—'}  ·  ② ${n2 ? n2.name : '—'}`, 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
+      text(ctx, `${(Game.techs || []).length}/${SPECIALS.length}  ENTER ▶`, 818, y + boxH * 0.55, small ? 13 : 15, '#ffb060', 'right', '800');
       y += rowH;
     } else {
       ctx.fillStyle = on ? 'rgba(120,230,255,0.2)' : 'rgba(0,0,0,0.4)';
@@ -431,6 +472,9 @@ function drawUI(ctx) {
     case 'LEVELSELECT':
       drawLevelSelect(ctx);
       break;
+    case 'TECHS':
+      drawTechs(ctx);
+      break;
     case 'PLAY':
       drawHUD(ctx);
       break;
@@ -440,7 +484,7 @@ function drawUI(ctx) {
       break;
     case 'PAUSE':
       drawHUD(ctx);
-      drawOverlay(ctx, 'PAUSED', '', ['Q / J - quit to menu', 'P / Esc / Enter - resume'], '#ffffff');
+      drawOverlay(ctx, 'PAUSED', '', [IS_TOUCH ? '① - techniques' : 'I - techniques', 'Q / J - quit to menu', 'P / Esc / Enter - resume'], '#ffffff');
       break;
     case 'GAMEOVER': {
       drawHUD(ctx);
@@ -471,7 +515,11 @@ function drawUI(ctx) {
         const actEnd = actOf(Game.levelIndex + 1) !== act;
         const lines = [act === 3 ? `◇ Mirror Shard broken  (${Game.crystals}/5)` : act === 2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
         if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
-        if (Game.result && Game.result.newTech) { const nt = Game.result.newTech; lines.push(`NEW TECHNIQUE: ${nt.icon} ${nt.name} (slot ${nt.slot === 1 ? '① - key I' : '② - key O'})`); }
+        if (Game.result && Game.result.newTech) {
+          const nt = Game.result.newTech;
+          const where = Game.equip[1] === nt.id ? 'in slot ① - key I' : Game.equip[2] === nt.id ? 'in slot ② - key O' : 'choose it in Techniques';
+          lines.push(`NEW TECHNIQUE: ${nt.icon} ${nt.name} (${where})`);
+        }
         if (actEnd) lines.push(`...but a new threat is waking up. ACT ${act + 1} begins!`);
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);

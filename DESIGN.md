@@ -142,7 +142,7 @@ The collapse of the Hollow Throne cracks the sky and opens the **Mirror Realm**.
 
 ## 5a. Special techniques
 
-Two slots: **① technique** (key I, quick, short recharge) and **② ultimate** (key O, stronger, long recharge – starts each level half recharged). One technique is learned after each completed level and can be equipped in training. Each hero has its own cooldowns; the AI ally does not use them. Hard: +20% recharge time, Very Hard: +40%.
+Two slots: **①** (key I) and **②** (key O). One technique is learned after each completed level. On the **Techniques** screen (menu, pause menu, training) any learned technique can be put into either slot. The recharge time belongs to the technique (quick ones 8–18 s, ultimates 40–60 s and half recharged at the start of a level), so swapping slots does not reset it. Each hero has its own cooldowns; the AI ally does not use them. Hard: +20% recharge time, Very Hard: +40%.
 
 | After level | Technique | Slot | Recharge | Effect |
 |---|---|---|---|---|

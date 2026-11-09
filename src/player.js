@@ -90,7 +90,7 @@ class Player {
     this.guardFlash = 0;
     this.hurtDur = 0.3;
     // special techniques (see specials.js)
-    this.specialCd = { 1: 0, 2: 0 };
+    this.techCd = {};          // remaining recharge time per technique id
     this.specialHits = new Set();
     this.ghosts = [];
     this.surgeT = 0;
@@ -121,7 +121,7 @@ class Player {
     if (this.blastCd > 0) this.blastCd -= dt;
     if (this.comboWindow > 0) this.comboWindow -= dt; else this.comboStep = 0;
     if (this.guardFlash > 0) this.guardFlash -= dt;
-    for (const k of [1, 2]) if (this.specialCd[k] > 0) this.specialCd[k] -= dt;
+    for (const k in this.techCd) if (this.techCd[k] > 0) this.techCd[k] -= dt;
     for (const g of this.ghosts) g.life -= dt;
     this.ghosts = this.ghosts.filter((g) => g.life > 0);
     if (this.instinctT > 0) this.instinctT -= dt;

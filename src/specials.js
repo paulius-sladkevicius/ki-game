@@ -1,7 +1,8 @@
 'use strict';
-// Special techniques: one is unlocked after each completed level and equipped into two slots.
-// Slot 1 (key I / ①) holds quick techniques, slot 2 (key O / ②) the stronger ultimate ones,
-// which recharge much more slowly. Each hero has its own cooldowns.
+// Special techniques: one is unlocked after each completed level and equipped into two slots
+// (key I / ① and key O / ②). Any learned technique can go into either slot. The recharge time belongs
+// to the technique itself, so ultimates stay rare wherever they are equipped. Each hero has its own cooldowns.
+// 'slot' below is the technique's kind: 1 = quick, 2 = ultimate (also its default slot).
 
 const SPECIALS = [
   { id: 'afterimage', name: 'Afterimage Dash', slot: 1, cd: 10, unlock: 0, icon: '»', color: '#bfe0ff', desc: 'dash through enemies, briefly untouchable' },
@@ -18,6 +19,10 @@ const SPECIALS = [
 const SPECIAL_BY_ID = Object.fromEntries(SPECIALS.map((s) => [s.id, s]));
 
 function specialCooldown(sp) { return sp.cd * (diff().specialCd || 1); }
+// Remaining recharge time of a technique for a hero.
+function techCooldown(h, id) { return (h && h.techCd && h.techCd[id]) || 0; }
+// How much of the recharge is left (0 = ready, 1 = just used).
+function techCooldownFrac(h, id) { return id ? clamp(techCooldown(h, id) / specialCooldown(SPECIAL_BY_ID[id]), 0, 1) : 0; }
 
 // Techniques owned in this run; levels already completed always count.
 function ensureTechs() {
@@ -27,7 +32,13 @@ function ensureTechs() {
   Game.equip = Game.equip || { 1: null, 2: null };
   for (const slot of [1, 2]) {
     if (Game.equip[slot] && !Game.techs.includes(Game.equip[slot])) Game.equip[slot] = null;
-    if (!Game.equip[slot]) Game.equip[slot] = Game.techs.find((id) => SPECIAL_BY_ID[id].slot === slot) || null;
+  }
+  if (Game.equip[1] && Game.equip[1] === Game.equip[2]) Game.equip[2] = null;
+  for (const slot of [1, 2]) {
+    // fill an empty slot: a technique of its own kind first, otherwise any other learned one
+    if (Game.equip[slot]) continue;
+    const other = Game.equip[slot === 1 ? 2 : 1];
+    Game.equip[slot] = Game.techs.find((id) => SPECIAL_BY_ID[id].slot === slot && id !== other) || null;
   }
 }
 
@@ -40,12 +51,32 @@ function unlockTechForLevel(levelIndex) {
   Game.techs.push(sp.id);
   Game.equip = Game.equip || { 1: null, 2: null };
   if (!Game.equip[sp.slot]) Game.equip[sp.slot] = sp.id;
+  else if (!Game.equip[sp.slot === 1 ? 2 : 1]) Game.equip[sp.slot === 1 ? 2 : 1] = sp.id;
   return sp;
 }
 
-// Cycles the technique equipped in a slot through the owned ones.
+// Puts a learned technique into a slot; if it was in the other slot, the two slots swap.
+function equipTech(slot, id) {
+  if (!id || !(Game.techs || []).includes(id)) return false;
+  const other = slot === 1 ? 2 : 1;
+  if (Game.equip[other] === id) Game.equip[other] = Game.equip[slot];
+  Game.equip[slot] = id;
+  return true;
+}
+
+// Techniques of the ultimate kind start each level half recharged, the quick ones are ready.
+function resetTechCooldowns(h) {
+  h.techCd = {};
+  for (const id of Game.techs || []) {
+    const sp = SPECIAL_BY_ID[id];
+    if (sp && sp.slot === 2) h.techCd[id] = specialCooldown(sp) * 0.5;
+  }
+}
+
+// Cycles the technique equipped in a slot through all learned ones (skipping the one in the other slot).
 function cycleEquip(slot, step) {
-  const owned = SPECIALS.filter((s) => s.slot === slot && (Game.techs || []).includes(s.id)).map((s) => s.id);
+  const other = Game.equip[slot === 1 ? 2 : 1];
+  const owned = SPECIALS.filter((s) => (Game.techs || []).includes(s.id) && s.id !== other).map((s) => s.id);
   if (!owned.length) return false;
   const i = owned.indexOf(Game.equip[slot]);
   Game.equip[slot] = owned[(i + step + owned.length) % owned.length];
@@ -67,9 +98,9 @@ function useSpecial(h, slot) {
   const id = Game.equip && Game.equip[slot];
   if (!id) { floater(h.x, h.y - 100, `Slot ${slot} is empty - finish levels to learn techniques`, '#cfd8ff', 14); return; }
   const sp = SPECIAL_BY_ID[id];
-  if (h.specialCd[slot] > 0) { floater(h.x, h.y - 100, `${sp.name}: ${Math.ceil(h.specialCd[slot])} s`, '#cfd8ff', 14); return; }
+  if (techCooldown(h, id) > 0) { floater(h.x, h.y - 100, `${sp.name}: ${Math.ceil(techCooldown(h, id))} s`, '#cfd8ff', 14); return; }
   if (!['normal', 'punch', 'blast', 'kicharge'].includes(h.state)) return;
-  h.specialCd[slot] = specialCooldown(sp);
+  h.techCd[id] = specialCooldown(sp);
   h.specialHits = new Set();
   floater(h.x, h.y - 125, sp.name.toUpperCase() + '!', sp.color, 20);
   Sfx.special(slot);
@@ -111,7 +142,7 @@ function useSpecial(h, slot) {
       break;
     case 'blink': {
       const t = nearestTarget(h.x);
-      if (!t) { h.specialCd[slot] = 1; break; }
+      if (!t) { h.techCd[id] = 1; break; }
       ghostAt(h);
       const side = sign(t.x - h.x) || dir;
       h.x = clamp(t.x + side * (t.w / 2 + 30), 20, W - 20);
@@ -127,7 +158,7 @@ function useSpecial(h, slot) {
     }
     case 'meteor': {
       const t = nearestTarget(h.x);
-      if (!t) { h.specialCd[slot] = 2; break; }
+      if (!t) { h.techCd[id] = 2; break; }
       ghostAt(h);
       h.meteor = { target: t, hits: 0, t: 0 };
       h.invuln = Math.max(h.invuln, 1.3);

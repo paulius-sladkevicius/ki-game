@@ -556,11 +556,10 @@ function startLevel(levelIndex = 0, fromStep = 0) {
       Game.player.x = 200; Game.ally.x = 120;
     }
   }
-  // techniques: the slot 1 one is ready at once, the ultimate starts half recharged
+  // techniques: quick ones are ready at once, ultimates start half recharged
   ensureTechs();
   for (const h of allHeroes()) {
-    h.specialCd[1] = 0;
-    h.specialCd[2] = Game.equip[2] ? specialCooldown(SPECIAL_BY_ID[Game.equip[2]]) * 0.5 : 0;
+    resetTechCooldowns(h);
   }
   const sw = document.getElementById('swBtn');
   if (sw) sw.classList.toggle('off', !Game.ally);
