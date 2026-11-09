@@ -27,9 +27,17 @@ const RAXAS_FORMS = [
   { id: 'eclipse', name: 'Eclipse Form', dmg: 4, speed: 340, style: 'raxasEclipse', beam: 'eclipse', aura: 'rgba(255,200,80,A)', auraP: '#ffd98a', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, ball: ['#fff2c0', 'rgba(255,170,40,0.8)'], banner: 'Ultimate power!' },
 ];
 
+// Nyx, the illusionist from act 1: palm strikes and homing illusion orbs.
+const NYX_FORMS = [
+  { id: 'base', name: 'Base Form', dmg: 1.6, speed: 280, style: 'nyx', beam: 'nyx', aura: 'rgba(230,90,200,A)', auraP: '#ff9ae0', drain: 0, kiRegen: 8, chargeRate: 1.2, widthMul: 1.1, ball: ['#ffd0f4', 'rgba(220,60,170,0.6)'] },
+  { id: 'mirage', name: 'Mirage Form', dmg: 3, speed: 330, style: 'nyxMirage', beam: 'nyx', aura: 'rgba(120,230,255,A)', auraP: '#a0f0ff', drain: 6.5, kiRegen: 13, chargeRate: 2, widthMul: 1.8, teleport: true, ball: ['#e0fbff', 'rgba(60,200,255,0.7)'], banner: '+200% damage, teleport (double-tap ← or →)' },
+  { id: 'phantom', name: 'Phantom Form', dmg: 4, speed: 340, style: 'nyxPhantom', beam: 'star', aura: 'rgba(255,200,250,A)', auraP: '#ffe0fa', drain: 0, kiRegen: 30, chargeRate: 2.5, widthMul: 2.2, teleport: true, ball: ['#ffffff', 'rgba(255,140,230,0.8)'], banner: 'Ultimate power!' },
+];
+
 const CHARACTERS = {
   ren: { id: 'ren', name: 'REN', forms: FORMS, finalForm: 4, scale: 1, color: '#8ab4ff' },
   raxas: { id: 'raxas', name: 'RAXAS', forms: RAXAS_FORMS, finalForm: 2, scale: 1.08, sword: true, color: '#c99bff' },
+  nyx: { id: 'nyx', name: 'NYX', forms: NYX_FORMS, finalForm: 2, scale: 1.02, orbs: true, color: '#ff9ae0' },
 };
 
 class Player {
@@ -414,6 +422,15 @@ class Player {
     this.setState('blast');
     this.pose = POSES.punch1();
     const h = this.hand();
+    if (this.char.orbs) {
+      // Nyx sends an illusion orb that homes in on the nearest enemy
+      Game.projectiles.push({
+        x: h.x + this.facing * 8, y: h.y, vx: this.facing * 420, vy: -30, r: 9, dmg: 7 * this.dmgMult, owner: 'player', src: this, life: 2.2,
+        homing: true, speed: 520, inner: this.F.ball[0], outer: this.F.ball[1], trail: this.F.auraP,
+      });
+      Sfx.blast();
+      return;
+    }
     if (this.char.sword) {
       // Raxas throws a sword wave: stronger than a Ki blast (power 2)
       Game.projectiles.push({

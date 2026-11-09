@@ -99,6 +99,7 @@ function menuOptions() {
     opts.push({ kind: 'select', label: 'Select level' });
   }
   opts.push({ kind: 'diff', label: 'Difficulty' });
+  if (prog >= 5) opts.push({ kind: 'helper', label: 'Helper friend' });
   return opts;
 }
 
@@ -117,9 +118,11 @@ function updateMenu() {
   if (I.jump) { Game.menuSel = (Game.menuSel + opts.length - 1) % opts.length; Sfx.unlock(); Sfx.select(); }
   if (I.charge) { Game.menuSel = (Game.menuSel + 1) % opts.length; Sfx.unlock(); Sfx.select(); }
   if (cur.kind === 'diff' && (I.left || I.right)) changeDifficulty(I.left ? -1 : 1);
+  if (cur.kind === 'helper' && (I.left || I.right)) { cycleHelper(I.left ? -1 : 1); Sfx.unlock(); Sfx.select(); }
   if ((I.confirm || I.punch) && Game.stateT > 0.2) {
     Sfx.unlock(); Sfx.select();
     if (cur.kind === 'diff') { changeDifficulty(1); return; }
+    if (cur.kind === 'helper') { cycleHelper(1); return; }
     if (cur.kind === 'select') { Game.lsSel = loadProgress(); setState('LEVELSELECT'); return; }
     Game.score = 0;
     if (cur.level === 0) resetRun(); else loadRun();
@@ -156,11 +159,19 @@ const TRAINING = [
 ];
 function trainCost(lvl) { return 100 * (lvl + 1); }
 
-// Rows of the training screen: upgrades, the lead fighter (when Raxas is with you), continue.
+// The hero you control at the start of the next level.
+function leadCharacter() {
+  const next = LEVELS[Game.levelIndex + 1];
+  const f = friendFor(next);
+  return CHARACTERS[Game.controlChar === 'friend' && f ? f : 'ren'];
+}
+
+// Rows of the training screen: upgrades, helper friend and lead fighter (from act 2), techniques, continue.
 function trainRows() {
   const rows = TRAINING.map((t) => ({ kind: 'up', t }));
   const next = LEVELS[Game.levelIndex + 1];
-  if (next && next.ally) rows.push({ kind: 'lead' });
+  if (next && next.ally) rows.push({ kind: 'helper' });
+  if (next && friendFor(next)) rows.push({ kind: 'lead' });
   rows.push({ kind: 'slot', slot: 1 }, { kind: 'slot', slot: 2 });
   rows.push({ kind: 'go' });
   return rows;
@@ -174,6 +185,14 @@ function updateTraining() {
   if (I.charge) { Game.trainSel = (Game.trainSel + 1) % n; Sfx.select(); }
   Game.trainSel = clamp(Game.trainSel, 0, n - 1);
   const cur = rows[Game.trainSel];
+  if (cur.kind === 'helper' && (I.left || I.right || ((I.confirm || I.punch) && Game.stateT > 0.3))) {
+    cycleHelper(I.left ? -1 : 1);
+    Sfx.select();
+    const f = friendFor(LEVELS[Game.levelIndex + 1]);
+    Game.trainMsg = { text: f ? `Helper friend: ${CHARACTERS[f].name}` : 'You will fight alone', t: 1.2, color: f ? CHARACTERS[f].color : '#cfd8ff' };
+    return;
+  }
+  if (cur.kind === 'lead' && (I.left || I.right)) Input.pressed.confirm = true;
   // technique slots: ← → (or Enter) change the equipped technique
   if (cur.kind === 'slot' && (I.left || I.right || ((I.confirm || I.punch) && Game.stateT > 0.3))) {
     if (cycleEquip(cur.slot, I.left ? -1 : 1)) {
@@ -194,11 +213,12 @@ function updateTraining() {
       startLevel(Game.levelIndex + 1);
       return;
     }
-    if (row.kind === 'lead' || (row.kind === 'lead' && (I.left || I.right))) {
-      Game.controlChar = Game.controlChar === 'raxas' ? 'ren' : 'raxas';
+    if (row.kind === 'lead') {
+      Game.controlChar = Game.controlChar === 'friend' ? 'ren' : 'friend';
       saveRun();
       Sfx.select();
-      Game.trainMsg = { text: `Lead fighter: ${CHARACTERS[Game.controlChar].name}`, t: 1.2, color: CHARACTERS[Game.controlChar].color };
+      const c = leadCharacter();
+      Game.trainMsg = { text: `Lead fighter: ${c.name}`, t: 1.2, color: c.color };
       return;
     }
     const t = row.t;
@@ -249,8 +269,11 @@ function updatePlay(dt) {
   const p = Game.player;
   const a = Game.ally;
 
-  p.update(p.state === 'transform' ? dt : edt, Input);
-  if (a) a.update(a.state === 'transform' ? dt : edt, a.ai.think(edt));
+  // Tick-Tock can slow the heroes down for a few seconds
+  if (Game.heroSlowT > 0) Game.heroSlowT -= dt;
+  const hs = Game.heroSlowT > 0 ? 0.55 : 1;
+  p.update((p.state === 'transform' ? dt : edt) * hs, Input);
+  if (a) a.update((a.state === 'transform' ? dt : edt) * hs, a.ai.think(edt));
   for (const e of Game.enemies) e.update(edt);
   for (const b of Game.bosses) b.update(edt);
   checkClash();
@@ -301,6 +324,7 @@ function render() {
   if (Game.shake > 0) ctx.translate(rand(-Game.shake, Game.shake), rand(-Game.shake, Game.shake));
   drawBackground(ctx);
   if (Game.state !== 'MENU' && Game.state !== 'LEVELSELECT') drawWorld(ctx);
+  if (Game.heroSlowT > 0 && Game.state === 'PLAY') { ctx.fillStyle = 'rgba(90,140,255,0.13)'; ctx.fillRect(0, 0, W, H); }
   ctx.restore();
   if (Game.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${clamp(Game.flash, 0, 0.8)})`;

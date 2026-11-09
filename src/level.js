@@ -317,7 +317,170 @@ const LEVELS = [
       { type: 'victory' },
     ],
   },
+
+  // ================= ACT 3: THE MIRROR REALM =================
+
+  // ---------- 11. Neon City ----------
+  {
+    name: 'Neon City', theme: 'neon', act: 3, crystals: 1, unlockStart: 3, ally: true, friend: 'nyx', allyUnlockStart: { raxas: 1, nyx: 0 },
+    script: [
+      { type: 'dialog', joinAlly: true, lines: [
+        L('', "Peace lasted one summer. Then the sky cracked - and a city of light appeared where the void had been."),
+        L('Master Oro', 'Ren, that is the Mirror Realm. Everything there is a reflection... and reflections can lie.'),
+        L('Nyx', 'He is right, boy. I was born in the Mirror Realm.'),
+        L('Ren', 'Nyx?! The illusionist from the volcano?'),
+        L('Nyx', 'Empress Kaldra is making dark copies of you. Five Mirror Shards hold her realm together - break them, and her mirrors break too.'),
+        L('Nyx', 'Vorg took my island. I will not let Kaldra take my home. Let me fight with you.'),
+        L('Tip', 'Nyx is your helper in act 3 (Helper friend: Auto). In the menu or in training you can pick Raxas instead - or fight alone.'),
+        L('Tip', 'Snipers show a red aiming line before they shoot. Step out of the line or guard!'),
+      ] },
+      { type: 'wave', enemies: [['sniper', 'R'], ['doppel', 'L'], ['elite', 'R']] },
+      { type: 'wave', enemies: [['doppel', 'R'], ['sniper', 'L'], ['drone', 'R'], ['sniper', 'R']] },
+      { type: 'wave', enemies: [['doppel', 'L'], ['doppel', 'R'], ['sniper', 'R'], ['wisp', 'L'], ['elite', 'L']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Glitch', 'H-h-hello, heroes. Error: you are not supposed to be here.'),
+        L('Nyx', "Glitch. Kaldra's watchdog."),
+        L('Tip', 'Glitch fires lasers across the arena: jump over the low ones, stay on the ground for the high ones!'),
+      ] },
+      { type: 'boss', bosses: [['glitch']] },
+      { type: 'dialog', lines: [
+        L('Glitch', 'S-s-system... shutting... down...'),
+        L('', 'The first Mirror Shard cracks. The neon lights flicker and go dark.'),
+        L('Nyx', 'One down. The next shard is hidden in the Enchanted Forest.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 12. Enchanted Forest ----------
+  {
+    name: 'Enchanted Forest', theme: 'forest', act: 3, crystals: 1, unlockStart: 3, ally: true, friend: 'nyx', allyUnlockStart: { raxas: 1, nyx: 0 }, unlockText: "Nyx' Mirage Form",
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Enchanted Forest. Giant mushrooms glow in the dark and the trees whisper.'),
+        L('Ren', 'Everything here is looking at us...'),
+      ] },
+      { type: 'wave', enemies: [['wisp', 'R'], ['shade', 'L'], ['doppel', 'R']] },
+      { type: 'wave', enemies: [['golem', 'L'], ['wisp', 'R'], ['sniper', 'R'], ['shade', 'L']] },
+      { type: 'dialog', unlockFriend: { nyx: 1 }, lines: [
+        L('Nyx', 'The forest remembers me... I can feel my true power again!'),
+        L('', 'A shimmering mirage surrounds Nyx.'),
+        L('UNLOCKED', "NYX - MIRAGE FORM: +200% damage, teleport. Switch to Nyx and press T - or let the computer use it!"),
+      ] },
+      { type: 'wave', enemies: [['doppel', 'R'], ['wisp', 'L'], ['golem', 'R'], ['sniper', 'L'], ['shade', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Thornmother', 'Little lights... you will feed my roots!'),
+        L('Tip', 'Thornmother makes vines burst from the ground where it turns green, and sends spore orbs after you.'),
+      ] },
+      { type: 'boss', bosses: [['thorn']] },
+      { type: 'dialog', lines: [
+        L('Thornmother', 'My forest... will grow again...'),
+        L('', 'The second Mirror Shard shatters. Somewhere far above, a great clock starts ticking.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 13. Clockwork Tower ----------
+  {
+    name: 'Clockwork Tower', theme: 'clock', act: 3, crystals: 1, unlockStart: 3, ally: true, friend: 'nyx', allyUnlockStart: { raxas: 1, nyx: 1 },
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Clockwork Tower. Every gear here turns the time of the Mirror Realm.'),
+        L('Nyx', 'If the tower stops, Kaldra loses control of time. Let us stop it.'),
+      ] },
+      { type: 'wave', enemies: [['armored', 'R'], ['sniper', 'L'], ['doppel', 'R'], ['bomber', 'L']] },
+      { type: 'wave', enemies: [['golem', 'R'], ['sniper', 'L'], ['doppel', 'L'], ['bomber', 'R'], ['drone', 'R']] },
+      { type: 'wave', enemies: [['armored', 'L'], ['doppel', 'R'], ['sniper', 'R'], ['golem', 'L'], ['sniper', 'L'], ['bomber', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Tick-Tock', 'TICK. TOCK. YOUR TIME IS UP.'),
+        L('Tip', 'Tick-Tock slows down time and throws bouncing gears. His shield blocks Ki from the front!'),
+      ] },
+      { type: 'boss', bosses: [['ticktock']] },
+      { type: 'dialog', lines: [
+        L('Tick-Tock', 'TICK... TOCK... ...'),
+        L('', 'The great clock stops. The third Mirror Shard falls from its face and breaks.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 14. Frozen Mirror Lake ----------
+  {
+    name: 'Frozen Mirror Lake', theme: 'mirrorlake', act: 3, crystals: 1, unlockStart: 3, ally: true, friend: 'nyx', allyUnlockStart: { raxas: 1, nyx: 1 },
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'A frozen lake, smooth as a mirror. In the ice, Ren sees his own face - smiling a cold smile.'),
+        L('Nyx', 'Careful. Something in the ice is copying you.'),
+      ] },
+      { type: 'wave', enemies: [['doppel', 'R'], ['doppel', 'L'], ['wisp', 'R'], ['sniper', 'L']] },
+      { type: 'wave', enemies: [['doppel', 'L'], ['shade', 'R'], ['sniper', 'R'], ['doppel', 'R'], ['golem', 'L']] },
+      { type: 'wave', enemies: [['doppel', 'R'], ['doppel', 'L'], ['sniper', 'L'], ['elite', 'R'], ['wisp', 'L'], ['doppel', 'R']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Dark Ren', 'I am everything you could have been, Ren. Stronger. Colder. Alone.'),
+        L('Ren', 'Then you know how this ends - I was never alone.'),
+        L('Tip', 'Dark Ren copies your moves and makes mirror clones. The clones break with a single hit.'),
+      ] },
+      { type: 'boss', bosses: [['darkren']] },
+      { type: 'dialog', lines: [
+        L('Dark Ren', 'Why... does your light... not break...'),
+        L('', 'The reflection shatters like glass. The fourth Mirror Shard rises from the lake.'),
+        L('Nyx', 'Only the Mirror Palace is left. Kaldra is waiting.'),
+      ] },
+      { type: 'victory' },
+    ],
+  },
+
+  // ---------- 15. Mirror Palace ----------
+  {
+    name: 'Mirror Palace', theme: 'palace', act: 3, crystals: 1, unlockStart: 3, ally: true, friend: 'nyx', allyUnlockStart: { raxas: 1, nyx: 1 }, final: true,
+    script: [
+      { type: 'dialog', lines: [
+        L('', 'The Mirror Palace. A thousand mirrors - and in every one of them, an army.'),
+        L('Master Oro', 'Ren. Whatever the mirrors show you, remember who you really are.'),
+      ] },
+      { type: 'wave', enemies: [['doppel', 'R'], ['sniper', 'L'], ['doppel', 'L'], ['golem', 'R'], ['wisp', 'R']] },
+      { type: 'wave', enemies: [['doppel', 'L'], ['doppel', 'R'], ['sniper', 'R'], ['shade', 'L'], ['elite', 'R'], ['sniper', 'L']] },
+      { type: 'dialog', checkpoint: true, lines: [
+        L('Kaldra', 'Welcome, little light. Do you like my mirrors? Each one holds a world I have taken.'),
+        L('Kaldra', 'Yours will look lovely on my wall.'),
+        L('Ren', 'Not today, Kaldra. Not ever.'),
+        L('Tip', 'Kaldra has three phases. At the end, both heroes reach their final forms - win the last beam clash by mashing L!'),
+      ] },
+      { type: 'boss', bosses: [['kaldra']] },
+      { type: 'dialog', lines: [
+        L('Kaldra', 'No... my reflections... are breaking...'),
+        L('', 'The last Mirror Shard shatters. Every mirror in the palace cracks - and the stolen worlds pour back into the sky like stars.'),
+        L('Nyx', 'My home is free. Thank you, Ren.'),
+        L('Master Oro', 'Light, shadow and illusion - side by side. You have saved more worlds than you know.'),
+        L('Ren', "Let's go home. Together."),
+      ] },
+      { type: 'victory' },
+    ],
+  },
 ];
+
+// Form unlocks of the friends. A level can give 'allyUnlockStart' (a number = Raxas, or { raxas, nyx })
+// and a dialog step can unlock forms with 'unlockAlly' (Raxas) or 'unlockFriend' ({ nyx: 1 }).
+function friendUnlocks(step) {
+  const u = {};
+  if (step.unlockAlly) u.raxas = step.unlockAlly;
+  if (step.unlockFriend) Object.assign(u, step.unlockFriend);
+  return u;
+}
+function friendUnlocked(levelIndex, id, fromStep) {
+  // everything unlocked in earlier levels counts, plus the steps of this level already passed
+  let best = 0;
+  for (let li = 0; li <= levelIndex; li++) {
+    const L = LEVELS[li];
+    const start = L.allyUnlockStart;
+    if (typeof start === 'number' && id === 'raxas') best = Math.max(best, start);
+    else if (start && typeof start === 'object' && start[id]) best = Math.max(best, start[id]);
+    const steps = li < levelIndex ? L.script.length : fromStep;
+    for (let i = 0; i < steps; i++) { const u = friendUnlocks(L.script[i]); if (u[id]) best = Math.max(best, u[id]); }
+  }
+  return best;
+}
 
 // Act 1 collects Star Crystals, act 2 breaks Hollow Seals: counted per act.
 function actOf(levelIndex) { return (LEVELS[levelIndex] && LEVELS[levelIndex].act) || 1; }
@@ -340,6 +503,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.bolts = [];
   Game.hazards = [];
   Game.rings = [];
+  Game.heroSlowT = 0;
   Game.coins = [];
   Game.particles = [];
   Game.floaters = [];
@@ -351,11 +515,12 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.hitstop = 0;
   Game.crystals = crystalsBefore(levelIndex);
   // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
-  Game.enemyHpMul = (lvl.act === 2 ? 1.7 : 1) * diff().hp;
-  Game.dangerMul = (lvl.act === 2 ? 1.6 : 1) * diff().dmg;
-  // heroes: Ren always, Raxas joins from level 6 on (AI-controlled unless you switch)
+  Game.enemyHpMul = (lvl.act === 3 ? 2.2 : lvl.act === 2 ? 1.7 : 1) * diff().hp;
+  Game.dangerMul = (lvl.act === 3 ? 1.8 : lvl.act === 2 ? 1.6 : 1) * diff().dmg;
+  // heroes: Ren always; from level 6 on a helper friend can join (see the Helper friend setting)
   Game.player = new Player('ren');
-  Game.ally = lvl.ally ? new Player('raxas') : null;
+  const friend = friendFor(lvl);
+  Game.ally = friend ? new Player(friend) : null;
   if (Game.ally) { Game.ally.x = 120; Game.ally.ai = new AllyAI(Game.ally); }
   Game.switchCd = 0;
   Game.script = lvl.script;
@@ -374,18 +539,17 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   }
   // forms unlocked in earlier levels and in steps already passed
   let unlocked = lvl.unlockStart;
-  let allyUnlocked = lvl.allyUnlockStart || 0;
   for (let i = 0; i < fromStep; i++) {
     if (lvl.script[i].unlock) unlocked = Math.max(unlocked, lvl.script[i].unlock);
-    if (lvl.script[i].unlockAlly) allyUnlocked = Math.max(allyUnlocked, lvl.script[i].unlockAlly);
   }
+  const allyUnlocked = Game.ally ? friendUnlocked(levelIndex, Game.ally.id, fromStep) : 0;
   Game.player.unlocked = unlocked;
   if (unlocked > 0) Game.player.power = 100;
   if (Game.ally) {
     Game.ally.unlocked = allyUnlocked;
     if (allyUnlocked > 0) Game.ally.power = 100;
     // start with the hero chosen last time
-    if (Game.controlChar === 'raxas') {
+    if (Game.controlChar === 'friend') {
       const ren = Game.player;
       Game.player = Game.ally; Game.player.ai = null;
       Game.ally = ren; Game.ally.ai = new AllyAI(ren);
@@ -420,9 +584,10 @@ function nextStep() {
     case 'dialog':
       openDialog(s.lines, () => {
         if (s.unlock) heroById('ren').unlock(s.unlock);
-        if (s.unlockAlly && heroById('raxas')) heroById('raxas').unlock(s.unlockAlly);
-        if (s.joinAlly) showHint(IS_TOUCH ? 'Tap ⇄ to switch between Ren and Raxas' : 'Press C to switch between Ren and Raxas', 4);
-        else if (s.unlock || s.unlockAlly) showHint('Press T to transform!', 3);
+        const fu = friendUnlocks(s);
+        for (const id in fu) if (heroById(id)) heroById(id).unlock(fu[id]);
+        if (s.joinAlly && Game.ally) showHint(IS_TOUCH ? `Tap ⇄ to switch between Ren and ${Game.ally.char.name}` : `Press C to switch between Ren and ${Game.ally.char.name}`, 4);
+        else if (s.unlock || Object.keys(friendUnlocks(s)).some((id) => heroById(id))) showHint('Press T to transform!', 3);
         nextStep();
       });
       break;
@@ -438,7 +603,7 @@ function nextStep() {
       for (const h of allHeroes()) { h.revive(diff().bossHeal); h.hp = Math.min(h.maxHp, h.hp + h.maxHp * diff().bossHeal); }
       if (Game.ally) { Game.ally.x = 120; Game.ally.facing = 1; }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
-      Sfx.music(Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
+      Sfx.music(Game.bosses.some((b) => b.id === 'kaldra') ? 'final3' : Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
       const names = Game.bosses.map((b) => b.name).join(' & ');
       showBanner('BOSS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'The twins', 2.0);
       break;

@@ -1,7 +1,7 @@
 'use strict';
 // Coins: dropped by enemies, after a moment they fly to the hero.
 
-const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0, shade: 30, golem: 45, wisp: 25 };
+const COIN_VALUES = { scout: 10, gunner: 15, drone: 15, armored: 25, bomber: 10, brute: 20, elite: 30, clone: 0, shade: 30, golem: 45, wisp: 25, doppel: 40, sniper: 35, mirrorclone: 0 };
 
 function spawnCoins(x, y, value) {
   value = Math.round(value * diff().coins);   // harder difficulties pay more

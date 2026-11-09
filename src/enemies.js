@@ -16,6 +16,10 @@ const ENEMY_DEFS = {
   shade: { hp: 70, speed: 170, windup: 0.35, dmg: 11, style: 'shade', score: 350, ai: 'shade', cd: [1.0, 1.6] },
   golem: { hp: 170, speed: 62, windup: 0.8, dmg: 17, style: 'golem', score: 500, ai: 'golem', cd: [1.6, 2.4], w: 46, h: 104, scale: 1.35, heavy: true },
   wisp: { hp: 34, speed: 120, windup: 0.6, dmg: 9, score: 250, ai: 'drone', shot: 'orb', cd: [2.2, 3.2], w: 34, h: 34 },
+  // act 3: the Mirror Realm
+  doppel: { hp: 85, speed: 165, windup: 0.32, dmg: 11, style: 'darkRen', score: 400, ai: 'elite', cd: [0.9, 1.4] },
+  sniper: { hp: 45, speed: 100, windup: 1.0, dmg: 15, style: 'sniper', score: 350, ai: 'sniper', cd: [2.4, 3.4] },
+  mirrorclone: { hp: 1, speed: 150, windup: 0.4, dmg: 8, style: 'darkRen', score: 60, ai: 'elite', cd: [1.2, 2.0], life: 9 },
 };
 
 class Enemy {
@@ -49,7 +53,7 @@ class Enemy {
     this.pose = POSES.walk(0);
     this.dodgeCd = 0;
     // champion: a stronger golden enemy (more often on harder difficulties)
-    this.champion = type !== 'clone' && Math.random() < diff().champion;
+    this.champion = type !== 'clone' && type !== 'mirrorclone' && Math.random() < diff().champion;
     this.dmgMul = 1;
     if (this.champion) {
       this.hp = this.maxHp = Math.round(this.maxHp * 1.6);
@@ -60,7 +64,7 @@ class Enemy {
 
   get dmg() { return this.def.dmg * this.dmgMul; }
   // smart ground fighters: can dodge beams, block punches and jump at flying heroes
-  get smart() { return ['melee', 'elite', 'shade', 'ranged'].includes(this.ai) && this.type !== 'clone' && !this.def.heavy; }
+  get smart() { return ['melee', 'elite', 'shade', 'ranged'].includes(this.ai) && this.type !== 'clone' && this.type !== 'mirrorclone' && !this.def.heavy; }
 
   setState(s) { this.state = s; this.stateT = 0; }
 
@@ -238,6 +242,18 @@ class Enemy {
           if (this.atkCd <= 0 && p.alive) { this.shootMode = false; this.setState('windup'); }
         }
         break;
+      case 'sniper':
+        // keeps far away, then aims a laser (the aim line is shown during the windup)
+        if (this.entering) this.vx = this.facing * this.speed;
+        else if (dist < 320 && this.x > 50 && this.x < W - 50) this.vx = -this.facing * this.speed;
+        else this.vx = 0;
+        if (this.atkCd <= 0 && !this.entering && p.alive) {
+          const h0 = handOf({ x: this.x, y: this.y, facing: this.facing, pose: POSES.fire() });
+          this.aim = { x1: h0.x, y1: h0.y, x2: p.x, y2: p.y - 40 };
+          this.shootMode = true;
+          this.setState('windup');
+        }
+        break;
       case 'bomber':
         this.vx = this.facing * this.speed;
         if (dist < 50 && Math.abs(p.y - this.y) < 80 && p.alive) this.setState('windup');
@@ -258,6 +274,23 @@ class Enemy {
       for (const h of liveHeroes()) {
         if (h.onGround && Math.abs(h.x - (this.x + this.facing * 30)) < 105) h.takeHit(this.dmg, sign(h.x - this.x) || this.facing, 320);
       }
+      return;
+    }
+    if (this.ai === 'sniper' && this.aim) {
+      // the laser goes along the aim line to the edge of the screen and hits the first hero on it
+      const a = this.aim;
+      const dx = a.x2 - a.x1, dy = a.y2 - a.y1, len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const far = 1400;
+      for (const h of liveHeroes()) {
+        const cx = h.x - a.x1, cy = (h.y - h.h / 2) - a.y1;
+        const along = cx * ux + cy * uy;
+        const off = Math.abs(cx * uy - cy * ux);
+        if (along > 0 && along < far && off < h.w / 2 + 12) h.takeHit(this.dmg, sign(ux) || this.facing, 260);
+      }
+      Game.bolts.push({ x1: a.x1, y1: a.y1, x2: a.x1 + ux * far, y2: a.y1 + uy * far, color: '#ff4060', life: 0.2, max: 0.2, seed: 0, straight: true });
+      Sfx.zap();
+      this.aim = null;
       return;
     }
     if (this.shootMode && this.def.shot === 'orb') {
@@ -362,7 +395,7 @@ class Enemy {
 
   draw(ctx) {
     if (this.state === 'dying') ctx.globalAlpha = clamp(1 - (this.stateT - 0.5) / 0.4, 0, 1);
-    if (this.type === 'clone') ctx.globalAlpha *= 0.65 + Math.sin(this.animT * 10) * 0.15;
+    if (this.type === 'clone' || this.type === 'mirrorclone') ctx.globalAlpha *= 0.65 + Math.sin(this.animT * 10) * 0.15;
     const fl = this.flash > 0;
     drawShadow(ctx, this.x, this.y, 20 * this.scale);
     ctx.globalAlpha *= this.alpha;
@@ -373,6 +406,16 @@ class Enemy {
     else drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.def.style], scale: this.scale, flash: fl, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.state === 'windup') text(ctx, '!', this.x, this.y - this.h - 22, 26, '#ff4040', 'center', '900');
+    if (this.state === 'windup' && this.aim) {
+      // sniper aim line: thin and blinking, gets brighter just before the shot
+      const k = this.stateT / (this.def.windup * diff().tell);
+      ctx.save();
+      ctx.strokeStyle = `rgba(255,60,90,${0.25 + 0.6 * k * (Math.floor(Game.time * 20) % 2 ? 1 : 0.6)})`;
+      ctx.lineWidth = 1 + k * 2;
+      const a = this.aim, dx = a.x2 - a.x1, dy = a.y2 - a.y1, len = Math.hypot(dx, dy) || 1;
+      ctx.beginPath(); ctx.moveTo(a.x1, a.y1); ctx.lineTo(a.x1 + dx / len * 1400, a.y1 + dy / len * 1400); ctx.stroke();
+      ctx.restore();
+    }
     if (this.champion && !this.dead) text(ctx, '★', this.x, this.y - this.h - 26, 14, '#ffd34a', 'center');
     if (!this.dead && this.hp < this.maxHp && this.maxHp > 1) {
       const top = this.y - this.h - 18;

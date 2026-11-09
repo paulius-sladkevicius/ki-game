@@ -58,11 +58,11 @@ function drawHUD(ctx) {
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
     text(ctx, 'T - ' + p.forms[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, p.forms[p.unlocked].auraP);
   }
-  drawSpecialSlots(ctx, p, Game.ally ? 182 : 150);
+  drawSpecialSlots(ctx, p, Game.ally ? 190 : 150);
   // the AI-controlled ally: small panel under the main bars
   const a = Game.ally;
   if (a) {
-    const y0 = 128;
+    const y0 = 136;
     text(ctx, a.char.name + (a.alive ? '' : '  (down)'), 20, y0, 13, a.alive ? a.char.color : '#888888');
     text(ctx, a.F.name, 20 + ctx.measureText(a.char.name + (a.alive ? '' : '  (down)')).width + 8, y0, 11, '#cfd8ff', 'left', '600');
     bar(ctx, 20, y0 + 6, 150, 7, a.hp / a.maxHp, a.hp > a.maxHp * 0.3 ? '#4cd964' : '#ff3b30');
@@ -72,7 +72,9 @@ function drawHUD(ctx) {
 
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
   text(ctx, diff().name.toUpperCase() + ' · BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, diff().color, 'right', '600');
-  text(ctx, actOf(Game.levelIndex) === 2 ? `LEVEL ${Game.levelIndex + 1} · ◆ ${Game.crystals}/5 seals` : `LEVEL ${Game.levelIndex + 1} · ★ ${Game.crystals}/5`, W - 20, 66, 12, '#ffd34a', 'right', '600');
+  const act = actOf(Game.levelIndex);
+  const coll = act === 3 ? `◇ ${Game.crystals}/5 shards` : act === 2 ? `◆ ${Game.crystals}/5 seals` : `★ ${Game.crystals}/5`;
+  text(ctx, `LEVEL ${Game.levelIndex + 1} · ${coll}`, W - 20, 66, 12, '#ffd34a', 'right', '600');
   text(ctx, `${Game.money} coins`, W - 20, 82, Game.moneyFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
   if (Game.combo >= 3) {
     const s = 22 + Math.min(14, Game.combo);
@@ -136,12 +138,13 @@ function drawDialog(ctx) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
   ctx.fill(); ctx.stroke();
-  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'raxas', 'Sable': 'sable', 'Gale': 'gale', 'Quartzus': 'quartz', 'Volta': 'volta', 'Hollow King': 'hollow', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
+  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'raxas', 'Sable': 'sable', 'Gale': 'gale', 'Quartzus': 'quartz', 'Volta': 'volta', 'Hollow King': 'hollow', 'Glitch': 'glitch', 'Thornmother': 'thorn', 'Tick-Tock': 'ticktock', 'Dark Ren': 'darkRen', 'Kaldra': 'kaldra', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
   let tx = x + 20;
   if (line.who in portraits) {
     let st = portraits[line.who];
-    const ren = heroById('ren'), rax = heroById('raxas');
+    const ren = heroById('ren'), rax = heroById('raxas'), nyx = heroById('nyx');
     if (st === 'raxas') st = STYLES[rax ? rax.F.style : 'raxasBase'];
+    else if (st === 'nyx' && nyx) st = STYLES[nyx.F.style];
     else st = st ? STYLES[st] : STYLES[ren ? ren.F.style : 'heroBase'];
     ctx.save();
     ctx.beginPath(); ctx.roundRect(x + 10, y + 10, 96, h - 20, 8); ctx.clip();
@@ -152,7 +155,7 @@ function drawDialog(ctx) {
     tx = x + 122;
   }
   if (line.who) {
-    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff', 'Sable': '#b08aff', 'Gale': '#7ff0d8', 'Quartzus': '#9ff0ff', 'Volta': '#fff27a', 'Hollow King': '#ff80c8' };
+    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff', 'Sable': '#b08aff', 'Gale': '#7ff0d8', 'Quartzus': '#9ff0ff', 'Volta': '#fff27a', 'Hollow King': '#ff80c8', 'Glitch': '#40f0ff', 'Thornmother': '#a0e060', 'Tick-Tock': '#e0c070', 'Dark Ren': '#ff6080', 'Kaldra': '#c0d8ff' };
     text(ctx, line.who, tx, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -200,7 +203,7 @@ function drawMenu(ctx) {
 
   const opts = menuOptions();
   const sel = clamp(Game.menuSel === undefined ? 0 : Game.menuSel, 0, opts.length - 1);
-  const y0 = 352, gap = 33;
+  const y0 = opts.length > 4 ? 344 : 352, gap = opts.length > 4 ? 30 : 33;
   opts.forEach((o, i) => {
     const y = y0 + i * gap;
     const on = i === sel;
@@ -211,11 +214,13 @@ function drawMenu(ctx) {
     if (o.kind === 'diff') {
       const d = diff();
       text(ctx, (on ? '▶ ' : '') + 'Difficulty:  ◀ ' + d.name + ' ▶', 620, y, on ? 20 : 17, on ? d.color : '#cfd8ff', 'center', on ? '800' : '600');
+    } else if (o.kind === 'helper') {
+      text(ctx, (on ? '▶ ' : '') + 'Helper friend:  ◀ ' + HELPER_NAMES[Game.helper] + ' ▶', 620, y, on ? 20 : 17, on ? '#c99bff' : '#cfd8ff', 'center', on ? '800' : '600');
     } else {
       text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 20 : 17, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
     }
   });
-  const hint = opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : '↑ ↓ choose · ENTER / J start';
+  const hint = opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : opts[sel] && opts[sel].kind === 'helper' ? '← → who helps you from level 6 on (Auto = story friend, None = alone)' : '↑ ↓ choose · ENTER / J start';
   if (Math.floor(t * 2) % 2 === 0) text(ctx, hint, 620, y0 + opts.length * gap + 4, 14, '#9fe6ff', 'center', '600');
   if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 530, 14, '#ffd34a', 'center', '600');
 }
@@ -282,8 +287,11 @@ function drawLevelSelect(ctx) {
   text(ctx, 'SELECT LEVEL', W / 2, 70, 44, '#ffe14d', 'center', '900');
   text(ctx, `Difficulty: ${d.name} - stars are saved for each difficulty`, W / 2, 100, 15, d.color, 'center', '600');
   const prog = loadProgress();
-  const cw = 160, ch = 150, gapX = 18, gapY = 22;
-  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = 130;
+  const rowsN = Math.ceil(LEVELS.length / 5);
+  const cw = 160, gapX = 18, gapY = rowsN > 2 ? 10 : 22;
+  const ch = rowsN > 2 ? 108 : 150;
+  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = rowsN > 2 ? 116 : 130;
+  const sc = ch / 150;   // smaller cards when there are three rows
   LEVELS.forEach((lvl, i) => {
     const x = x0 + (i % 5) * (cw + gapX);
     const y = yTop + Math.floor(i / 5) * (ch + gapY);
@@ -294,20 +302,20 @@ function drawLevelSelect(ctx) {
     ctx.strokeStyle = on ? '#ffe14d' : 'rgba(255,255,255,0.2)';
     ctx.lineWidth = on ? 3 : 1;
     ctx.strokeRect(x, y, cw, ch);
-    text(ctx, `${i + 1}`, x + cw / 2, y + 42, 34, locked ? '#666677' : '#ffffff', 'center', '900');
+    text(ctx, `${i + 1}`, x + cw / 2, y + 42 * sc, 34 * Math.max(0.75, sc), locked ? '#666677' : '#ffffff', 'center', '900');
     const words = lvl.name.replace("Vorg's Ship in Orbit", "Vorg's Ship");
-    text(ctx, words, x + cw / 2, y + 68, 13, locked ? '#666677' : '#cfd8ff', 'center', '700');
-    text(ctx, lvl.act === 2 ? 'Act 2' : 'Act 1', x + cw / 2, y + 86, 11, locked ? '#555566' : '#8a8fb0', 'center', '600');
+    text(ctx, words, x + cw / 2, y + 68 * sc, 13, locked ? '#666677' : '#cfd8ff', 'center', '700');
+    text(ctx, 'Act ' + (lvl.act || 1), x + cw / 2, y + 86 * sc, 11, locked ? '#555566' : '#8a8fb0', 'center', '600');
     if (locked) {
-      text(ctx, 'LOCKED', x + cw / 2, y + 124, 15, '#666677', 'center', '800');
+      text(ctx, 'LOCKED', x + cw / 2, y + 124 * sc, 15, '#666677', 'center', '800');
     } else {
       const best = bestResult(i);
-      drawStars(ctx, x + cw / 2, y + 120, best ? best.stars : 0, 24);
+      drawStars(ctx, x + cw / 2, y + 122 * sc, best ? best.stars : 0, 24 * Math.max(0.8, sc));
       if (best) text(ctx, best.rank, x + cw - 14, y + 26, 20, RANK_COLORS[best.rank], 'right', '900');
     }
   });
-  text(ctx, '← → ↑ ↓ choose · ENTER / J play · P / Esc back', W / 2, 500, 15, '#9fe6ff', 'center', '600');
-  text(ctx, '★ complete   ★ no defeat   ★ little damage   ·   S = 3 stars + fast', W / 2, 524, 13, '#cfd8ff', 'center', '600');
+  text(ctx, '← → ↑ ↓ choose · ENTER / J play · P / Esc back', W / 2, 508, 14, '#9fe6ff', 'center', '600');
+  text(ctx, '★ complete   ★ no defeat   ★ little damage   ·   S = 3 stars + fast', W / 2, 529, 12, '#cfd8ff', 'center', '600');
 }
 
 function drawOverlay(ctx, title, sub, lines, color, top = 275) {
@@ -344,7 +352,8 @@ function drawTraining(ctx) {
   drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: Math.floor(t * 3) % 2 ? POSES.punch1() : POSES.punch2(), style: STYLES.heroBase, scale: 1.6, t });
   drawHumanoid(ctx, { x: 120, y: 420, facing: 1, pose: POSES.idle(t), style: STYLES.master, scale: 1.4, t });
   const nextLvl = LEVELS[Game.levelIndex + 1];
-  if (nextLvl && nextLvl.ally) drawHumanoid(ctx, { x: 370, y: 420, facing: -1, pose: Math.floor(t * 3) % 2 ? POSES.punch2() : POSES.swordSlash(), style: STYLES.raxasBase, scale: 1.6, t });
+  const fr = friendFor(nextLvl);
+  if (fr) drawHumanoid(ctx, { x: 370, y: 420, facing: -1, pose: Math.floor(t * 3) % 2 ? POSES.punch2() : (fr === 'raxas' ? POSES.swordSlash() : POSES.punch1()), style: STYLES[CHARACTERS[fr].forms[0].style], scale: 1.6, t });
   text(ctx, 'Master Oro: "Train hard, Ren - the next enemy is stronger!"', 250, 470, 14, '#9fe6ff', 'center', '600');
 
   text(ctx, 'TRAINING', 650, 80, 48, '#ffe14d', 'center', '900');
@@ -373,13 +382,22 @@ function drawTraining(ctx) {
       text(ctx, cost, 818, y + boxH * 0.8, 15, lvl < 5 && Game.money >= trainCost(lvl) ? '#ffe680' : '#888888', 'right', '700');
       y += rowH;
     } else if (row.kind === 'lead') {
-      const c = CHARACTERS[Game.controlChar === 'raxas' ? 'raxas' : 'ren'];
+      const c = leadCharacter();
       ctx.fillStyle = on ? 'rgba(200,150,255,0.2)' : 'rgba(0,0,0,0.4)';
       ctx.fillRect(470, y, 360, boxH);
       if (on) { ctx.strokeStyle = '#c99bff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
       text(ctx, 'Lead fighter', 486, y + boxH * 0.45, small ? 15 : 18, '#c99bff', 'left', '800');
       text(ctx, 'who you control at the start (C switches)', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
       text(ctx, '⇄ ' + c.name, 818, y + boxH * 0.62, 18, c.color, 'right', '800');
+      y += rowH;
+    } else if (row.kind === 'helper') {
+      const f = friendFor(LEVELS[Game.levelIndex + 1]);
+      ctx.fillStyle = on ? 'rgba(200,150,255,0.2)' : 'rgba(0,0,0,0.4)';
+      ctx.fillRect(470, y, 360, boxH);
+      if (on) { ctx.strokeStyle = '#c99bff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
+      text(ctx, 'Helper friend', 486, y + boxH * 0.45, small ? 15 : 18, '#c99bff', 'left', '800');
+      text(ctx, f ? `${CHARACTERS[f].name} fights with you` : 'you fight alone', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
+      text(ctx, (on ? '◀ ' : '') + HELPER_NAMES[Game.helper] + (on ? ' ▶' : ''), 818, y + boxH * 0.55, small ? 14 : 17, f ? CHARACTERS[f].color : '#cfd8ff', 'right', '800');
       y += rowH;
     } else if (row.kind === 'slot') {
       const sp = Game.equip && Game.equip[row.slot] ? SPECIAL_BY_ID[Game.equip[row.slot]] : null;
@@ -440,25 +458,26 @@ function drawUI(ctx) {
       const recLine = 'Score: ' + Game.score + (newRecord ? '  - NEW BEST!' : '  (best ' + Game.highScore + ')');
       const go = Game.stateT > 1.5;
       if (last) {
-        drawOverlay(ctx, 'THE END', 'The Hollow King is gone - light returns to the world!', [
-          '◆ All 5 Hollow Seals broken',
-          'Ren and Raxas - legends of light and shadow',
+        drawOverlay(ctx, 'THE END', 'Kaldra is defeated - the stolen worlds are free!', [
+          '◇ All 5 Mirror Shards broken',
+          'Ren, Raxas and Nyx - legends of light, shadow and illusion',
           recLine,
           'Thanks for playing!',
           go ? 'ENTER - back to menu' : '',
         ], '#ffe14d', 300);
         drawResult(ctx, 205);
       } else {
-        const act2 = actOf(Game.levelIndex) === 2;
-        const actEnd = actOf(Game.levelIndex + 1) !== actOf(Game.levelIndex);
-        const lines = [act2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
+        const act = actOf(Game.levelIndex);
+        const actEnd = actOf(Game.levelIndex + 1) !== act;
+        const lines = [act === 3 ? `◇ Mirror Shard broken  (${Game.crystals}/5)` : act === 2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
         if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
         if (Game.result && Game.result.newTech) { const nt = Game.result.newTech; lines.push(`NEW TECHNIQUE: ${nt.icon} ${nt.name} (slot ${nt.slot === 1 ? '① - key I' : '② - key O'})`); }
-        if (actEnd) lines.push('...but a darker power is waking up. ACT 2 begins!');
+        if (actEnd) lines.push(`...but a new threat is waking up. ACT ${act + 1} begins!`);
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);
         lines.push(go ? 'ENTER - go to training' : '');
-        drawOverlay(ctx, actEnd ? 'ACT 1 COMPLETE!' : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? 'Vorg is defeated - the Star Crystals are safe' : lvl.name + ' is safe', lines, '#ffe14d', 300);
+        const actSub = act === 2 ? 'The Hollow King is gone - light returns to the world' : 'Vorg is defeated - the Star Crystals are safe';
+        drawOverlay(ctx, actEnd ? `ACT ${act} COMPLETE!` : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? actSub : lvl.name + ' is safe', lines, '#ffe14d', 300);
         drawResult(ctx, 205);
       }
       break;

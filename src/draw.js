@@ -45,6 +45,15 @@ const STYLES = {
   volta: { gi: '#20263a', under: '#ffe14d', belt: '#ffe14d', pants: '#141826', boots: '#ffe14d', arm: '#20263a', skin: '#d8e0f0', band: '#ffe14d', hair: 'storm', hairColor: '#fff6a0' },
   hollow: { gi: '#0c0a14', under: '#5a2a9a', belt: '#3a2a5a', pants: '#08060e', boots: '#3a2a5a', arm: '#0c0a14', skin: '#2a2438', band: '#a070ff', hair: 'horns', hairColor: '#cfc0ff' },
   hollow2: { gi: '#000000', under: '#ff40a0', belt: '#ff40a0', pants: '#050008', boots: '#ff40a0', arm: '#08000e', skin: '#1a0828', band: '#ff40a0', hair: 'horns', hairColor: '#ff90d0' },
+  nyxMirage: { gi: '#12303a', under: '#7ff0ff', belt: '#7ff0ff', pants: '#0c2028', boots: '#7ff0ff', arm: '#d8c8f0', skin: '#d8c8f0', band: '#7ff0ff', hair: 'long', hairColor: '#ff7ad8' },
+  nyxPhantom: { gi: '#f4eef8', under: '#ff9ae0', belt: '#ff9ae0', pants: '#e8dcf0', boots: '#ff9ae0', arm: '#f0e4f8', skin: '#f0e4f8', band: '#ff9ae0', hair: 'long', hairColor: 'rainbow' },
+  darkRen: { gi: '#1a1a24', under: '#5a5a70', belt: '#8a1a3a', pants: '#10101a', boots: '#2a2a3a', arm: '#c0b8d0', skin: '#c0b8d0', band: '#8a1a3a', headband: '#8a1a3a', hair: 'swept', hairColor: '#e8e8f0' },
+  sniper: { gi: '#1c2420', under: '#3aff8a', belt: '#3aff8a', pants: '#121816', boots: '#2a3a30', arm: '#1c2420', skin: '#8aa898', band: '#3aff8a', hair: 'helmet', hairColor: '#2a3430', visor: '#ff4060' },
+  glitch: { gi: '#101828', under: '#40f0ff', belt: '#ff40c0', pants: '#0a101c', boots: '#40f0ff', arm: '#101828', skin: '#c8d8e8', band: '#ff40c0', hair: 'mohawk', hairColor: '#40f0ff' },
+  thorn: { gi: '#2a4a20', under: '#c0e060', belt: '#6a3a1a', pants: '#1a3010', boots: '#4a2a10', arm: '#3a6a2a', skin: '#8ac070', band: '#e060a0', hair: 'long', hairColor: '#3a8a3a' },
+  ticktock: { gi: '#6a5030', under: '#e0c070', belt: '#3a2a18', pants: '#4a3820', boots: '#2a2018', arm: '#8a7050', skin: '#c0a070', band: '#e0c070', hair: 'helmet', hairColor: '#b89a50', visor: '#60e0ff', shield: true },
+  kaldra: { gi: '#e8f0ff', under: '#9fc8ff', belt: '#c0d8ff', pants: '#c8d8f0', boots: '#9fc8ff', arm: '#e8f0ff', skin: '#e0e8f8', band: '#9fc8ff', hair: 'long', hairColor: '#f8fcff' },
+  kaldra2: { gi: '#20103a', under: '#ff60c0', belt: '#c0a0ff', pants: '#140828', boots: '#ff60c0', arm: '#2a1848', skin: '#d0c0f0', band: '#ff60c0', hair: 'storm', hairColor: '#c0a0ff' },
   flash: { gi: '#ffffff', under: '#ffffff', belt: '#ffffff', pants: '#ffffff', boots: '#ffffff', arm: '#ffffff', skin: '#ffffff', band: '#ffffff', hair: null, hairColor: '#ffffff', visor: '#ffffff' },
 };
 
@@ -365,9 +374,13 @@ const BEAM_COLORS = {
   shadow: ['rgba(110,30,220,A)', 'rgba(210,180,255,A)'],
   eclipse: ['rgba(255,170,40,A)', 'rgba(255,245,200,A)'],
   raxas: ['rgba(160,60,255,A)', 'rgba(225,190,255,A)'],
+  nyx: ['rgba(230,60,180,A)', 'rgba(255,200,240,A)'],
   red: ['rgba(255,40,60,A)', 'rgba(255,170,170,A)'],
   crystal: ['rgba(90,200,255,A)', 'rgba(255,200,250,A)'],
   void: ['rgba(120,0,200,A)', 'rgba(255,120,220,A)'],
+  mirror: ['rgba(140,190,255,A)', 'rgba(240,250,255,A)'],
+  dark: ['rgba(140,20,60,A)', 'rgba(230,180,200,A)'],
+  vine: ['rgba(80,200,60,A)', 'rgba(220,255,180,A)'],
 };
 
 function drawBeam(ctx, b) {
@@ -409,6 +422,17 @@ function drawProjectile(ctx, p) {
     ctx.beginPath(); ctx.arc(-10, 0, 24, -1.2, 1.2); ctx.arc(-22, 0, 22, 1.1, -1.1, true); ctx.fill();
     ctx.fillStyle = 'rgba(245,225,255,0.95)';
     ctx.beginPath(); ctx.arc(-10, 0, 20, -1.1, 1.1); ctx.arc(-18, 0, 18, 1.0, -1.0, true); ctx.fill();
+    ctx.restore();
+    return;
+  }
+  if (p.type === 'gear') {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Game.time * 8 * sign(p.vx));
+    ctx.fillStyle = '#b8954a';
+    for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.fillRect(-3, -p.r - 4, 6, 8); }
+    ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5a4020'; ctx.beginPath(); ctx.arc(0, 0, p.r * 0.4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     return;
   }
@@ -807,6 +831,102 @@ Object.assign(BG_BUILDERS, {
   },
 });
 
+// ----- act 3 backgrounds -----
+Object.assign(BG_BUILDERS, {
+  neon(g) {
+    bgSky(g, [[0, '#0a0618'], [0.6, '#24104a'], [1, '#5a1a6a']]);
+    bgStars(g, 30, 160, 0.5);
+    // skyline
+    const tower = (x, w, h, c) => {
+      g.fillStyle = c; g.fillRect(x, GROUND - h, w, h);
+      for (let yy = GROUND - h + 10; yy < GROUND - 12; yy += 16) for (let xx = x + 6; xx < x + w - 6; xx += 12) {
+        if (((xx * 7 + yy * 3) % 5) < 2) { g.fillStyle = ((xx + yy) % 3) ? 'rgba(255,220,140,0.75)' : 'rgba(120,240,255,0.7)'; g.fillRect(xx, yy, 5, 7); }
+      }
+    };
+    [[0, 90, 260], [100, 70, 330], [180, 110, 220], [300, 60, 380], [370, 120, 280], [500, 80, 340], [590, 100, 240], [700, 70, 360], [780, 90, 300], [880, 80, 250]].forEach(([x, w, h], i) => tower(x, w, h, i % 2 ? '#140c26' : '#1c1032'));
+    // neon signs
+    const sign = (x, y, w, c) => { g.save(); g.shadowColor = c; g.shadowBlur = 18; g.strokeStyle = c; g.lineWidth = 4; g.strokeRect(x, y, w, 26); g.restore(); };
+    sign(110, 170, 50, '#ff40c0'); sign(390, 210, 80, '#40f0ff'); sign(720, 150, 46, '#ffe14d'); sign(600, 260, 60, '#ff40c0');
+    bgGround(g, '#1a1426', '#08060e', '#40f0ff', 'rgba(64,240,255,0.18)');
+  },
+
+  forest(g) {
+    bgSky(g, [[0, '#0e1a2a'], [0.6, '#1e3a3a'], [1, '#3a5a3a']]);
+    bgGlow(g, 480, 180, 160, 'rgba(200,255,200,0.5)', 'rgba(120,220,160,0.25)');
+    // huge trees
+    const tree = (x, w, c) => {
+      g.fillStyle = c; g.fillRect(x, 0, w, GROUND);
+      g.beginPath(); g.moveTo(x - 30, GROUND); g.quadraticCurveTo(x + w / 2, GROUND - 60, x + w + 30, GROUND); g.fill();
+    };
+    tree(40, 70, '#142418'); tree(230, 46, '#1a2e1e'); tree(690, 60, '#1a2e1e'); tree(860, 80, '#142418');
+    // giant glowing mushrooms
+    const mush = (x, h, r, c) => {
+      g.fillStyle = '#d8d0b0'; g.fillRect(x - 6, GROUND - h, 12, h);
+      const gl = g.createRadialGradient(x, GROUND - h, 4, x, GROUND - h, r * 2);
+      gl.addColorStop(0, c.replace('A', '0.5')); gl.addColorStop(1, c.replace('A', '0'));
+      g.fillStyle = gl; g.beginPath(); g.arc(x, GROUND - h, r * 2, 0, Math.PI * 2); g.fill();
+      g.fillStyle = c.replace('A', '1'); g.beginPath(); g.ellipse(x, GROUND - h, r, r * 0.55, 0, Math.PI, 0); g.fill();
+    };
+    mush(150, 90, 40, 'rgba(255,110,200,A)'); mush(380, 60, 30, 'rgba(110,220,255,A)'); mush(560, 110, 46, 'rgba(180,255,120,A)'); mush(790, 70, 34, 'rgba(255,190,90,A)');
+    bgGround(g, '#2a3a22', '#121a10', '#4a6a3a', 'rgba(0,0,0,0.3)', false);
+    g.fillStyle = 'rgba(120,200,90,0.5)';
+    for (let i = 0; i < 40; i++) { const x = (i * 29) % W; g.fillRect(x, GROUND - 6 + (i % 3) * 2, 2, 8); }
+  },
+
+  clock(g) {
+    bgSky(g, [[0, '#2a1a10'], [0.6, '#4a3020'], [1, '#6a4a2a']]);
+    // big gears in the background
+    const gear = (x, y, r, teeth, c) => {
+      g.fillStyle = c;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+      for (let i = 0; i < teeth; i++) { const a = i / teeth * Math.PI * 2; g.save(); g.translate(x, y); g.rotate(a); g.fillRect(-r * 0.12, -r - r * 0.18, r * 0.24, r * 0.25); g.restore(); }
+      g.fillStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.arc(x, y, r * 0.35, 0, Math.PI * 2); g.fill();
+    };
+    gear(150, 160, 110, 14, '#5a4026'); gear(330, 300, 70, 10, '#6a4a2a'); gear(780, 200, 140, 16, '#5a4026'); gear(560, 110, 60, 9, '#6a4a2a');
+    // clock face
+    g.fillStyle = '#e8dcc0'; g.beginPath(); g.arc(480, 220, 80, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#3a2a18'; g.lineWidth = 6; g.stroke();
+    g.fillStyle = '#3a2a18';
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.fillRect(480 + Math.cos(a) * 64 - 3, 220 + Math.sin(a) * 64 - 3, 6, 6); }
+    bgGround(g, '#4a3824', '#20160c', '#8a6a3a', 'rgba(0,0,0,0.35)');
+  },
+
+  mirrorlake(g) {
+    bgSky(g, [[0, '#1a2a4a'], [0.5, '#4a6a9a'], [1, '#b8d0f0']]);
+    bgGlow(g, 700, 140, 90, 'rgba(255,255,255,0.9)', 'rgba(220,235,255,0.5)');
+    bgPeaks(g, '#7a90b8', [[0, 320], [140, 250], [280, 300], [420, 230], [560, 300], [700, 260], [840, 310], [960, 270]]);
+    // the frozen lake mirrors the sky
+    const lake = g.createLinearGradient(0, 330, 0, GROUND);
+    lake.addColorStop(0, '#b8d0f0'); lake.addColorStop(1, '#6a8ab8');
+    g.fillStyle = lake; g.fillRect(0, 330, W, GROUND - 330);
+    g.fillStyle = 'rgba(122,144,184,0.5)';
+    g.beginPath(); g.moveTo(0, 330); [[140, 400], [280, 360], [420, 420], [560, 360], [700, 390], [840, 350], [960, 380]].forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(W, 330); g.closePath(); g.fill();
+    // mirror shards sticking out of the ice
+    g.fillStyle = 'rgba(230,245,255,0.85)';
+    [[120, 60], [330, 40], [610, 70], [850, 50]].forEach(([x, h]) => { g.beginPath(); g.moveTo(x - 12, GROUND); g.lineTo(x - 4, GROUND - h); g.lineTo(x + 10, GROUND - h * 0.7); g.lineTo(x + 14, GROUND); g.closePath(); g.fill(); });
+    bgGround(g, '#dce8f8', '#9ab4d8', '#ffffff', 'rgba(120,150,200,0.3)');
+  },
+
+  palace(g) {
+    bgSky(g, [[0, '#0c0a20'], [0.6, '#20184a'], [1, '#3a2a6a']]);
+    // tall mirrors on the walls
+    for (let i = 0; i < 6; i++) {
+      const x = 40 + i * 160;
+      g.fillStyle = '#c8a640'; g.beginPath(); g.roundRect(x - 6, 80, 92, 300, 46); g.fill();
+      const m = g.createLinearGradient(x, 90, x + 80, 370);
+      m.addColorStop(0, '#9fc8ff'); m.addColorStop(0.5, '#e8f4ff'); m.addColorStop(1, '#7aa0e0');
+      g.fillStyle = m; g.beginPath(); g.roundRect(x, 88, 80, 284, 40); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(x + 14, 110, 6, 200);
+    }
+    // chandelier
+    g.strokeStyle = '#c8a640'; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(480, 0); g.lineTo(480, 40); g.stroke();
+    g.fillStyle = '#ffe9a0';
+    for (let i = -3; i <= 3; i++) { g.beginPath(); g.arc(480 + i * 22, 50 + Math.abs(i) * 4, 5, 0, Math.PI * 2); g.fill(); }
+    bgGround(g, '#e8e0f8', '#9a8ac8', '#ffffff', 'rgba(120,100,180,0.3)');
+  },
+});
+
 function drawBackground(ctx) {
   const theme = Game.theme || 'monastery';
   if (!_bgCache[theme]) {
@@ -880,6 +1000,40 @@ function drawBackground(ctx) {
       const a = t * 0.6 + i * 0.5, r = 60 + ((i * 37 + t * 30) % 300);
       ctx.fillStyle = `rgba(190,110,255,${0.6 - r / 600})`;
       ctx.fillRect(480 + Math.cos(a) * r, 200 + Math.sin(a) * r * 0.55, 2.5, 2.5);
+    }
+  } else if (theme === 'neon') {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) {
+      const on = Math.sin(t * (2 + i) + i) > -0.3;
+      if (!on) continue;
+      ctx.fillStyle = ['rgba(255,64,192,0.18)', 'rgba(64,240,255,0.18)', 'rgba(255,225,77,0.15)', 'rgba(255,64,192,0.15)'][i];
+      ctx.fillRect([110, 390, 720, 600][i] - 10, [170, 210, 150, 260][i] - 10, [70, 100, 66, 80][i], 46);
+    }
+    ctx.fillStyle = 'rgba(160,200,255,0.35)';
+    for (let i = 0; i < 40; i++) { const x = (i * 73 + t * 60) % W; const y = (i * 41 + t * 500) % GROUND; ctx.fillRect(x, y, 1, 10); }
+  } else if (theme === 'forest') {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 24; i++) {
+      const x = (i * 97 + Math.sin(t * 0.8 + i) * 30) % W;
+      const y = 100 + (i * 47) % 330 + Math.sin(t * 1.5 + i) * 15;
+      ctx.fillStyle = `rgba(${i % 2 ? '255,150,230' : '160,255,160'},${0.35 + 0.35 * Math.sin(t * 3 + i)})`;
+      ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'clock') {
+    // the clock hands turn
+    ctx.strokeStyle = '#3a2a18'; ctx.lineCap = 'round';
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(480, 220); ctx.lineTo(480 + Math.cos(t * 0.5) * 55, 220 + Math.sin(t * 0.5) * 55); ctx.stroke();
+    ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(480, 220); ctx.lineTo(480 + Math.cos(t * 0.04) * 38, 220 + Math.sin(t * 0.04) * 38); ctx.stroke();
+  } else if (theme === 'mirrorlake') {
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let i = 0; i < 40; i++) { const x = (i * 97 + t * 12) % W; const y = (i * 53 + t * 30) % GROUND; ctx.fillRect(x, y, 2, 2); }
+  } else if (theme === 'palace') {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 6; i++) {
+      const sweep = ((t * 0.4 + i * 0.3) % 1.6) - 0.3;
+      if (sweep < 0 || sweep > 1) continue;
+      const x = 40 + i * 160, y = 88 + sweep * 284;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x, y, 80, 10);
     }
   } else if (theme === 'ship') {
     for (let i = 0; i < 6; i++) {

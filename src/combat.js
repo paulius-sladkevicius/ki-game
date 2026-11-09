@@ -135,14 +135,29 @@ function addHazard(x, kind, src) {
   Game.hazards.push({ x, kind, src, t: 0, tell, life: tell + 0.35, w: kind === 'lightning' ? 40 : 52, dmg: kind === 'lightning' ? 15 : 14, hit: new Set() });
 }
 
+// A horizontal laser across the whole arena at height y (after an extra delay).
+function addLaser(y, src, delay) {
+  Game.hazards.push({ kind: 'laser', y, x: W / 2, src, t: -delay, tell: 0.9, life: 1.25, w: 0, dmg: 16, hit: new Set() });
+}
+
 function updateHazards(dt) {
   for (const z of Game.hazards) {
     const before = z.t;
     z.t += dt;
     if (before < z.tell && z.t >= z.tell) {
       addShake(4);
-      if (z.kind === 'lightning') { Sfx.zap(); Game.flash = Math.max(Game.flash, 0.12); } else Sfx.boom();
-      burst(z.x, GROUND - 10, z.kind === 'lightning' ? '#fff6a0' : '#a070ff', 14, 260, 4, 0.4);
+      if (z.kind === 'lightning' || z.kind === 'laser') { Sfx.zap(); if (z.kind === 'lightning') Game.flash = Math.max(Game.flash, 0.12); } else Sfx.boom();
+      if (z.kind !== 'laser') burst(z.x, GROUND - 10, z.kind === 'lightning' ? '#fff6a0' : z.kind === 'vine' ? '#a0e060' : '#a070ff', 14, 260, 4, 0.4);
+    }
+    if (z.kind === 'laser') {
+      if (z.t >= z.tell) {
+        for (const h of liveHeroes()) {
+          if (z.hit.has(h)) continue;
+          const b = boxOf(h);
+          if (b.y < z.y + 12 && b.y + b.h > z.y - 12) { z.hit.add(h); h.takeHit(z.dmg, sign(h.x - (z.src ? z.src.x : W / 2)) || 1, 240); }
+        }
+      }
+      continue;
     }
     if (z.t >= z.tell) {
       const top = z.kind === 'lightning' ? -10 : GROUND - 170;
@@ -162,12 +177,26 @@ function drawHazards(ctx) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (const z of Game.hazards) {
+    if (z.kind === 'laser') {
+      if (z.t < 0) continue;
+      if (z.t < z.tell) {
+        ctx.globalAlpha = 0.4 + 0.5 * (Math.floor(Game.time * 16) % 2);
+        ctx.strokeStyle = '#ff4060'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, z.y); ctx.lineTo(W, z.y); ctx.stroke();
+      } else {
+        const k = 1 - (z.t - z.tell) / (z.life - z.tell);
+        ctx.globalAlpha = k;
+        ctx.fillStyle = 'rgba(255,60,100,0.6)'; ctx.fillRect(0, z.y - 12, W, 24);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, z.y - 4, W, 8);
+      }
+      continue;
+    }
     const light = z.kind === 'lightning';
     if (z.t < z.tell) {
       // warning glow on the ground
       const k = z.t / z.tell;
       ctx.globalAlpha = 0.3 + 0.5 * k * (0.6 + 0.4 * Math.sin(Game.time * 30));
-      ctx.fillStyle = light ? '#fff6a0' : '#a070ff';
+      ctx.fillStyle = light ? '#fff6a0' : z.kind === 'vine' ? '#a0e060' : '#a070ff';
       ctx.beginPath(); ctx.ellipse(z.x, GROUND + 2, z.w * (0.5 + 0.5 * k), 7, 0, 0, Math.PI * 2); ctx.fill();
     } else {
       const k = 1 - (z.t - z.tell) / (z.life - z.tell);
@@ -181,7 +210,8 @@ function drawHazards(ctx) {
       } else {
         const top = GROUND - 170 * Math.min(1, (z.t - z.tell) * 8);
         const g = ctx.createLinearGradient(0, top, 0, GROUND);
-        g.addColorStop(0, 'rgba(160,100,255,0)'); g.addColorStop(0.3, 'rgba(140,70,255,0.9)'); g.addColorStop(1, 'rgba(60,10,120,0.9)');
+        if (z.kind === 'vine') { g.addColorStop(0, 'rgba(160,255,100,0)'); g.addColorStop(0.3, 'rgba(90,200,60,0.9)'); g.addColorStop(1, 'rgba(40,90,20,0.9)'); }
+        else { g.addColorStop(0, 'rgba(160,100,255,0)'); g.addColorStop(0.3, 'rgba(140,70,255,0.9)'); g.addColorStop(1, 'rgba(60,10,120,0.9)'); }
         ctx.fillStyle = g;
         ctx.fillRect(z.x - z.w / 2, top, z.w, GROUND - top);
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
@@ -196,17 +226,24 @@ function updateProjectiles(dt) {
   collideProjectiles();
   for (const pr of Game.projectiles) {
     if (pr.homing && pr.life > 0) {
-      // homing orbs slowly turn towards the closest hero
-      const h = nearestHero(pr.x);
-      if (h && h.alive) {
+      // homing orbs slowly turn towards the closest hero (or, for the player's orbs, the closest enemy)
+      const h = pr.owner === 'player' ? nearestTarget(pr.x) : nearestHero(pr.x);
+      if (h && (h.alive || pr.owner === 'player')) {
         const dx = h.x - pr.x, dy = (h.y - 45) - pr.y, d = Math.hypot(dx, dy) || 1;
-        pr.vx += (dx / d * pr.speed - pr.vx) * Math.min(1, dt * 1.6);
-        pr.vy += (dy / d * pr.speed - pr.vy) * Math.min(1, dt * 1.6);
+        const turn = pr.owner === 'player' ? 5 : 1.6;
+        pr.vx += (dx / d * pr.speed - pr.vx) * Math.min(1, dt * turn);
+        pr.vy += (dy / d * pr.speed - pr.vy) * Math.min(1, dt * turn);
       }
     }
+    if (pr.gravity) pr.vy += pr.gravity * dt;
     pr.x += pr.vx * dt;
     pr.y += pr.vy * dt;
     pr.life -= dt;
+    if (pr.type === 'gear' && pr.y > GROUND - pr.r) {
+      pr.y = GROUND - pr.r;
+      pr.vy = -Math.abs(pr.vy) * 0.75;
+      if (--pr.bounces < 0) pr.life = 0;
+    }
     if (pr.x < -60 || pr.x > W + 60 || pr.y > GROUND + 10) pr.life = 0;
     if (pr.type === 'shard' && pr.y > GROUND - 8) { pr.life = 0; burst(pr.x, GROUND - 6, '#9ff0ff', 8, 160, 3, 0.3); }
     if (pr.life <= 0) continue;
@@ -371,6 +408,13 @@ function drawBolts(ctx) {
   ctx.lineCap = 'round';
   for (const b of Game.bolts) {
     const a = b.life / b.max;
+    if (b.straight) {
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = b.color; ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+      continue;
+    }
     const segs = 7;
     for (let pass = 0; pass < 2; pass++) {
       ctx.strokeStyle = pass === 0 ? b.color : '#ffffff';

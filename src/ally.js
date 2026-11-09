@@ -43,6 +43,14 @@ class AllyAI {
       return I;
     }
 
+    // 0b) lasers about to fire: jump over a low one, get down for a high one
+    const laser = Game.hazards.find((z) => z.kind === 'laser' && z.t > z.tell - 0.45 && z.t < z.tell + 0.1);
+    if (laser) {
+      if (laser.y > GROUND - 40) { if (h.onGround && this.jumpT <= 0) { I.pressed.jump = true; this.jumpT = 0.5; } I.down.jump = true; }
+      else if (!h.onGround) I.down.charge = true;
+      return I;
+    }
+
     // 1) danger: a boss beam is coming -> fly over it or guard
     const bossBeam = Game.bosses.find((b) => !b.dead && (b.state === 'beam_tell' || b.state === 'beam'));
     if (bossBeam) {

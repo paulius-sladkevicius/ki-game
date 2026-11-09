@@ -27,6 +27,19 @@ const BOSS_DEFS = {
     phase2Style: 'hollow2', phase2Scale: 1.6, phase2Text: 'The void tears open!', phaseColor: '#ff40a0',
     finalText: 'Light and shadow, side by side!',
     attacks: ['orbs', 'teleport', 'pillars'], rage: ['beam', 'summon', 'rain', 'dive', 'orbs'], beamColor: 'void', aura: 'rgba(160,40,255,A)' },
+  // ----- act 3: the Mirror Realm -----
+  glitch: { name: 'GLITCH', title: 'Ghost of the neon city', style: 'glitch', hp: 2000, scale: 1.1, score: 6000, coins: 300, want: 300,
+    attacks: ['lasers', 'teleport', 'fingers'], rage: ['beam', 'lasers', 'dash'], beamColor: 'sky', aura: 'rgba(60,240,255,A)' },
+  thorn: { name: 'THORNMOTHER', title: 'Queen of the wild forest', style: 'thorn', hp: 2400, scale: 1.5, score: 6500, coins: 320, pillarKind: 'vine', summonType: 'wisp', speed: 90,
+    attacks: ['pillars', 'orbs', 'summon'], rage: ['beam', 'pillars', 'orbs'], beamColor: 'vine', aura: 'rgba(120,220,80,A)' },
+  ticktock: { name: 'TICK-TOCK', title: 'The clockwork guardian', style: 'ticktock', hp: 2600, scale: 1.45, score: 7000, coins: 340, shield: true, speed: 100,
+    attacks: ['gears', 'timeslow', 'charge'], rage: ['beam', 'gears', 'quake'], beamColor: 'flame', aura: 'rgba(255,200,90,A)' },
+  darkren: { name: 'DARK REN', title: 'Your own reflection', style: 'darkRen', hp: 2500, scale: 1.05, score: 7500, coins: 360, cloneType: 'mirrorclone', alwaysAura: true,
+    attacks: ['dash', 'fingers', 'teleport', 'clones'], rage: ['beam', 'dash', 'clones'], beamColor: 'dark', aura: 'rgba(160,20,60,A)' },
+  kaldra: { name: 'EMPRESS KALDRA', title: 'Ruler of the Mirror Realm', style: 'kaldra', hp: 4800, scale: 1.3, score: 15000, phases: true, alwaysAura: true,
+    phase2Style: 'kaldra2', phase2Scale: 1.5, phase2Text: 'The mirrors shatter!', phaseColor: '#c0a0ff', summonType: 'doppel', cloneType: 'mirrorclone',
+    finalText: 'Every reflection fights with you!',
+    attacks: ['lasers', 'orbs', 'teleport'], rage: ['beam', 'summon', 'lasers', 'clones', 'dive'], beamColor: 'mirror', aura: 'rgba(170,200,255,A)' },
 };
 
 class Boss {
@@ -242,9 +255,10 @@ class Boss {
         this.vx = 0;
         if (Math.random() < 0.5) spawnParticle({ x: this.x + rand(-30, 30), y: this.y - rand(0, this.h), vx: 0, vy: -100, life: 0.4, size: 3, color: '#d040a0' });
         if (this.stateT >= 0.6) {
-          const alive = Game.enemies.filter((e) => e.type === 'clone' && !e.dead).length;
+          const cloneType = this.def.cloneType || 'clone';
+          const alive = Game.enemies.filter((e) => e.type === cloneType && !e.dead).length;
           for (let i = 0; i < Math.min(2, 3 - alive); i++) {
-            const c = new Enemy('clone', Math.random() < 0.5 ? 'L' : 'R');
+            const c = new Enemy(cloneType, Math.random() < 0.5 ? 'L' : 'R');
             c.x = rand(80, W - 80); c.entering = false;
             Game.enemies.push(c);
             burst(c.x, c.y - 40, '#d040a0', 14, 200, 4, 0.4);
@@ -409,6 +423,43 @@ class Boss {
         }
         break;
 
+      // ----- horizontal lasers: low ones (jump over) and high ones (stay on the ground) -----
+      case 'lasers_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.45) {
+          const low = GROUND - 16, high = GROUND - 118;
+          const first = Math.random() < 0.5 ? low : high;
+          addLaser(first, this, 0);
+          if (this.enraged) addLaser(first === low ? high : low, this, 0.8);
+          Sfx.zap();
+          this.recover(0.5);
+        }
+        break;
+
+      // ----- bouncing gears -----
+      case 'gears_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.4) {
+          const n = this.enraged ? 4 : 3;
+          for (let i = 0; i < n; i++) {
+            Game.projectiles.push({ x: this.x + this.facing * 40, y: this.y - this.h * 0.6, vx: this.facing * rand(200, 380), vy: -rand(300, 620), gravity: 900, bounces: 3, r: 15, dmg: 10, owner: 'enemy', type: 'gear', life: 6, power: 2, trail: '#e0c070' });
+          }
+          Sfx.slash();
+          this.recover(0.4);
+        }
+        break;
+
+      // ----- slows the heroes down for a few seconds -----
+      case 'timeslow_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.6) {
+          Game.heroSlowT = this.enraged ? 4.5 : 3.5;
+          showHint('Time slows down!', 2);
+          Sfx.special(2);
+          this.recover(0.3);
+        }
+        break;
+
       case 'recover':
         this.vx *= 0.85;
         this.alpha = 1;
@@ -505,7 +556,7 @@ class Boss {
     const map = {
       dash: 'dash_tell', slash: 'slash_tell', leap: 'leap', fingers: 'fingers_tell', teleport: 'tp_out',
       charge: 'charge_tell', quake: 'quake_tell', clones: 'clones_tell', summon: 'summon_tell',
-      pillars: 'pillars_tell', lightning: 'pillars_tell', rain: 'rain_tell', dive: 'dive_up', tornado: 'tornado_tell', orbs: 'orbs_tell',
+      pillars: 'pillars_tell', lightning: 'pillars_tell', lasers: 'lasers_tell', gears: 'gears_tell', timeslow: 'timeslow_tell', rain: 'rain_tell', dive: 'dive_up', tornado: 'tornado_tell', orbs: 'orbs_tell',
     };
     this.setState(map[pick] || 'dash_tell');
   }
@@ -563,7 +614,8 @@ class Boss {
   computePose() {
     switch (this.state) {
       case 'dash_tell': case 'slash_tell': case 'quake_tell': case 'clones_tell': case 'summon_tell': case 'final_tell':
-      case 'pillars_tell': case 'rain_tell': case 'orbs_tell': return POSES.swordRaise();
+      case 'pillars_tell': case 'rain_tell': case 'orbs_tell': case 'timeslow_tell': return POSES.swordRaise();
+      case 'lasers_tell': case 'gears_tell': return POSES.punch1();
       case 'tornado_tell': return POSES.swordSlash();
       case 'dive_up': case 'dive_aim': return POSES.jump();
       case 'dive_down': return POSES.dash();

@@ -115,6 +115,23 @@ After Vorg's defeat the Star Crystals start to dim: Vorg was never conquering �
 - The AI ally deals 75% damage, and act 2 enemies have more HP and hit harder, so the fights stay challenging with two heroes.
 - **Final Twin Wave:** in the last phase both heroes reach their final forms (Star Form and Eclipse Form) and fire together into the Hollow King's beam.
 
+## 4c. Act 3: the Mirror Realm
+
+The collapse of the Hollow Throne cracks the sky and opens the **Mirror Realm**. Its ruler, **Empress Kaldra**, steals worlds into her mirrors and makes dark copies of the heroes. **Nyx**, the illusionist from level 4, was born there and joins Ren. Together they must break the **5 Mirror Shards**.
+
+| # | Location | New enemies | Boss |
+|---|---|---|---|
+| 11 | **Neon City** | dark copies, laser snipers (aiming line, then a laser) | **Glitch** – low lasers (jump) and high lasers (stay on the ground), teleport |
+| 12 | **Enchanted Forest** | wisps, golems | **Thornmother** – vines from the ground, spore orbs, summons wisps (Nyx' Mirage Form unlocks) |
+| 13 | **Clockwork Tower** | armored, bombers, snipers | **Tick-Tock** – bouncing gears, slows time, shield, charge |
+| 14 | **Frozen Mirror Lake** | many dark copies | **Dark Ren** – copies your moves, mirror clones |
+| 15 | **Mirror Palace** | everything | **Empress Kaldra** – 3 phases, lasers, clones, final Twin Wave clash |
+
+### Helper friend
+- **Auto** = the story friend (Raxas in act 2, Nyx in act 3), or a fixed **Raxas** / **Nyx** (Nyx after reaching act 3), or **None** to fight alone. Set in the menu or in training; the lead fighter option chooses whether you start as Ren or as the friend.
+- **Nyx:** palm strikes, homing illusion orbs instead of a Ki blast, her own beam. Forms: Base → Mirage Form (+200%, teleport) → Phantom Form (final battle only).
+- Act 3 enemies have ×2.2 HP and hit ×1.8 harder (on top of the difficulty).
+
 ## 5. Score and progress
 - Points for enemies, combos and bosses.
 - **Combo counter:** every 10 hits in a row gives +10% Power.
@@ -176,3 +193,4 @@ Two slots: **① technique** (key I, quick, short recharge) and **② ultimate**
 3. ✅ **Polish:** sounds, particles, dialogs, training screen, mobile controls.
 4. ✅ **Publishing:** GitHub Pages.
 5. ✅ **Act 2:** 5 more levels, the ally Raxas, switching between heroes.
+6. ✅ **Act 3:** 5 more levels, the new friend Nyx, helper friend setting.

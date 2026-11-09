@@ -93,13 +93,13 @@ function saveHighScore() {
   }
 }
 
-// Saved progress: highest level reached (0..9).
+// Saved progress: highest level reached (0..14).
 function loadProgress() {
-  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 9); } catch (e) { return 0; }
+  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 14); } catch (e) { return 0; }
 }
 function saveProgress(levelIndex) {
   try {
-    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 9)));
+    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 14)));
   } catch (e) { /* ignore */ }
 }
 
@@ -119,7 +119,7 @@ function loadRun() {
     const r = JSON.parse(localStorage.getItem('kiwave_run') || 'null');
     if (r && r.upgrades) {
       Game.money = Math.max(0, r.money | 0);
-      Game.controlChar = r.lead === 'raxas' ? 'raxas' : 'ren';
+      Game.controlChar = r.lead === 'raxas' || r.lead === 'friend' ? 'friend' : 'ren';
       Game.techs = Array.isArray(r.techs) ? r.techs.filter((id) => typeof id === 'string') : [];
       Game.equip = r.equip && typeof r.equip === 'object' ? { 1: r.equip[1] || null, 2: r.equip[2] || null } : { 1: null, 2: null };
       Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5), guard: clamp(r.upgrades.guard | 0, 0, 5) };
@@ -196,4 +196,36 @@ function saveResult(levelIndex, res) {
     try { localStorage.setItem('kiwave_stars', JSON.stringify(all)); } catch (e) { /* ignore */ }
   }
   return better;
+}
+
+// ---------- Helper friend ----------
+// 'auto' = the story friend of the level (Raxas in act 2, Nyx in act 3), or a fixed friend, or 'none' (fight alone).
+const HELPER_NAMES = { auto: 'Auto', raxas: 'Raxas', nyx: 'Nyx', none: 'None' };
+function helperOptions() {
+  const opts = ['auto', 'raxas'];
+  if (loadProgress() >= 10) opts.push('nyx');     // Nyx joins in act 3
+  opts.push('none');
+  return opts;
+}
+function loadHelper() {
+  try { const h = localStorage.getItem('kiwave_helper'); return HELPER_NAMES[h] ? h : 'auto'; } catch (e) { return 'auto'; }
+}
+function saveHelper() {
+  try { localStorage.setItem('kiwave_helper', Game.helper); } catch (e) { /* ignore */ }
+}
+function cycleHelper(step) {
+  const opts = helperOptions();
+  const i = Math.max(0, opts.indexOf(Game.helper));
+  Game.helper = opts[(i + step + opts.length) % opts.length];
+  saveHelper();
+}
+Game.helper = loadHelper();
+// Which friend fights with you in this level (null = nobody).
+function friendFor(lvl) {
+  if (!lvl || !lvl.ally) return null;
+  let h = Game.helper;
+  if (h === 'nyx' && loadProgress() < 10) h = 'auto';
+  if (h === 'none') return null;
+  if (h === 'auto') return lvl.friend || 'raxas';
+  return h;
 }
