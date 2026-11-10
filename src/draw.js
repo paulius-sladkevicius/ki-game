@@ -555,17 +555,36 @@ function drawProjectile(ctx, p) {
     ctx.restore();
     return;
   }
-  if (p.type === 'tornado') {
+  if (p.type === 'tornado' || p.type === 'cyclone') {
+    // a boss tornado, or Gale's Cyclone (bigger, in his aura color)
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 6; i++) {
-      const yy = p.y + 28 - i * 11;
-      const rw = 8 + i * 4.5;
-      const ph = Game.time * 14 + i;
-      ctx.strokeStyle = `rgba(200,255,240,${0.25 + 0.1 * (p.power || 1)})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(p.x + Math.sin(ph) * 4, yy, rw, 4, 0, 0, Math.PI * 2); ctx.stroke();
+    const sc = p.scale || 1;
+    const mine = p.type === 'cyclone';
+    for (let i = 0; i < (mine ? 7 : 6); i++) {
+      const yy = p.y + 28 * sc - i * 11 * sc;
+      const rw = (8 + i * 4.5) * sc;
+      const ph = Game.time * (mine ? 18 : 14) + i;
+      ctx.strokeStyle = mine ? (i % 2 ? 'rgba(255,255,255,0.55)' : p.color) : `rgba(200,255,240,${0.25 + 0.1 * (p.power || 1)})`;
+      ctx.lineWidth = mine ? 3.5 : 3;
+      ctx.beginPath(); ctx.ellipse(p.x + Math.sin(ph) * 4 * sc, yy, rw, 4 * sc, 0, 0, Math.PI * 2); ctx.stroke();
     }
+    ctx.restore();
+    return;
+  }
+  if (p.look === 'moth') {
+    // Nyx' illusion moth: a glowing body with flapping wings
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.atan2(p.vy, p.vx));
+    const flap = 0.35 + Math.abs(Math.sin(Game.time * 22 + p.x * 0.05)) * 0.65;
+    ctx.fillStyle = p.outer;
+    for (const s2 of [-1, 1]) {
+      ctx.beginPath(); ctx.ellipse(-2, s2 * 7 * flap, 9, 6 * flap, s2 * 0.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = p.inner;
+    ctx.beginPath(); ctx.ellipse(0, 0, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     return;
   }

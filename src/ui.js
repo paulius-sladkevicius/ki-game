@@ -44,12 +44,13 @@ function drawHUD(ctx) {
   const nameW = ctx.measureText(p.char.name).width;
   text(ctx, p.F.name, 30 + nameW, 26, 13, p.form > 0 ? '#ffd34a' : '#cfd8ff', 'left', '600');
   bar(ctx, 20, 34, 260, 14, p.hp / p.maxHp, p.hp > 30 ? '#4cd964' : '#ff3b30');
-  bar(ctx, 20, 54, 260, 9, p.ki / p.maxKi, '#3aa0ff');
+  const pw = powerInfo(p);
+  bar(ctx, 20, 54, 260, 9, p.ki / p.maxKi, pw.color);
   const full = p.power >= 100;
   const pc = p.form > 0 ? '#ffb000' : '#ffd34a';
   bar(ctx, 20, 69, 260, 9, p.power / 100, pc, 'rgba(0,0,0,0.55)', full || p.form > 0);
   text(ctx, 'HP', 288, 46, 11, '#d0ffd8');
-  text(ctx, 'KI', 288, 63, 11, '#bfe0ff');
+  text(ctx, pw.energy, 288, 63, 11, pw.label);
   text(ctx, 'POWER', 288, 78, 11, '#fff2b0');
   const gk = p.guard / p.maxGuard;
   bar(ctx, 20, 84, 260, 7, gk, p.guardLocked ? '#5a6a78' : '#7fe8ff', 'rgba(0,0,0,0.55)', p.guarding);
@@ -58,17 +59,17 @@ function drawHUD(ctx) {
   if (canUp && Math.floor(Game.time * 4) % 2 === 0) {
     text(ctx, 'T - ' + p.forms[p.unlocked].name.toUpperCase() + '!', 20, 114, 16, p.forms[p.unlocked].auraP);
   }
-  drawSpecialSlots(ctx, p, Game.ally ? 190 : 150);
-  // the AI-controlled ally: small panel under the main bars
-  const a = Game.ally;
-  if (a) {
-    const y0 = 136;
-    text(ctx, a.char.name + (a.alive ? '' : '  (down)'), 20, y0, 13, a.alive ? a.char.color : '#888888');
-    text(ctx, a.F.name, 20 + ctx.measureText(a.char.name + (a.alive ? '' : '  (down)')).width + 8, y0, 11, '#cfd8ff', 'left', '600');
+  drawSpecialSlots(ctx, p, Game.allies.length ? 162 + Game.allies.length * 28 : 150);
+  // the AI-controlled friends: small panels under the main bars
+  Game.allies.forEach((a, i) => {
+    const y0 = 136 + i * 28;
+    const nm = a.char.name + (a.alive ? '' : '  (down)');
+    text(ctx, nm, 20, y0, 13, a.alive ? a.char.color : '#888888');
+    text(ctx, a.F.name, 20 + ctx.measureText(nm).width + 8, y0, 11, '#cfd8ff', 'left', '600');
     bar(ctx, 20, y0 + 6, 150, 7, a.hp / a.maxHp, a.hp > a.maxHp * 0.3 ? '#4cd964' : '#ff3b30');
-    bar(ctx, 20, y0 + 17, 150, 4, a.ki / a.maxKi, '#3aa0ff');
-    if (!IS_TOUCH) text(ctx, 'C - switch', 178, y0 + 14, 11, '#cfd8ff', 'left', '600');
-  }
+    bar(ctx, 20, y0 + 17, 150, 4, a.ki / a.maxKi, powerInfo(a).color);
+    if (!IS_TOUCH && i === 0) text(ctx, 'C - switch', 178, y0 + 14, 11, '#cfd8ff', 'left', '600');
+  });
 
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
   text(ctx, diff().name.toUpperCase() + ' · BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, diff().color, 'right', '600');
@@ -224,12 +225,12 @@ function drawMenu(ctx) {
     } else if (o.kind === 'dialogs') {
       text(ctx, (on ? '▶ ' : '') + 'Dialogs:  ◀ ' + (Game.dialogsOn ? 'On' : 'Off') + ' ▶', 620, y, on ? 19 : fs, on ? '#9fffb0' : '#cfd8ff', 'center', on ? '800' : '600');
     } else if (o.kind === 'helper') {
-      text(ctx, (on ? '▶ ' : '') + 'Helper friend:  ◀ ' + HELPER_NAMES[Game.helper] + ' ▶', 620, y, on ? 20 : 17, on ? '#c99bff' : '#cfd8ff', 'center', on ? '800' : '600');
+      text(ctx, (on ? '▶ ' : '') + 'Helper friends:  ◀ ' + helperName(Game.helper) + ' ▶', 620, y, on ? 20 : 17, on ? '#c99bff' : '#cfd8ff', 'center', on ? '800' : '600');
     } else {
       text(ctx, (on ? '▶ ' : '') + o.label, 620, y, on ? 19 : fs, on ? '#ffe14d' : '#cfd8ff', 'center', on ? '800' : '600');
     }
   });
-  const hint = opts[sel] && opts[sel].kind === 'dialogs' ? '← → show the story dialogs or skip them (P / Esc also skips one)' : opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : opts[sel] && opts[sel].kind === 'helper' ? '← → who helps you from level 6 on (Auto = story friend, None = alone)' : '↑ ↓ choose · ENTER / J start';
+  const hint = opts[sel] && opts[sel].kind === 'dialogs' ? '← → show the story dialogs or skip them (P / Esc also skips one)' : opts[sel] && opts[sel].kind === 'diff' ? '← → change difficulty' : opts[sel] && opts[sel].kind === 'helper' ? '← → who helps you from level 6 on: one or two friends (Auto = story friend)' : '↑ ↓ choose · ENTER / J start';
   if (Math.floor(t * 2) % 2 === 0) text(ctx, hint, 620, y0 + opts.length * gap + 4, 14, '#9fe6ff', 'center', '600');
   if (Game.highScore > 0) text(ctx, 'Best score: ' + Game.highScore, 620, 530, 14, '#ffd34a', 'center', '600');
 }
@@ -415,8 +416,11 @@ function drawTraining(ctx) {
   drawHumanoid(ctx, { x: 250, y: 420, facing: 1, pose: Math.floor(t * 3) % 2 ? POSES.punch1() : POSES.punch2(), style: STYLES.heroBase, scale: 1.6, t });
   drawHumanoid(ctx, { x: 120, y: 420, facing: 1, pose: POSES.idle(t), style: STYLES.master, scale: 1.4, t });
   const nextLvl = LEVELS[Game.levelIndex + 1];
-  const fr = friendFor(nextLvl);
-  if (fr) drawHumanoid(ctx, { x: 370, y: 420, facing: -1, pose: Math.floor(t * 3) % 2 ? POSES.punch2() : (fr === 'raxas' ? POSES.swordSlash() : POSES.punch1()), style: STYLES[CHARACTERS[fr].forms[0].style], scale: 1.6, t });
+  const frs = friendsFor(nextLvl);
+  frs.forEach((fr, i) => {
+    const pose = Math.floor(t * 3 + i) % 2 ? POSES.punch2() : (fr === 'raxas' ? POSES.swordSlash() : POSES.punch1());
+    drawHumanoid(ctx, { x: frs.length > 1 ? 345 + i * 70 : 370, y: 420, facing: -1, pose, style: STYLES[CHARACTERS[fr].forms[0].style], scale: frs.length > 1 ? 1.35 : 1.6, t });
+  });
   text(ctx, 'Master Oro: "Train hard, Ren - the next enemy is stronger!"', 250, 470, 14, '#9fe6ff', 'center', '600');
 
   text(ctx, 'TRAINING', 650, 80, 48, '#ffe14d', 'center', '900');
@@ -454,13 +458,14 @@ function drawTraining(ctx) {
       text(ctx, '⇄ ' + c.name, 818, y + boxH * 0.62, 18, c.color, 'right', '800');
       y += rowH;
     } else if (row.kind === 'helper') {
-      const f = friendFor(LEVELS[Game.levelIndex + 1]);
+      const fr = friendsFor(LEVELS[Game.levelIndex + 1]);
       ctx.fillStyle = on ? 'rgba(200,150,255,0.2)' : 'rgba(0,0,0,0.4)';
       ctx.fillRect(470, y, 360, boxH);
       if (on) { ctx.strokeStyle = '#c99bff'; ctx.lineWidth = 2; ctx.strokeRect(470, y, 360, boxH); }
-      text(ctx, 'Helper friend', 486, y + boxH * 0.45, small ? 15 : 18, '#c99bff', 'left', '800');
-      text(ctx, f ? `${CHARACTERS[f].name} fights with you` : 'you fight alone', 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
-      text(ctx, (on ? '◀ ' : '') + HELPER_NAMES[Game.helper] + (on ? ' ▶' : ''), 818, y + boxH * 0.55, small ? 14 : 17, f ? CHARACTERS[f].color : '#cfd8ff', 'right', '800');
+      text(ctx, 'Helper friends', 486, y + boxH * 0.45, small ? 15 : 18, '#c99bff', 'left', '800');
+      const desc = fr.length ? fr.map((id) => `${CHARACTERS[id].name} (${powerInfo({ id }).energy.toLowerCase()})`).join(' + ') : 'you fight alone';
+      text(ctx, desc, 486, y + boxH * 0.85, small ? 11 : 13, '#cfd8ff', 'left', '600');
+      text(ctx, (on ? '◀ ' : '') + helperName(Game.helper) + (on ? ' ▶' : ''), 818, y + boxH * 0.45, small ? 13 : 15, fr.length ? CHARACTERS[fr[0]].color : '#cfd8ff', 'right', '800');
       y += rowH;
     } else if (row.kind === 'techs') {
       ctx.fillStyle = on ? 'rgba(255,170,80,0.2)' : 'rgba(0,0,0,0.4)';

@@ -18,7 +18,8 @@ const Game = {
   rings: [],
   techs: [],
   equip: { 1: null, 2: null },
-  ally: null,
+  allies: [],        // AI-controlled friends (the hero you control is Game.player)
+  team: [],          // all heroes of the level in a fixed order: Ren first, then the friends
   levelIndex: 0,
   crystals: 0,
   money: 0,
@@ -119,7 +120,7 @@ function loadRun() {
     const r = JSON.parse(localStorage.getItem('kiwave_run') || 'null');
     if (r && r.upgrades) {
       Game.money = Math.max(0, r.money | 0);
-      Game.controlChar = r.lead === 'raxas' || r.lead === 'friend' ? 'friend' : 'ren';
+      Game.controlChar = r.lead === 'friend' || FRIEND_IDS.includes(r.lead) ? r.lead : 'ren';
       Game.techs = Array.isArray(r.techs) ? r.techs.filter((id) => typeof id === 'string') : [];
       Game.equip = r.equip && typeof r.equip === 'object' ? { 1: r.equip[1] || null, 2: r.equip[2] || null } : { 1: null, 2: null };
       Game.upgrades = { hp: clamp(r.upgrades.hp | 0, 0, 5), ki: clamp(r.upgrades.ki | 0, 0, 5), beam: clamp(r.upgrades.beam | 0, 0, 5), guard: clamp(r.upgrades.guard | 0, 0, 5) };
@@ -141,8 +142,8 @@ const IS_TOUCH = ('ontouchstart' in window) || (window.matchMedia && matchMedia(
 function vibrate(ms) { if (IS_TOUCH && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* ignore */ } } }
 
 // ---------- Heroes ----------
-// Game.player is the hero you control, Game.ally the AI-controlled one (from level 6 on).
-function allHeroes() { return [Game.player, Game.ally].filter(Boolean); }
+// Game.player is the hero you control, Game.allies the AI-controlled friends (from level 6 on).
+function allHeroes() { return [Game.player, ...(Game.allies || [])].filter(Boolean); }
 function liveHeroes() { return allHeroes().filter((h) => h.alive); }
 function heroById(id) { return allHeroes().find((h) => h.id === id) || null; }
 // Enemies attack the closest hero that is still standing.
@@ -198,17 +199,38 @@ function saveResult(levelIndex, res) {
   return better;
 }
 
-// ---------- Helper friend ----------
-// 'auto' = the story friend of the level (Raxas in act 2, Nyx in act 3), or a fixed friend, or 'none' (fight alone).
-const HELPER_NAMES = { auto: 'Auto', raxas: 'Raxas', nyx: 'Nyx', none: 'None' };
+// ---------- Helper friends ----------
+// Game.helper: 'auto' = the story friend of the level, one friend ('raxas'), a team of two ('raxas+gale') or 'none' (fight alone).
+const FRIEND_IDS = ['raxas', 'nyx', 'gale'];
+const FRIEND_NAMES = { raxas: 'Raxas', nyx: 'Nyx', gale: 'Gale' };
+// Raxas joins in act 2, Gale after his own level (7, Sky Temple), Nyx in act 3.
+function friendAvailable(id, prog = loadProgress()) {
+  if (id === 'raxas') return true;
+  if (id === 'gale') return prog >= 7;
+  if (id === 'nyx') return prog >= 10;
+  return false;
+}
+function helperName(h) {
+  if (h === 'auto') return 'Auto';
+  if (h === 'none') return 'None';
+  return h.split('+').map((id) => FRIEND_NAMES[id] || id).join(' + ');
+}
+function validHelper(h) {
+  if (h === 'auto' || h === 'none') return true;
+  if (typeof h !== 'string') return false;
+  const ids = h.split('+');
+  return ids.length <= 2 && new Set(ids).size === ids.length && ids.every((id) => FRIEND_IDS.includes(id));
+}
 function helperOptions() {
-  const opts = ['auto', 'raxas'];
-  if (loadProgress() >= 10) opts.push('nyx');     // Nyx joins in act 3
+  const prog = loadProgress();
+  const fr = FRIEND_IDS.filter((id) => friendAvailable(id, prog));
+  const opts = ['auto', ...fr];
+  for (let i = 0; i < fr.length; i++) for (let j = i + 1; j < fr.length; j++) opts.push(fr[i] + '+' + fr[j]);
   opts.push('none');
   return opts;
 }
 function loadHelper() {
-  try { const h = localStorage.getItem('kiwave_helper'); return HELPER_NAMES[h] ? h : 'auto'; } catch (e) { return 'auto'; }
+  try { const h = localStorage.getItem('kiwave_helper'); return validHelper(h) ? h : 'auto'; } catch (e) { return 'auto'; }
 }
 function saveHelper() {
   try { localStorage.setItem('kiwave_helper', Game.helper); } catch (e) { /* ignore */ }
@@ -220,15 +242,16 @@ function cycleHelper(step) {
   saveHelper();
 }
 Game.helper = loadHelper();
-// Which friend fights with you in this level (null = nobody).
-function friendFor(lvl) {
-  if (!lvl || !lvl.ally) return null;
+// Which friends fight with you in this level (an empty list = nobody).
+function friendsFor(lvl) {
+  if (!lvl || !lvl.ally) return [];
   let h = Game.helper;
-  if (h === 'nyx' && loadProgress() < 10) h = 'auto';
-  if (h === 'none') return null;
-  if (h === 'auto') return lvl.friend || 'raxas';
-  return h;
+  if (!helperOptions().includes(h)) h = 'auto';   // a friend that is not unlocked yet
+  if (h === 'none') return [];
+  if (h === 'auto') return [lvl.friend || 'raxas'];
+  return h.split('+');
 }
+function friendFor(lvl) { return friendsFor(lvl)[0] || null; }
 
 // ---------- Dialogs on / off ----------
 function loadDialogsOn() {

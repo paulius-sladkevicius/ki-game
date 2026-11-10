@@ -109,7 +109,7 @@ After Vorg's defeat the Star Crystals start to dim: Vorg was never conquering �
 
 ### Two heroes
 - **C / ⇄** switches which hero you control; the other is driven by an AI that uses exactly the same moves (it attacks, guards against telegraphed attacks, flies over boss beams, transforms).
-- **Raxas:** sword combo with longer reach, a sword wave (power 2) instead of a Ki blast, his own beam. Forms: Base → Shadow Form (+200%, teleport) → Eclipse Form (final battle only).
+- **Raxas:** sword combo with longer reach, a sword wave (power 2) instead of a Ki blast, Shadow Rush instead of a Ki Wave. Forms: Base → Shadow Form (+200%, teleport) → Eclipse Form (final battle only).
 - If the hero you control falls, control passes to the other one; a fallen hero gets back up after the wave (40% HP) and fully before the boss. Game over only when both are down.
 - Enemies attack the closest hero; bosses pick a target before each attack (usually the closest, sometimes the other one).
 - The AI ally deals 75% damage, and act 2 enemies have more HP and hit harder, so the fights stay challenging with two heroes.
@@ -127,9 +127,20 @@ The collapse of the Hollow Throne cracks the sky and opens the **Mirror Realm**.
 | 14 | **Frozen Mirror Lake** | many dark copies | **Dark Ren** – copies your moves, mirror clones |
 | 15 | **Mirror Palace** | everything | **Empress Kaldra** – 3 phases, lasers, clones, final Twin Wave clash |
 
-### Helper friend
-- **Auto** = the story friend (Raxas in acts 2 and 4, Nyx in acts 3 and 5), or a fixed **Raxas** / **Nyx** (Nyx after reaching act 3), or **None** to fight alone. Set in the menu or in training; the lead fighter option chooses whether you start as Ren or as the friend.
-- **Nyx:** palm strikes, homing illusion orbs instead of a Ki blast, her own beam. Forms: Base → Mirage Form (+200%, teleport) → Phantom Form (final battle only).
+### Helper friends
+- **Auto** = the story friend (Raxas in acts 2 and 4, Nyx in acts 3 and 5), one fixed friend (**Raxas**; **Gale** after level 7; **Nyx** after reaching act 3), a **team of two** (Raxas + Nyx, Raxas + Gale, Nyx + Gale) or **None** to fight alone. Set in the menu or in training; the lead fighter option chooses who you control at the start, C / ⇄ cycles through the team.
+- With two friends, enemies have ×1.3 HP and bosses ×1.3 HP. In the final battles every friend joins the final wave clash (Triple Wave).
+- **Own powers instead of Ki** (`src/friends.js`): every friend has their own energy bar and K / L powers. L uses the same 3 charge levels and energy costs as the Ki Wave.
+
+| Friend | Energy | K | L |
+|---|---|---|---|
+| Raxas | SHADOW | sword wave (power 2) | **Shadow Rush** – dash 230/390/620 px, hits every enemy once, goes through shields and blocks, cuts through shots |
+| Nyx | MANA | homing illusion orb | **Phantom Swarm** – 3/5/8 homing illusion moths |
+| Gale | WIND | **Wind Gust** – short range, big push, blows enemy shots back | **Cyclone** – a slow tornado that hits each enemy up to 3–4 times and carries it along |
+
+- Only the Ki Wave can start an ordinary beam clash, so while you control a friend, boss beams have to be dodged or guarded.
+- **Gale** (boss of level 7) joins after his level: Base → Tempest Form (+200%, teleport, ready from the start) → Hurricane Form (final battle only).
+- **Nyx:** palm strikes, homing illusion orbs instead of a Ki blast, Phantom Swarm instead of a Ki Wave. Forms: Base → Mirage Form (+200%, teleport) → Phantom Form (final battle only).
 - Act 3 enemies have ×2.2 HP and hit ×1.8 harder (on top of the difficulty).
 
 ## 4d. Act 4: the Drowned World
@@ -223,3 +234,4 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 5. ✅ **Act 2:** 5 more levels, the ally Raxas, switching between heroes.
 6. ✅ **Act 3:** 5 more levels, the new friend Nyx, helper friend setting.
 7. ✅ **Acts 4 and 5:** 10 more levels – the Drowned World and the First Light.
+8. ✅ **Friend teams:** up to two helper friends at once, the new friend Gale, friends fight with their own energies and powers instead of Ki.

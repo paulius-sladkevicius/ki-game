@@ -261,7 +261,9 @@ function updateProjectiles(dt) {
     if (Math.random() < 0.5) spawnParticle({ x: pr.x, y: pr.y + rand(-3, 3), vx: -pr.vx * 0.1, vy: rand(-20, 20), life: 0.2, size: 2.5, color: pr.trail || (pr.owner === 'player' ? '#bfe6ff' : '#ffb070') });
     // a tidal wave is a tall wall of water standing on the ground
     const pb = pr.type === 'tidal' ? { x: pr.x - 23, y: GROUND - pr.h, w: 46, h: pr.h } : { x: pr.x - pr.r, y: pr.y - pr.r, w: pr.r * 2, h: pr.r * 2 };
-    if (pr.owner === 'player' && pr.type === 'sphere') {
+    if (pr.owner === 'player' && pr.type === 'cyclone') {
+      updateCyclone(pr, pb, dt);   // Gale's Cyclone (friends.js)
+    } else if (pr.owner === 'player' && pr.type === 'sphere') {
       // World Sphere: explodes on the first enemy or on the ground
       if (pr.y > GROUND - 40 || liveTargets().some((t) => rectsOverlap(pb, boxOf(t)))) explodeSphere(pr);
     } else if (pr.owner === 'player' && pr.pierce) {
@@ -308,7 +310,7 @@ function updateBolts(dt) {
 function checkClash() {
   if (Game.clash) return;
   const p = Game.player;
-  if (!p.alive) return;
+  if (!p.alive || powerInfo(p).power) return;   // only Ki Waves clash; friends fight with other powers
   const bb = Game.beams.find((b) => b.owner === 'boss' && b.life > 0 && b.src && !b.src.dead);
   if (!bb) return;
   const boss = bb.src;
@@ -329,21 +331,22 @@ function startClash(pb, bb, opts = {}) {
   boss.setState('clash');
   p.invuln = 0;
   Game.clash = { pb, bb, boss, push: 0.42 + pb.level * 0.05, t: 0, rate: opts.rate || (boss.enraged ? 0.2 : 0.16), final: !!opts.final };
-  // In the final clash the ally joins with a second beam and helps push.
-  const a = Game.ally;
-  if (opts.final && a && a.alive) {
-    // the ally stands right behind the hero you control and fires alongside
-    a.x = clamp(p.x - p.facing * 55, 20, W - 20);
+  // In the final clash every friend joins with their own wave and helps push.
+  const joined = opts.final ? Game.allies.filter((a) => a.alive) : [];
+  Game.clash.abs = [];
+  joined.forEach((a, i) => {
+    // the friends stand right behind the hero you control and fire alongside
+    a.x = clamp(p.x - p.facing * (55 + i * 50), 20, W - 20);
     a.y = p.y; a.vy = 0;
     a.facing = sign(boss.x - a.x);
     a.beamLevel = 3;
     a.pose = POSES.fire();
     const ab = a.releaseBeam(true);
     ab.clash = true;
-    Game.clash.ab = ab;
+    Game.clash.abs.push(ab);
     Game.clash.rate *= 0.75;
-    showBanner('TWIN WAVE!', `${p.char.name} & ${a.char.name}`, 1.6);
-  }
+  });
+  if (joined.length) showBanner(joined.length > 1 ? 'TRIPLE WAVE!' : 'TWIN WAVE!', [p, ...joined].map((h) => h.char.name).join(' & '), 1.6);
 }
 
 function updateClash(dt) {
@@ -363,11 +366,11 @@ function updateClash(dt) {
   c.mx = mx; c.my = ph.y;
   c.pb.len = Math.abs(mx - ph.x);
   c.bb.len = Math.abs(bh.x - mx);
-  if (c.ab) {
-    const ah = c.ab.src.hand();
-    c.ab.x = ah.x; c.ab.y = ah.y;
-    c.ab.dir = sign(mx - ah.x);
-    c.ab.len = Math.abs(mx - ah.x);
+  for (const ab of c.abs) {
+    const ah = ab.src.hand();
+    ab.x = ah.x; ab.y = ah.y;
+    ab.dir = sign(mx - ah.x);
+    ab.len = Math.abs(mx - ah.x);
   }
   addShake(c.final ? 7 : 4);
   for (let i = 0; i < (c.final ? 6 : 3); i++) {
@@ -382,8 +385,8 @@ function updateClash(dt) {
   if (!result) return;
 
   Game.clash = null;
-  Game.beams = Game.beams.filter((b) => b !== c.pb && b !== c.bb && b !== c.ab);
-  if (c.ab && c.ab.src.alive) c.ab.src.setState('normal');
+  Game.beams = Game.beams.filter((b) => b !== c.pb && b !== c.bb && !c.abs.includes(b));
+  for (const ab of c.abs) if (ab.src.alive) ab.src.setState('normal');
   Game.flash = c.final ? 0.9 : 0.35;
   if (result > 0) {
     p.setState('normal');

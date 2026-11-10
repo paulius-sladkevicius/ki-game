@@ -1,5 +1,5 @@
 'use strict';
-// Playable heroes (Ren and Raxas): movement, attacks, Ki blasts, the Ki Wave, guard and transformations.
+// Playable heroes (Ren and the friends, see friends.js): movement, attacks, Ki blasts, the Ki Wave, guard and transformations.
 // A hero is driven either by the player's Input or by an AI that produces the same kind of input.
 
 const BEAM_LEVELS = {
@@ -214,13 +214,17 @@ class Player {
           const a = Math.random() * Math.PI * 2, r = rand(40, 80);
           spawnParticle({ x: h.x + Math.cos(a) * r, y: h.y + Math.sin(a) * r, vx: -Math.cos(a) * r * 4, vy: -Math.sin(a) * r * 4, life: 0.25, size: rand(1.5, 3.5), color: this.F.ball[0] });
         }
-        if (!I.down.beam) this.releaseBeam();
+        if (!I.down.beam) { if (powerInfo(this).power) releasePower(this); else this.releaseBeam(); }
         break;
       }
 
       case 'firing':
         this.vx = 0;
-        if (this.stateT >= BEAM_LEVELS[this.beamLevel].dur) this.setState('normal');
+        if (this.stateT >= (this.fireDur || BEAM_LEVELS[this.beamLevel].dur)) { this.fireDur = 0; this.setState('normal'); }
+        break;
+
+      case 'rush':
+        updateRush(this, dt);
         break;
 
       case 'kicharge':
@@ -282,7 +286,7 @@ class Player {
         this.flying = true;
         this.vy += (-220 - this.vy) * Math.min(1, dt * 6);
         this.ki -= 10 * dt;
-      } else if (['charging', 'firing', 'clash', 'transform', 'dash', 'special', 'meteor', 'sphere'].includes(this.state)) {
+      } else if (['charging', 'firing', 'clash', 'transform', 'dash', 'special', 'meteor', 'sphere', 'rush'].includes(this.state)) {
         this.flying = false;
         this.vy = lerp(this.vy, 0, Math.min(1, dt * 10));
       } else {
@@ -322,6 +326,7 @@ class Player {
       case 'firing': case 'clash': return POSES.fire();
       case 'kicharge': return this.guardLocked ? POSES.kicharge(t) : POSES.guard(t);
       case 'dash': return POSES.dash();
+      case 'rush': return this.char.sword ? POSES.swordSlash() : POSES.dash();
       case 'special': return POSES[this.specialPose || 'transform'](t);
       case 'meteor': return this.comboStep === 3 ? POSES.kick() : this.comboStep === 2 ? POSES.punch2() : POSES.punch1();
       case 'sphere': return POSES.swordRaise();
@@ -415,8 +420,9 @@ class Player {
   }
 
   fireBlast() {
+    if (this.char.wind) { windGust(this); return; }
     if (this.blastCd > 0) return;
-    if (this.ki < 5) { floater(this.x, this.y - 95, 'Not enough Ki!', '#7fc8ff', 15); return; }
+    if (this.ki < 5) { floater(this.x, this.y - 95, `Not enough ${powerInfo(this).energy === 'KI' ? 'Ki' : powerInfo(this).energy}!`, powerInfo(this).color, 15); return; }
     this.ki -= 5;
     this.blastCd = 0.22;
     this.setState('blast');
@@ -449,7 +455,7 @@ class Player {
   }
 
   startCharge() {
-    if (this.ki < beamCost(1)) { floater(this.x, this.y - 95, 'Not enough Ki! (hold S)', '#7fc8ff', 15); return; }
+    if (this.ki < beamCost(1)) { const e = powerInfo(this).energy; floater(this.x, this.y - 95, `Not enough ${e === 'KI' ? 'Ki' : e}! (hold S)`, powerInfo(this).color, 15); return; }
     this.setState('charging');
     this.charge = 0;
     this.beamLevel = 1;
@@ -473,8 +479,9 @@ class Player {
     if (this.controlled) Sfx.chargeStop();
     Sfx.beam(this.beamLevel);
     addShake(this.beamLevel * 3);
+    this.fireDur = 0;
     this.setState(forClash ? 'clash' : 'firing');
-    if (this.beamLevel === 3) floater(this.x, this.y - 110, 'KI WAVE!', this.F.auraP, 26);
+    if (this.beamLevel === 3 && (this.controlled || !forClash)) floater(this.x, this.y - 110, powerInfo(this).energy + ' WAVE!', this.F.auraP, 26);
     return b;
   }
 
@@ -613,7 +620,7 @@ class Player {
       drawEnergyBall(ctx, this.x, this.y - 150, r, '#dff4ff', 'rgba(80,170,255,0.7)', this.animT);
     }
     // with two heroes, a small marker shows which one you control
-    if (Game.ally && this.controlled && this.alive) {
+    if (Game.allies.length && this.controlled && this.alive) {
       const top = this.y - this.h * this.scale - 30 + Math.sin(this.animT * 5) * 3;
       ctx.fillStyle = this.char.color;
       ctx.beginPath(); ctx.moveTo(this.x - 7, top); ctx.lineTo(this.x + 7, top); ctx.lineTo(this.x, top + 9); ctx.closePath(); ctx.fill();

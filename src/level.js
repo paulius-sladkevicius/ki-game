@@ -230,6 +230,8 @@ const LEVELS = [
       { type: 'dialog', lines: [
         L('Gale', 'The wind... has changed...'),
         L('', 'The second Hollow Seal breaks apart in the wind.'),
+        L('Gale', 'The Hollow King tricked me too. When you need the wind, call me - I will fight at your side.'),
+        L('UNLOCKED', 'NEW FRIEND - GALE: he fights with WIND, not Ki. K = Wind Gust (blows enemy shots back), L = Cyclone. Choose him under Helper friends - alone or together with Raxas!'),
         L('Raxas', 'The next one is deep underground. In the Crystal Caverns.'),
       ] },
       { type: 'victory' },
@@ -468,9 +470,15 @@ function friendUnlocks(step) {
   if (step.unlockFriend) Object.assign(u, step.unlockFriend);
   return u;
 }
+// The hero you control stands at x = 200, the friends behind.
+function placeHeroes() {
+  Game.player.x = 200; Game.player.facing = 1;
+  Game.allies.forEach((a, i) => { a.x = 120 - i * 60; a.facing = 1; });
+}
+
 function friendUnlocked(levelIndex, id, fromStep) {
   // everything unlocked in earlier levels counts, plus the steps of this level already passed
-  let best = 0;
+  let best = id === 'gale' ? 1 : 0;   // Gale is a master: his Tempest Form is ready from the start
   for (let li = 0; li <= levelIndex; li++) {
     const L = LEVELS[li];
     const start = L.allyUnlockStart;
@@ -528,11 +536,12 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   const actHp = { 1: 1, 2: 1.7, 3: 2.2, 4: 2.4, 5: 2.6 }, actDmg = { 1: 1, 2: 1.6, 3: 1.8, 4: 1.9, 5: 2.0 };
   Game.enemyHpMul = (actHp[lvl.act || 1] || 1) * diff().hp;
   Game.dangerMul = (actDmg[lvl.act || 1] || 1) * diff().dmg;
-  // heroes: Ren always; from level 6 on a helper friend can join (see the Helper friend setting)
-  Game.player = new Player('ren');
-  const friend = friendFor(lvl);
-  Game.ally = friend ? new Player(friend) : null;
-  if (Game.ally) { Game.ally.x = 120; Game.ally.ai = new AllyAI(Game.ally); }
+  // heroes: Ren always; from level 6 on one or two helper friends can join (see the Helper friends setting)
+  const friendIds = friendsFor(lvl);
+  // a team of three makes the enemies and bosses a bit tougher
+  Game.teamMul = friendIds.length > 1 ? 1.3 : 1;
+  Game.enemyHpMul *= Game.teamMul;
+  Game.team = [new Player('ren'), ...friendIds.map((id) => new Player(id))];
   Game.switchCd = 0;
   Game.script = lvl.script;
   // level statistics for the star rating (kept when retrying after a defeat)
@@ -553,27 +562,21 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   for (let i = 0; i < fromStep; i++) {
     if (lvl.script[i].unlock) unlocked = Math.max(unlocked, lvl.script[i].unlock);
   }
-  const allyUnlocked = Game.ally ? friendUnlocked(levelIndex, Game.ally.id, fromStep) : 0;
-  Game.player.unlocked = unlocked;
-  if (unlocked > 0) Game.player.power = 100;
-  if (Game.ally) {
-    Game.ally.unlocked = allyUnlocked;
-    if (allyUnlocked > 0) Game.ally.power = 100;
-    // start with the hero chosen last time
-    if (Game.controlChar === 'friend') {
-      const ren = Game.player;
-      Game.player = Game.ally; Game.player.ai = null;
-      Game.ally = ren; Game.ally.ai = new AllyAI(ren);
-      Game.player.x = 200; Game.ally.x = 120;
-    }
+  for (const h of Game.team) {
+    h.unlocked = h.id === 'ren' ? unlocked : friendUnlocked(levelIndex, h.id, fromStep);
+    if (h.unlocked > 0) h.power = 100;
   }
+  // start with the hero chosen last time
+  const leadId = leadIdFor(friendIds);
+  setControlled(Game.team.find((h) => h.id === leadId) || Game.team[0]);
+  placeHeroes();
   // techniques: quick ones are ready at once, ultimates start half recharged
   ensureTechs();
   for (const h of allHeroes()) {
     resetTechCooldowns(h);
   }
   const sw = document.getElementById('swBtn');
-  if (sw) sw.classList.toggle('off', !Game.ally);
+  if (sw) sw.classList.toggle('off', !Game.allies.length);
   saveProgress(levelIndex);
   saveRun();
   Sfx.music(lvl.theme);
@@ -596,7 +599,7 @@ function nextStep() {
         if (s.unlock) heroById('ren').unlock(s.unlock);
         const fu = friendUnlocks(s);
         for (const id in fu) if (heroById(id)) heroById(id).unlock(fu[id]);
-        if (s.joinAlly && Game.ally) showHint(IS_TOUCH ? `Tap ⇄ to switch between Ren and ${Game.ally.char.name}` : `Press C to switch between Ren and ${Game.ally.char.name}`, 4);
+        if (s.joinAlly && Game.allies.length) showHint((IS_TOUCH ? 'Tap ⇄' : 'Press C') + ' to switch between ' + Game.team.map((h) => h.char.name).join(', ').replace(/, ([^,]*)$/, ' and $1'), 4);
         else if (s.unlock || Object.keys(friendUnlocks(s)).some((id) => heroById(id))) showHint('Press T to transform!', 3);
         nextStep();
       });
@@ -607,11 +610,9 @@ function nextStep() {
       break;
     }
     case 'boss': {
-      const p = Game.player;
-      p.x = 200; p.facing = 1;
+      placeHeroes();
       // before the boss: full HP on Easy/Normal, only part of it on Hard and Very Hard
       for (const h of allHeroes()) { h.revive(diff().bossHeal); h.hp = Math.min(h.maxHp, h.hp + h.maxHp * diff().bossHeal); }
-      if (Game.ally) { Game.ally.x = 120; Game.ally.facing = 1; }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
       const own = Game.bosses.map((b) => b.def.music).find(Boolean);    // final bosses of the later acts name their track
       Sfx.music(own || (Game.bosses.some((b) => b.id === 'kaldra') ? 'final3' : Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss'));
@@ -679,7 +680,7 @@ function updateScript(dt) {
 function openDialog(lines, cb) {
   Sfx.chargeStop();
   for (const p of allHeroes()) {
-    if (['charging', 'firing', 'kicharge', 'punch', 'blast', 'transform', 'hurt', 'clash'].includes(p.state)) {
+    if (['charging', 'firing', 'kicharge', 'punch', 'blast', 'transform', 'hurt', 'clash', 'rush'].includes(p.state)) {
       if (p.state === 'transform') p.form = p.transformTo;
       p.setState('normal');
     }

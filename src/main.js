@@ -7,6 +7,16 @@ Game.highScore = loadHighScore();
 Input.setupTouch();
 const swBtn = document.getElementById('swBtn');
 const spBtns = [1, 2].map((k) => document.querySelector(`#touch [data-a="special${k}"]`));
+const powerLabels = { k: document.querySelector('#touch [data-a="blast"] small'), l: document.querySelector('#touch [data-a="beam"] small') };
+
+// Touch buttons K and L are named after the powers of the hero you control (blast/wave, slash/rush, ...).
+function updatePowerButtons() {
+  const info = Game.player && ['PLAY', 'DIALOG', 'PAUSE'].includes(Game.state) ? powerInfo(Game.player) : POWER_INFO.ren;
+  for (const key of ['k', 'l']) {
+    const el = powerLabels[key];
+    if (el && el.textContent !== info[key]) el.textContent = info[key];
+  }
+}
 
 // Touch buttons ① ② show how far the technique has recharged.
 // The button is only restyled when its value changes; 'ready' (exactly 0) is its own value,
@@ -39,10 +49,11 @@ function update(dt) {
   Game.stateT += dt;
   if (Game.flash > 0) Game.flash -= dt;
   if (Input.pressed.mute) { Game.muted = !Game.muted; if (Game.muted) Sfx.chargeStop(); }
-  // the ⇄ button only makes sense in a level with two heroes
-  const showSw = !!Game.ally && ['PLAY', 'DIALOG', 'PAUSE'].includes(Game.state);
+  // the ⇄ button only makes sense in a level with friends
+  const showSw = Game.allies.length > 0 && ['PLAY', 'DIALOG', 'PAUSE'].includes(Game.state);
   if (swBtn && swBtn.classList.contains('off') === showSw) swBtn.classList.toggle('off', !showSw);
   updateSpecialButtons();
+  updatePowerButtons();
 
   switch (Game.state) {
     case 'MENU':
@@ -202,17 +213,15 @@ function updateLevelSelect() {
 // Training between levels: spend coins to upgrade HP, Ki and the Ki Wave.
 const TRAINING = [
   { key: 'hp', name: 'Health', desc: '+20 max HP', color: '#4cd964' },
-  { key: 'ki', name: 'Ki', desc: '+20 max Ki, +15% regeneration', color: '#3aa0ff' },
-  { key: 'beam', name: 'Ki Wave', desc: '+15% wave damage', color: '#ffd34a' },
+  { key: 'ki', name: 'Ki', desc: '+20 max Ki (and friends\' energy), +15% regen', color: '#3aa0ff' },
+  { key: 'beam', name: 'Ki Wave', desc: '+15% wave damage (also friends\' L powers)', color: '#ffd34a' },
   { key: 'guard', name: 'Guard', desc: '+20 max guard, +15% refill', color: '#7fe8ff' },
 ];
 function trainCost(lvl) { return 100 * (lvl + 1); }
 
 // The hero you control at the start of the next level.
 function leadCharacter() {
-  const next = LEVELS[Game.levelIndex + 1];
-  const f = friendFor(next);
-  return CHARACTERS[Game.controlChar === 'friend' && f ? f : 'ren'];
+  return CHARACTERS[leadIdFor(friendsFor(LEVELS[Game.levelIndex + 1]))];
 }
 
 // Rows of the training screen: upgrades, helper friend and lead fighter (from act 2), techniques, continue.
@@ -237,8 +246,8 @@ function updateTraining() {
   if (cur.kind === 'helper' && (I.left || I.right || ((I.confirm || I.punch) && Game.stateT > 0.3))) {
     cycleHelper(I.left ? -1 : 1);
     Sfx.select();
-    const f = friendFor(LEVELS[Game.levelIndex + 1]);
-    Game.trainMsg = { text: f ? `Helper friend: ${CHARACTERS[f].name}` : 'You will fight alone', t: 1.2, color: f ? CHARACTERS[f].color : '#cfd8ff' };
+    const fr = friendsFor(LEVELS[Game.levelIndex + 1]);
+    Game.trainMsg = { text: fr.length ? `Helper friends: ${fr.map((id) => CHARACTERS[id].name).join(' + ')}` : 'You will fight alone', t: 1.2, color: fr.length ? CHARACTERS[fr[0]].color : '#cfd8ff' };
     return;
   }
   if (cur.kind === 'lead' && (I.left || I.right)) Input.pressed.confirm = true;
@@ -251,7 +260,8 @@ function updateTraining() {
       return;
     }
     if (row.kind === 'lead') {
-      Game.controlChar = Game.controlChar === 'friend' ? 'ren' : 'friend';
+      const ids = ['ren', ...friendsFor(LEVELS[Game.levelIndex + 1])];
+      Game.controlChar = ids[(ids.indexOf(leadCharacter().id) + 1) % ids.length];
       saveRun();
       Sfx.select();
       const c = leadCharacter();
@@ -272,17 +282,17 @@ function updateTraining() {
   }
 }
 
-// Switch which hero you control; the other one is taken over by the AI.
+// Switch to the next hero of the team that is still standing; the others are taken over by the AI.
 function switchHero(force) {
-  const p = Game.player, a = Game.ally;
-  if (!a || !a.alive || Game.clash || Game.state !== 'PLAY') return false;
+  const p = Game.player, team = Game.team;
+  if (!Game.allies.length || Game.clash || Game.state !== 'PLAY') return false;
   if (!force && Game.switchCd > 0) return false;
+  let a = null;
+  for (let k = 1; k < team.length && !a; k++) { const c = team[(team.indexOf(p) + k) % team.length]; if (c.alive) a = c; }
+  if (!a) return false;
   if (p.alive && ['charging', 'kicharge', 'punch', 'blast'].includes(p.state)) p.setState('normal');
   Sfx.chargeStop();
-  Game.player = a;
-  Game.ally = p;
-  a.ai = null;
-  p.ai = new AllyAI(p);
+  setControlled(a);
   Game.controlChar = a.id;
   Game.switchCd = 0.4;
   floater(a.x, a.y - 125, 'YOU: ' + a.char.name, a.char.color, 18);
@@ -304,14 +314,13 @@ function updatePlay(dt) {
   if (Game.switchCd > 0) Game.switchCd -= dt;
   if (Input.pressed.switch) switchHero(false);
   const p = Game.player;
-  const a = Game.ally;
 
   // Tick-Tock can slow the heroes down for a few seconds
   if (Game.heroSlowT > 0) Game.heroSlowT -= dt;
   if (Game.darkT > 0) Game.darkT -= dt;
   const hs = Game.heroSlowT > 0 ? 0.55 : 1;
   p.update((p.state === 'transform' ? dt : edt) * hs, Input);
-  if (a) a.update((a.state === 'transform' ? dt : edt) * hs, a.ai.think(edt));
+  for (const a of Game.allies) a.update((a.state === 'transform' ? dt : edt) * hs, a.ai.think(edt));
   for (const e of Game.enemies) e.update(edt);
   for (const b of Game.bosses) b.update(edt);
   checkClash();
@@ -329,11 +338,11 @@ function updatePlay(dt) {
 
   updateScript(dt);
 
-  // the controlled hero is down: hand control to the ally, if it is still standing
-  if (p.state === 'dead' && p.stateT > 1.2 && a && a.alive && Game.state === 'PLAY') {
-    switchHero(true);
-    showHint(`${p.char.name} is down! Now controlling ${a.char.name}`, 3);
-  } else if (p.state === 'dead' && p.stateT > 1.6 && !(a && a.alive) && Game.state === 'PLAY') {
+  // the controlled hero is down: hand control to a friend that is still standing
+  const standing = Game.allies.some((h) => h.alive);
+  if (p.state === 'dead' && p.stateT > 1.2 && standing && Game.state === 'PLAY') {
+    if (switchHero(true)) showHint(`${p.char.name} is down! Now controlling ${Game.player.char.name}`, 3);
+  } else if (p.state === 'dead' && p.stateT > 1.6 && !standing && Game.state === 'PLAY') {
     saveHighScore();
     Sfx.music(null);
     Sfx.lose();
@@ -344,7 +353,7 @@ function updatePlay(dt) {
 function drawWorld(ctx) {
   for (const e of Game.enemies) e.draw(ctx);
   for (const b of Game.bosses) b.draw(ctx);
-  if (Game.ally) Game.ally.draw(ctx);
+  for (const a of Game.allies) a.draw(ctx);
   if (Game.player) Game.player.draw(ctx);
   for (const b of Game.beams) drawBeam(ctx, b);
   drawClash(ctx);

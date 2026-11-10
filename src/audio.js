@@ -239,6 +239,7 @@ const Sfx = (() => {
     select() { tone(880, 0.08, 'square', 0.1); tone(1320, 0.08, 'square', 0.1, null, 0.08); },
     jump() { tone(300, 0.1, 'square', 0.05, 600); },
     slash() { noise(0.2, 0.3, 6000, 'highpass'); tone(900, 0.15, 'sawtooth', 0.05, 300); },
+    wind() { noise(0.4, 0.28, 500, 'bandpass', 2600); tone(260, 0.3, 'sine', 0.05, 520); },
     teleport() { tone(1200, 0.12, 'sine', 0.12, 300); },
     zap() { noise(0.12, 0.3, 5000, 'highpass'); tone(1800, 0.08, 'square', 0.05, 600); },
     boom() { noise(0.25, 0.45, 800, 'lowpass', 100); tone(60, 0.3, 'sine', 0.3, 25); },

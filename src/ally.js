@@ -28,16 +28,18 @@ class AllyAI {
       return I;
     }
     I.down.beam = false;
-    if (['clash', 'transform', 'hurt', 'dead'].includes(h.state)) return I;
+    if (['clash', 'transform', 'hurt', 'dead', 'rush'].includes(h.state)) return I;
 
     const go = (dir) => { I.down[dir > 0 ? 'right' : 'left'] = true; };
     const targets = liveTargets().filter((t) => !t.entering && t.state !== 'dying' && t.state !== 'intro');
+
+    const slot = Math.max(0, Game.allies.indexOf(h));   // with two friends, the second one stands further back
 
     // 0) the final sphere is charging: gather next to the player for the Twin Wave
     if (Game.bosses.some((b) => !b.dead && b.state === 'final_tell')) {
       const lead = Game.player;
       if (lead && lead.alive) {
-        const want = lead.x - lead.facing * 55;
+        const want = lead.x - lead.facing * (55 + slot * 50);
         if (Math.abs(want - h.x) > 20) go(want - h.x);
       }
       return I;
@@ -67,6 +69,17 @@ class AllyAI {
       return I;
     }
 
+    // 1b) Gale blows incoming shots back at the enemies
+    if (h.char.wind && h.state === 'normal' && this.blastT <= 0 && h.ki > 10) {
+      const shot = Game.projectiles.find((pr) => pr.owner === 'enemy' && pr.life > 0 && pr.vx && !uncancellable(pr) && !pr.gravity && pr.type !== 'shard'
+        && Math.abs(pr.x - h.x) < 190 && Math.abs(pr.y - (h.y - 50)) < 70 && sign(h.x - pr.x) === sign(pr.vx));
+      if (shot) {
+        if (h.facing !== sign(shot.x - h.x)) go(shot.x - h.x);
+        else { I.pressed.blast = true; this.blastT = 0.45; }
+        return I;
+      }
+    }
+
     // 2) danger: an enemy is about to hit us -> guard (facing it)
     const threat = targets.find((t) => {
       const d = Math.abs(t.x - h.x);
@@ -90,7 +103,7 @@ class AllyAI {
     if (!targets.length) {
       const lead = Game.player;
       if (lead && lead.alive) {
-        const want = lead.x - lead.facing * 80;
+        const want = lead.x - lead.facing * (80 + slot * 60);
         if (Math.abs(want - h.x) > 40) go(want - h.x);
       }
       return I;
@@ -102,13 +115,14 @@ class AllyAI {
     const dx = t.x - h.x, dist = Math.abs(dx), dir = sign(dx);
     const flying = t.ai === 'drone';
     const reach = h.char.sword ? 78 : 62;
+    const wind = h.char.wind;
 
     if (flying) {
       // fly up to the drone and shoot it
       if (h.y - 45 > t.y - 15) I.down.jump = true;
       if (h.onGround && this.jumpT <= 0) { I.pressed.jump = true; this.jumpT = 0.4; }
       if (dist > 160) go(dx); else if (h.facing !== dir) go(dx);
-      if (Math.abs((h.y - 55) - (t.y - 15)) < 30 && this.blastT <= 0 && h.ki > 10) { I.pressed.blast = true; this.blastT = 0.45; }
+      if (Math.abs((h.y - 55) - (t.y - 15)) < (wind ? 50 : 30) && (!wind || dist < 200) && this.blastT <= 0 && h.ki > 10) { I.pressed.blast = true; this.blastT = 0.45; }
       return I;
     }
 
@@ -120,7 +134,8 @@ class AllyAI {
       this.beamT = rand(3.5, 6);
       return I;
     }
-    if (dist > 160 && dist < 520 && this.blastT <= 0 && h.ki > 25) {
+    // Gale's gust only reaches close enemies
+    if (wind ? dist < 200 && this.blastT <= 0 && h.ki > 15 : dist > 160 && dist < 520 && this.blastT <= 0 && h.ki > 25) {
       if (h.facing !== dir) go(dx);
       else { I.pressed.blast = true; this.blastT = rand(0.7, 1.3); }
       return I;

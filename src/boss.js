@@ -54,7 +54,7 @@ class Boss {
     this.vx = 0; this.vy = 0;
     this.setScale(d.scale);
     this.facing = -1;
-    this.maxHp = this.hp = Math.round(d.hp * diff().hp);
+    this.maxHp = this.hp = Math.round(d.hp * diff().hp * (Game.teamMul || 1));   // a team of three meets a tougher boss
     this.state = 'intro';
     this.stateT = 0;
     this.animT = 0;
