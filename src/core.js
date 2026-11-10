@@ -93,13 +93,13 @@ function saveHighScore() {
   }
 }
 
-// Saved progress: highest level reached (0..14).
+// Saved progress: highest level reached (0..24).
 function loadProgress() {
-  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 14); } catch (e) { return 0; }
+  try { return clamp(parseInt(localStorage.getItem('kiwave_level') || '0', 10) || 0, 0, 24); } catch (e) { return 0; }
 }
 function saveProgress(levelIndex) {
   try {
-    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 14)));
+    if (levelIndex > loadProgress()) localStorage.setItem('kiwave_level', String(clamp(levelIndex, 0, 24)));
   } catch (e) { /* ignore */ }
 }
 

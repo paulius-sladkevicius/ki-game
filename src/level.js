@@ -482,6 +482,15 @@ function friendUnlocked(levelIndex, id, fromStep) {
   return best;
 }
 
+// What each act collects and how its end is announced.
+const ACTS = {
+  1: { mark: '★', hud: '', got: 'Star Crystal recovered', end: 'Vorg is defeated - the Star Crystals are safe' },
+  2: { mark: '◆', hud: ' seals', got: 'Hollow Seal broken', end: 'The Hollow King is gone - light returns to the world' },
+  3: { mark: '◇', hud: ' shards', got: 'Mirror Shard broken', end: 'Kaldra is defeated - the stolen worlds are free' },
+  4: { mark: '●', hud: ' pearls', got: 'Tide Pearl recovered', end: 'The Tide King sleeps - the seas are calm again' },
+  5: { mark: '✹', hud: ' sparks', got: 'Star Spark lit', end: 'Zenith is at peace - the First Light shines for everyone' },
+};
+
 // Act 1 collects Star Crystals, act 2 breaks Hollow Seals: counted per act.
 function actOf(levelIndex) { return (LEVELS[levelIndex] && LEVELS[levelIndex].act) || 1; }
 function crystalsBefore(levelIndex) {
@@ -504,6 +513,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.hazards = [];
   Game.rings = [];
   Game.heroSlowT = 0;
+  Game.darkT = 0;
   Game.coins = [];
   Game.particles = [];
   Game.floaters = [];
@@ -515,8 +525,9 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.hitstop = 0;
   Game.crystals = crystalsBefore(levelIndex);
   // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
-  Game.enemyHpMul = (lvl.act === 3 ? 2.2 : lvl.act === 2 ? 1.7 : 1) * diff().hp;
-  Game.dangerMul = (lvl.act === 3 ? 1.8 : lvl.act === 2 ? 1.6 : 1) * diff().dmg;
+  const actHp = { 1: 1, 2: 1.7, 3: 2.2, 4: 2.4, 5: 2.6 }, actDmg = { 1: 1, 2: 1.6, 3: 1.8, 4: 1.9, 5: 2.0 };
+  Game.enemyHpMul = (actHp[lvl.act || 1] || 1) * diff().hp;
+  Game.dangerMul = (actDmg[lvl.act || 1] || 1) * diff().dmg;
   // heroes: Ren always; from level 6 on a helper friend can join (see the Helper friend setting)
   Game.player = new Player('ren');
   const friend = friendFor(lvl);
@@ -592,7 +603,7 @@ function nextStep() {
       break;
     case 'wave': {
       const n = waves.indexOf(s) + 1;
-      showBanner(`WAVE ${n}/${waves.length}`, "Defeat Vorg's soldiers!", 1.8);
+      showBanner(`WAVE ${n}/${waves.length}`, actOf(Game.levelIndex) === 1 ? "Defeat Vorg's soldiers!" : 'Defeat them all!', 1.8);
       break;
     }
     case 'boss': {
@@ -602,9 +613,10 @@ function nextStep() {
       for (const h of allHeroes()) { h.revive(diff().bossHeal); h.hp = Math.min(h.maxHp, h.hp + h.maxHp * diff().bossHeal); }
       if (Game.ally) { Game.ally.x = 120; Game.ally.facing = 1; }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
-      Sfx.music(Game.bosses.some((b) => b.id === 'kaldra') ? 'final3' : Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss');
+      const own = Game.bosses.map((b) => b.def.music).find(Boolean);    // final bosses of the later acts name their track
+      Sfx.music(own || (Game.bosses.some((b) => b.id === 'kaldra') ? 'final3' : Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss'));
       const names = Game.bosses.map((b) => b.name).join(' & ');
-      showBanner('BOSS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : 'The twins', 2.0);
+      showBanner('BOSS: ' + names, Game.bosses.length === 1 ? Game.bosses[0].def.title : (s.duoTitle || 'The twins'), 2.0);
       break;
     }
     case 'victory':

@@ -308,6 +308,7 @@ function updatePlay(dt) {
 
   // Tick-Tock can slow the heroes down for a few seconds
   if (Game.heroSlowT > 0) Game.heroSlowT -= dt;
+  if (Game.darkT > 0) Game.darkT -= dt;
   const hs = Game.heroSlowT > 0 ? 0.55 : 1;
   p.update((p.state === 'transform' ? dt : edt) * hs, Input);
   if (a) a.update((a.state === 'transform' ? dt : edt) * hs, a.ai.think(edt));
@@ -356,12 +357,36 @@ function drawWorld(ctx) {
   drawFloaters(ctx);
 }
 
+// Darkness (the angler boss): everything is black except a circle of light around each hero and boss.
+let _darkCanvas = null;
+function drawDarkness(ctx) {
+  if (!_darkCanvas) { _darkCanvas = document.createElement('canvas'); _darkCanvas.width = W; _darkCanvas.height = H; }
+  const g = _darkCanvas.getContext('2d');
+  const k = clamp(Math.min(Game.darkT, 1), 0, 1);     // fades back in during the last second
+  g.globalCompositeOperation = 'source-over';
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = `rgba(2,4,12,${0.93 * k})`;
+  g.fillRect(0, 0, W, H);
+  g.globalCompositeOperation = 'destination-out';
+  const hole = (x, y, r) => {
+    const rg = g.createRadialGradient(x, y, r * 0.35, x, y, r);
+    rg.addColorStop(0, 'rgba(0,0,0,1)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  };
+  for (const h of liveHeroes()) hole(h.x, h.y - 45, 125);
+  for (const b of liveBosses()) hole(b.x, b.y - b.h - 8, 46);          // the boss' glowing lure gives it away
+  for (const pr of Game.projectiles) hole(pr.x, pr.y, 34);
+  for (const bm of Game.beams) hole(bm.x + bm.dir * bm.len * 0.5, bm.y, Math.max(60, bm.len * 0.55));
+  ctx.drawImage(_darkCanvas, 0, 0);
+}
+
 function render() {
   ctx.save();
   if (Game.shake > 0) ctx.translate(rand(-Game.shake, Game.shake), rand(-Game.shake, Game.shake));
   drawBackground(ctx);
   if (Game.state !== 'MENU' && Game.state !== 'LEVELSELECT' && !(Game.state === 'TECHS' && Game.techsReturn === 'MENU')) drawWorld(ctx);
   if (Game.heroSlowT > 0 && Game.state === 'PLAY') { ctx.fillStyle = 'rgba(90,140,255,0.13)'; ctx.fillRect(0, 0, W, H); }
+  if (Game.darkT > 0 && (Game.state === 'PLAY' || Game.state === 'PAUSE')) drawDarkness(ctx);
   ctx.restore();
   if (Game.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${clamp(Game.flash, 0, 0.8)})`;

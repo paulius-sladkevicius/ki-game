@@ -128,9 +128,37 @@ The collapse of the Hollow Throne cracks the sky and opens the **Mirror Realm**.
 | 15 | **Mirror Palace** | everything | **Empress Kaldra** – 3 phases, lasers, clones, final Twin Wave clash |
 
 ### Helper friend
-- **Auto** = the story friend (Raxas in act 2, Nyx in act 3), or a fixed **Raxas** / **Nyx** (Nyx after reaching act 3), or **None** to fight alone. Set in the menu or in training; the lead fighter option chooses whether you start as Ren or as the friend.
+- **Auto** = the story friend (Raxas in acts 2 and 4, Nyx in acts 3 and 5), or a fixed **Raxas** / **Nyx** (Nyx after reaching act 3), or **None** to fight alone. Set in the menu or in training; the lead fighter option chooses whether you start as Ren or as the friend.
 - **Nyx:** palm strikes, homing illusion orbs instead of a Ki blast, her own beam. Forms: Base → Mirage Form (+200%, teleport) → Phantom Form (final battle only).
 - Act 3 enemies have ×2.2 HP and hit ×1.8 harder (on top of the difficulty).
+
+## 4d. Act 4: the Drowned World
+
+With the mirrors broken, the sea starts to rise. Deep below, the **Tide King Maelor** – ruler of a world that drowned long ago – has taken the **5 Tide Pearls** that hold the oceans in place. Ren dives after them with **Raxas**.
+
+| # | Location | New enemies | Boss |
+|---|---|---|---|
+| 16 | **Coral Shore** | ghost pirates, armored crabs (block, heavy), jellyfish (dive at you after a '!') | **Captain Brine** – dash, sword waves, bouncing cannonballs, calls his pirate crew |
+| 17 | **Shipwreck Graveyard** | crabs, pirates, jellyfish | **Krakessa** – tentacles from the ground, homing orbs, whirlpools |
+| 18 | **Abyssal Trench** | jellyfish, shades | **Lumen** – puts out the light: you only see around the heroes, shots and the glow above Lumen |
+| 19 | **Sunken City** | crabs, pirates | **Fin and Gill**, the shark brothers – one fights up close and dives, the other shoots from afar |
+| 20 | **Leviathan Throne** | everything | **Tide King Maelor** – 3 phases, tidal waves across the arena (jump or fly over them; cannot be cancelled), tentacles, final Twin Wave clash |
+
+## 4e. Act 5: the First Light
+
+The pearls wake something far older: **Zenith**, the first warrior, who gathered the **Star Sparks** of the First Light so that nobody could ever misuse it again. Ren and **Nyx** follow the sparks into space.
+
+| # | Location | New enemies | Boss |
+|---|---|---|---|
+| 21 | **Asteroid Belt** | sentinels (fan of 3 shots), star knights | **Rok** – meteor rain, charge, ground quake |
+| 22 | **Comet Station** | sentinels, comet bombers (fast), knights | **Unit Zero** – lasers, homing orbs, slows time, calls sentinels |
+| 23 | **Sun Temple** | knights, wisps, comets | **Solara** – sunburst (a ring of shots), fire pillars, dive |
+| 24 | **Black Star Citadel** | knights, sentinels, snipers | **General Nova** – shield against Ki from the front, charge, lightning, calls star knights |
+| 25 | **The Origin** | everything | **Zenith** – 3 phases, sunbursts, lasers, meteor rain, final Twin Wave clash |
+
+- Act 4 enemies have ×2.4 HP and hit ×1.9 harder; act 5: ×2.6 HP and ×2.0 damage (on top of the difficulty).
+- Ren starts acts 4 and 5 with all his forms, the friend with the second form (the friend's final form appears in the last battle of the act). The helper friend setting works as before (Auto = Raxas in act 4, Nyx in act 5).
+- Acts 4 and 5 live in `src/acts45.js`: it only adds data (styles, enemies, bosses, backgrounds, levels) on top of the shared engine.
 
 ## 5. Score and progress
 - Points for enemies, combos and bosses.
@@ -182,7 +210,7 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 
 **Technology:** plain HTML5 + JavaScript (Canvas 2D), no server. Open `index.html` and play. Can be hosted on GitHub Pages.
 
-**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`). 10 levels in two acts.
+**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`). 25 levels in five acts.
 
 ---
 
@@ -194,3 +222,4 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 4. ✅ **Publishing:** GitHub Pages.
 5. ✅ **Act 2:** 5 more levels, the ally Raxas, switching between heroes.
 6. ✅ **Act 3:** 5 more levels, the new friend Nyx, helper friend setting.
+7. ✅ **Acts 4 and 5:** 10 more levels – the Drowned World and the First Light.

@@ -297,6 +297,30 @@ function drawWisp(ctx, x, y, facing, t, flash) {
   ctx.fillRect(x + facing * 9 - 1, cy - 4, 3, 5);
 }
 
+// Jellyfish: floats, then dives at a hero
+function drawJelly(ctx, x, y, t, flash, diving) {
+  const cy = y - 20;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, cy, 2, x, cy, 34);
+  g.addColorStop(0, flash ? '#ffffff' : diving ? 'rgba(255,160,220,0.95)' : 'rgba(170,230,255,0.9)');
+  g.addColorStop(1, 'rgba(60,120,220,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, cy, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = flash ? '#ffffff' : 'rgba(190,220,255,0.85)';
+  ctx.beginPath(); ctx.ellipse(x, cy, 17, 13, 0, Math.PI, 0); ctx.fill();
+  ctx.strokeStyle = flash ? '#ffffff' : 'rgba(170,200,255,0.8)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath(); ctx.moveTo(x + i * 6, cy);
+    ctx.quadraticCurveTo(x + i * 6 + Math.sin(t * 6 + i) * 5, cy + 10, x + i * 7 + Math.sin(t * 5 + i * 2) * 4, cy + 20);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#16324a';
+  ctx.fillRect(x - 6, cy - 6, 3, 4); ctx.fillRect(x + 3, cy - 6, 3, 4);
+  ctx.restore();
+}
+
 // Rolling exploding robot
 function drawBomber(ctx, x, y, facing, t, flash, fuse) {
   ctx.save();
@@ -425,6 +449,34 @@ function drawProjectile(ctx, p) {
     ctx.restore();
     return;
   }
+  if (p.type === 'tidal') {
+    // a wall of water rolling along the ground
+    ctx.save();
+    const dir = sign(p.vx), top = GROUND - p.h;
+    const g = ctx.createLinearGradient(0, top, 0, GROUND);
+    g.addColorStop(0, 'rgba(210,250,255,0.95)'); g.addColorStop(0.25, 'rgba(60,180,220,0.9)'); g.addColorStop(1, 'rgba(20,80,150,0.9)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(p.x - dir * 34, GROUND);
+    ctx.quadraticCurveTo(p.x - dir * 30, top + 20, p.x + dir * 6, top);
+    ctx.quadraticCurveTo(p.x + dir * 34, top + 6, p.x + dir * 30, top + 30 + Math.sin(Game.time * 12) * 4);
+    ctx.quadraticCurveTo(p.x + dir * 14, top + 26, p.x + dir * 22, GROUND);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(p.x + dir * (8 + i * 5) + Math.sin(Game.time * 9 + i) * 3, top + 6 + i * 5, 4 - i * 0.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    return;
+  }
+  if (p.type === 'gear' && p.look === 'ball') {
+    // cannonball
+    ctx.save();
+    ctx.fillStyle = '#1c1c24';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.arc(p.x - 4, p.y - 5, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return;
+  }
   if (p.type === 'gear') {
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -470,6 +522,24 @@ function drawProjectile(ctx, p) {
   }
   if (p.type === 'sphere') {
     drawEnergyBall(ctx, p.x, p.y, 60, '#dff4ff', 'rgba(80,170,255,0.7)', Game.time);
+    return;
+  }
+  if (p.type === 'shard' && p.look === 'meteor') {
+    // burning rock with a tail of fire
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.ellipse(p.x, GROUND + 2, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    const tail = ctx.createLinearGradient(0, p.y - 60, 0, p.y);
+    tail.addColorStop(0, 'rgba(255,120,20,0)'); tail.addColorStop(1, 'rgba(255,190,80,0.8)');
+    ctx.fillStyle = tail;
+    ctx.beginPath(); ctx.moveTo(p.x - 9, p.y); ctx.lineTo(p.x, p.y - 60); ctx.lineTo(p.x + 9, p.y); ctx.closePath(); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#5a3a28';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff8a2a';
+    ctx.beginPath(); ctx.arc(p.x + 3, p.y + 3, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
     return;
   }
   if (p.type === 'shard') {
@@ -561,6 +631,9 @@ function bgGround(g, top, bottom, edge, line, tiles = true) {
     for (let x = (row % 2) * 40; x < W; x += 80) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 26); g.stroke(); }
   }
 }
+
+// Moving details of a background, by theme (used by the backgrounds of acts 4 and 5).
+const BG_ANIM = {};
 
 const BG_BUILDERS = {
   monastery(g) {
@@ -938,7 +1011,9 @@ function drawBackground(ctx) {
   ctx.drawImage(_bgCache[theme], 0, 0);
   const t = Game.time;
   ctx.save();
-  if (theme === 'monastery') {
+  if (BG_ANIM[theme]) {
+    BG_ANIM[theme](ctx, t);       // later acts register their moving details here
+  } else if (theme === 'monastery') {
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     for (let i = 0; i < 6; i++) ctx.fillRect(864 + (i * 7) % 26, 250 + ((t * 160 + i * 37) % (GROUND - 250)), 3, 14);
   } else if (theme === 'desert') {

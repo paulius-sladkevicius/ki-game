@@ -68,7 +68,7 @@ function updateBeams(dt) {
       // the beam and enemy projectiles cancel each other: each shot uses up some of the beam's power
       for (const pr of Game.projectiles) {
         if (b.power <= 0) break;
-        if (pr.owner === 'enemy' && pr.life > 0 && pr.type !== 'groundwave' && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
+        if (pr.owner === 'enemy' && pr.life > 0 && !uncancellable(pr) && pr.x > r.x && pr.x < r.x + r.w && Math.abs(pr.y - b.y) < b.width / 2 + pr.r) {
           const used = Math.min(b.power, pr.power || 1);
           b.power -= used;
           pr.power = (pr.power || 1) - used;
@@ -107,7 +107,7 @@ function updateBeams(dt) {
 function collideProjectiles() {
   const mine = Game.projectiles.filter((pr) => pr.owner === 'player' && pr.life > 0);
   if (!mine.length) return;
-  const theirs = Game.projectiles.filter((pr) => pr.owner === 'enemy' && pr.life > 0 && pr.type !== 'groundwave');
+  const theirs = Game.projectiles.filter((pr) => pr.owner === 'enemy' && pr.life > 0 && !uncancellable(pr));
   for (const a of mine) {
     for (const b of theirs) {
       if (a.life <= 0) break;
@@ -129,7 +129,15 @@ function collideProjectiles() {
 }
 
 // ---------- Ground hazards: a glowing warning, then a pillar erupts ----------
-// kind 'shadow' (dark pillar) or 'lightning' (bolt from the sky).
+// kind 'lightning' is a bolt from the sky; every other kind is a pillar in the colors below.
+const PILLAR_LOOK = {
+  shadow: { glow: '#a070ff', mid: 'rgba(140,70,255,0.9)', base: 'rgba(60,10,120,0.9)', top: 'rgba(160,100,255,0)' },
+  vine: { glow: '#a0e060', mid: 'rgba(90,200,60,0.9)', base: 'rgba(40,90,20,0.9)', top: 'rgba(160,255,100,0)' },
+  tentacle: { glow: '#40d0c0', mid: 'rgba(40,170,160,0.9)', base: 'rgba(20,70,90,0.9)', top: 'rgba(120,255,230,0)' },
+  fire: { glow: '#ffa040', mid: 'rgba(255,140,30,0.9)', base: 'rgba(200,40,10,0.9)', top: 'rgba(255,230,120,0)' },
+};
+function pillarLook(kind) { return PILLAR_LOOK[kind] || PILLAR_LOOK.shadow; }
+
 function addHazard(x, kind, src) {
   const tell = kind === 'lightning' ? 0.65 : 0.85;
   Game.hazards.push({ x, kind, src, t: 0, tell, life: tell + 0.35, w: kind === 'lightning' ? 40 : 52, dmg: kind === 'lightning' ? 15 : 14, hit: new Set() });
@@ -147,7 +155,7 @@ function updateHazards(dt) {
     if (before < z.tell && z.t >= z.tell) {
       addShake(4);
       if (z.kind === 'lightning' || z.kind === 'laser') { Sfx.zap(); if (z.kind === 'lightning') Game.flash = Math.max(Game.flash, 0.12); } else Sfx.boom();
-      if (z.kind !== 'laser') burst(z.x, GROUND - 10, z.kind === 'lightning' ? '#fff6a0' : z.kind === 'vine' ? '#a0e060' : '#a070ff', 14, 260, 4, 0.4);
+      if (z.kind !== 'laser') burst(z.x, GROUND - 10, z.kind === 'lightning' ? '#fff6a0' : pillarLook(z.kind).glow, 14, 260, 4, 0.4);
     }
     if (z.kind === 'laser') {
       if (z.t >= z.tell) {
@@ -196,7 +204,7 @@ function drawHazards(ctx) {
       // warning glow on the ground
       const k = z.t / z.tell;
       ctx.globalAlpha = 0.3 + 0.5 * k * (0.6 + 0.4 * Math.sin(Game.time * 30));
-      ctx.fillStyle = light ? '#fff6a0' : z.kind === 'vine' ? '#a0e060' : '#a070ff';
+      ctx.fillStyle = light ? '#fff6a0' : pillarLook(z.kind).glow;
       ctx.beginPath(); ctx.ellipse(z.x, GROUND + 2, z.w * (0.5 + 0.5 * k), 7, 0, 0, Math.PI * 2); ctx.fill();
     } else {
       const k = 1 - (z.t - z.tell) / (z.life - z.tell);
@@ -210,8 +218,8 @@ function drawHazards(ctx) {
       } else {
         const top = GROUND - 170 * Math.min(1, (z.t - z.tell) * 8);
         const g = ctx.createLinearGradient(0, top, 0, GROUND);
-        if (z.kind === 'vine') { g.addColorStop(0, 'rgba(160,255,100,0)'); g.addColorStop(0.3, 'rgba(90,200,60,0.9)'); g.addColorStop(1, 'rgba(40,90,20,0.9)'); }
-        else { g.addColorStop(0, 'rgba(160,100,255,0)'); g.addColorStop(0.3, 'rgba(140,70,255,0.9)'); g.addColorStop(1, 'rgba(60,10,120,0.9)'); }
+        const look = pillarLook(z.kind);
+        g.addColorStop(0, look.top); g.addColorStop(0.3, look.mid); g.addColorStop(1, look.base);
         ctx.fillStyle = g;
         ctx.fillRect(z.x - z.w / 2, top, z.w, GROUND - top);
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
@@ -221,6 +229,9 @@ function drawHazards(ctx) {
   }
   ctx.restore();
 }
+
+// Ground shockwaves and tidal waves cannot be shot down: they have to be jumped over.
+function uncancellable(pr) { return pr.type === 'groundwave' || pr.type === 'tidal'; }
 
 function updateProjectiles(dt) {
   collideProjectiles();
@@ -245,10 +256,11 @@ function updateProjectiles(dt) {
       if (--pr.bounces < 0) pr.life = 0;
     }
     if (pr.x < -60 || pr.x > W + 60 || pr.y > GROUND + 10) pr.life = 0;
-    if (pr.type === 'shard' && pr.y > GROUND - 8) { pr.life = 0; burst(pr.x, GROUND - 6, '#9ff0ff', 8, 160, 3, 0.3); }
+    if (pr.type === 'shard' && pr.y > GROUND - 8) { pr.life = 0; burst(pr.x, GROUND - 6, pr.look === 'meteor' ? '#ff9a40' : '#9ff0ff', 8, 160, 3, 0.3); }
     if (pr.life <= 0) continue;
     if (Math.random() < 0.5) spawnParticle({ x: pr.x, y: pr.y + rand(-3, 3), vx: -pr.vx * 0.1, vy: rand(-20, 20), life: 0.2, size: 2.5, color: pr.trail || (pr.owner === 'player' ? '#bfe6ff' : '#ffb070') });
-    const pb = { x: pr.x - pr.r, y: pr.y - pr.r, w: pr.r * 2, h: pr.r * 2 };
+    // a tidal wave is a tall wall of water standing on the ground
+    const pb = pr.type === 'tidal' ? { x: pr.x - 23, y: GROUND - pr.h, w: 46, h: pr.h } : { x: pr.x - pr.r, y: pr.y - pr.r, w: pr.r * 2, h: pr.r * 2 };
     if (pr.owner === 'player' && pr.type === 'sphere') {
       // World Sphere: explodes on the first enemy or on the ground
       if (pr.y > GROUND - 40 || liveTargets().some((t) => rectsOverlap(pb, boxOf(t)))) explodeSphere(pr);
@@ -278,7 +290,8 @@ function updateProjectiles(dt) {
       for (const h of liveHeroes()) {
         if (rectsOverlap(pb, boxOf(h))) {
           const dir = pr.vx ? sign(pr.vx) : sign(h.x - pr.x);
-          if (h.takeHit(pr.dmg, dir, pr.type === 'tornado' ? 420 : 200)) { if (pr.type !== 'tornado') pr.life = 0; break; }
+          const big = pr.type === 'tornado' || pr.type === 'tidal';
+          if (h.takeHit(pr.dmg, dir, big ? 420 : 200)) { if (!big) pr.life = 0; break; }
         }
       }
     }

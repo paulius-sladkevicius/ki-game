@@ -51,6 +51,14 @@ class AllyAI {
       return I;
     }
 
+    // 0c) a tidal wave is close: jump and stay in the air until it has passed
+    const wave = Game.projectiles.find((pr) => pr.type === 'tidal' && Math.abs(pr.x - h.x) < 190 && sign(h.x - pr.x) === sign(pr.vx));
+    if (wave) {
+      if (h.onGround && this.jumpT <= 0) { I.pressed.jump = true; this.jumpT = 0.4; }
+      I.down.jump = true;
+      return I;
+    }
+
     // 1) danger: a boss beam is coming -> fly over it or guard
     const bossBeam = Game.bosses.find((b) => !b.dead && (b.state === 'beam_tell' || b.state === 'beam'));
     if (bossBeam) {

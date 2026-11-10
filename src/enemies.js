@@ -117,6 +117,20 @@ class Enemy {
         }
         break;
 
+      case 'divebomb':
+        // dive at the spot where the hero was, hit once on contact, then float back up
+        if (!this.diveHit) {
+          for (const h of liveHeroes()) {
+            if (rectsOverlap(boxOf(this), boxOf(h))) { this.diveHit = true; h.takeHit(this.dmg, sign(this.vx) || this.facing, 240); break; }
+          }
+        }
+        if (this.stateT >= 0.75 || this.y >= GROUND - 4) {
+          this.vx = 0; this.vy = 0;
+          this.setState('walk');
+          this.atkCd = rand(this.def.cd[0], this.def.cd[1]);
+        }
+        break;
+
       case 'stun':
         this.vx *= 0.88;
         if (this.stateT >= this.stunT) this.setState('walk');
@@ -162,7 +176,9 @@ class Enemy {
         break;
     }
 
-    if (this.ai === 'drone' && this.state !== 'dying') {
+    if (this.state === 'divebomb') {
+      // a diving flyer keeps its own speed (no hovering, no gravity)
+    } else if (this.ai === 'drone' && this.state !== 'dying') {
       this.y = lerp(this.y, this.hoverY + Math.sin(this.animT * 3) * 12, Math.min(1, dt * 4));
       this.vy = 0;
     } else {
@@ -220,7 +236,7 @@ class Enemy {
       case 'drone': {
         const near = this.ai === 'drone' ? 200 : 260;
         const far = this.ai === 'drone' ? 340 : 430;
-        if (this.entering) this.vx = this.facing * this.speed;
+        if (this.entering) this.vx = (this.x < W / 2 ? 1 : -1) * this.speed; // walk in, even if a hero hugs the wall
         else if (dist < near && this.x > 50 && this.x < W - 50) this.vx = -this.facing * this.speed;
         else if (dist > far) this.vx = this.facing * this.speed;
         else this.vx = 0;
@@ -244,7 +260,7 @@ class Enemy {
         break;
       case 'sniper':
         // keeps far away, then aims a laser (the aim line is shown during the windup)
-        if (this.entering) this.vx = this.facing * this.speed;
+        if (this.entering) this.vx = (this.x < W / 2 ? 1 : -1) * this.speed; // walk in, even if a hero hugs the wall
         else if (dist < 320 && this.x > 50 && this.x < W - 50) this.vx = -this.facing * this.speed;
         else this.vx = 0;
         if (this.atkCd <= 0 && !this.entering && p.alive) {
@@ -256,12 +272,23 @@ class Enemy {
         break;
       case 'bomber':
         this.vx = this.facing * this.speed;
+        if (this.def.trail && Math.random() < 0.7) spawnParticle({ x: this.x - this.facing * 12, y: this.y - 15 + rand(-6, 6), vx: -this.facing * 60, vy: rand(-20, 20), life: 0.3, size: 4, color: this.def.trail });
         if (dist < 50 && Math.abs(p.y - this.y) < 80 && p.alive) this.setState('windup');
         break;
     }
   }
 
   doStrike(p) {
+    if (this.def.dive) {
+      // flyers with 'dive' swoop down instead of shooting
+      const tx = p.x, ty = p.y - 30;
+      const d = Math.hypot(tx - this.x, ty - this.y) || 1;
+      this.vx = (tx - this.x) / d * 520;
+      this.vy = (ty - this.y) / d * 520;
+      this.diveHit = false;
+      this.setState('divebomb');
+      return;
+    }
     if (this.ai === 'bomber') {
       this.explodeSelf(true);
       return;
@@ -303,12 +330,17 @@ class Enemy {
       const ty = p.y - 45;
       const ang = Math.atan2(ty - h.y, p.x - h.x);
       const elite = this.ai === 'elite';
-      Game.projectiles.push({
-        x: h.x, y: h.y, vx: Math.cos(ang) * (elite ? 420 : 340), vy: Math.sin(ang) * (elite ? 420 : 340), r: 7, dmg: this.dmg,
-        owner: 'enemy', life: 3,
-        inner: this.type === 'clone' ? '#ffb0f0' : elite ? '#ff9090' : '#ffd27a',
-        outer: this.type === 'clone' ? 'rgba(210,60,170,0.6)' : elite ? 'rgba(255,30,60,0.6)' : 'rgba(255,90,20,0.6)',
-      });
+      // 'spread' enemies fire a fan of shots instead of a single one
+      const n = this.def.spread || 1;
+      for (let i = 0; i < n; i++) {
+        const a = ang + (i - (n - 1) / 2) * 0.24;
+        Game.projectiles.push({
+          x: h.x, y: h.y, vx: Math.cos(a) * (elite ? 420 : 340), vy: Math.sin(a) * (elite ? 420 : 340), r: 7, dmg: this.dmg,
+          owner: 'enemy', life: 3,
+          inner: this.type === 'clone' ? '#ffb0f0' : elite ? '#ff9090' : '#ffd27a',
+          outer: this.type === 'clone' ? 'rgba(210,60,170,0.6)' : elite ? 'rgba(255,30,60,0.6)' : 'rgba(255,90,20,0.6)',
+        });
+      }
       Sfx.blast();
       return;
     }
@@ -400,7 +432,8 @@ class Enemy {
     drawShadow(ctx, this.x, this.y, 20 * this.scale);
     ctx.globalAlpha *= this.alpha;
     if (this.champion && !this.dead) drawAura(ctx, this.x, this.y, this.h * this.scale + 30, 'rgba(255,210,60,A)', 0.9, this.animT);
-    if (this.type === 'wisp') drawWisp(ctx, this.x, this.y, this.facing, this.animT, fl);
+    if (this.def.look === 'jelly') drawJelly(ctx, this.x, this.y, this.animT, fl, this.state === 'divebomb');
+    else if (this.type === 'wisp') drawWisp(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'drone') drawDrone(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'bomber') drawBomber(ctx, this.x, this.y, this.facing, this.animT, fl, this.state === 'windup');
     else drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.def.style], scale: this.scale, flash: fl, t: this.animT });

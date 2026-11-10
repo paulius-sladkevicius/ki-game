@@ -274,7 +274,7 @@ class Boss {
         if (this.stateT >= 0.6) {
           const type = this.def.summonType || 'elite';
           const alive = Game.enemies.filter((e) => e.type === type && !e.dead).length;
-          for (let i = 0; i < 2 - alive; i++) Game.enemies.push(new Enemy(type, i === 0 ? 'L' : 'R'));
+          for (let i = 0; i < (this.def.summonCount || 2) - alive; i++) Game.enemies.push(new Enemy(type, i === 0 ? 'L' : 'R'));
           floater(this.x, this.y - this.h - 20, 'Guards, attack!', '#ff9090', 18);
           this.recover(0.4);
         }
@@ -369,7 +369,7 @@ class Boss {
           const hs = liveHeroes();
           for (let i = 0; i < n; i++) {
             const h = hs[i % hs.length];
-            Game.projectiles.push({ x: clamp(h.x + rand(-260, 260), 20, W - 20), y: -30 - i * 55, vx: 0, vy: 430, r: 11, dmg: 10, owner: 'enemy', type: 'shard', life: 4 });
+            Game.projectiles.push({ x: clamp(h.x + rand(-260, 260), 20, W - 20), y: -30 - i * 55, vx: 0, vy: 430, r: 11, dmg: 10, owner: 'enemy', type: 'shard', look: this.def.rainLook, life: 4 });
           }
           Sfx.boom();
           this.recover(0.4);
@@ -442,7 +442,7 @@ class Boss {
         if (this.stateT >= 0.4) {
           const n = this.enraged ? 4 : 3;
           for (let i = 0; i < n; i++) {
-            Game.projectiles.push({ x: this.x + this.facing * 40, y: this.y - this.h * 0.6, vx: this.facing * rand(200, 380), vy: -rand(300, 620), gravity: 900, bounces: 3, r: 15, dmg: 10, owner: 'enemy', type: 'gear', life: 6, power: 2, trail: '#e0c070' });
+            Game.projectiles.push({ x: this.x + this.facing * 40, y: this.y - this.h * 0.6, vx: this.facing * rand(200, 380), vy: -rand(300, 620), gravity: 900, bounces: 3, r: 15, dmg: 10, owner: 'enemy', type: 'gear', look: this.def.gearLook, life: 6, power: 2, trail: this.def.gearLook === 'ball' ? '#8a8a9a' : '#e0c070' });
           }
           Sfx.slash();
           this.recover(0.4);
@@ -457,6 +457,46 @@ class Boss {
           showHint('Time slows down!', 2);
           Sfx.special(2);
           this.recover(0.3);
+        }
+        break;
+
+      // ----- tidal wave: a wall of water crosses the arena, jump or fly over it -----
+      case 'tidal_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.6) {
+          Game.projectiles.push({ x: this.x + this.facing * 50, y: GROUND - 42, vx: this.facing * 320, vy: 0, r: 23, h: 84, dmg: 15, owner: 'enemy', type: 'tidal', life: 6 });
+          // when enraged a second wave comes from the far edge of the arena
+          if (this.enraged) Game.projectiles.push({ x: this.facing > 0 ? W + 40 : -40, y: GROUND - 42, vx: -this.facing * 260, vy: 0, r: 23, h: 84, dmg: 15, owner: 'enemy', type: 'tidal', life: 6 });
+          Sfx.boom();
+          this.recover(0.5);
+        }
+        break;
+
+      // ----- darkness: only the area around the heroes stays visible -----
+      case 'darkness_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.5) {
+          Game.darkT = this.enraged ? 8 : 6;
+          showHint('The light goes out!', 2);
+          Sfx.special(2);
+          this.recover(0.3);
+        }
+        break;
+
+      // ----- sunburst: a ring of shots in every direction -----
+      case 'sunburst_tell':
+        this.vx = 0;
+        if (this.stateT >= 0.5) {
+          const n = this.enraged ? 14 : 10;
+          const col = BEAM_COLORS[this.def.beamColor];
+          const off = Math.random() * Math.PI;
+          for (let i = 0; i < n; i++) {
+            const a = off + i / n * Math.PI * 2;
+            Game.projectiles.push({ x: this.x, y: this.y - this.h * 0.55, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, r: 8, dmg: 7, owner: 'enemy', life: 3, inner: col[1].replace('A', '1'), outer: col[0].replace('A', '0.6') });
+          }
+          Sfx.blast();
+          addShake(5);
+          this.recover(0.45);
         }
         break;
 
@@ -556,6 +596,7 @@ class Boss {
     const map = {
       dash: 'dash_tell', slash: 'slash_tell', leap: 'leap', fingers: 'fingers_tell', teleport: 'tp_out',
       charge: 'charge_tell', quake: 'quake_tell', clones: 'clones_tell', summon: 'summon_tell',
+      tidal: 'tidal_tell', darkness: 'darkness_tell', sunburst: 'sunburst_tell',
       pillars: 'pillars_tell', lightning: 'pillars_tell', lasers: 'lasers_tell', gears: 'gears_tell', timeslow: 'timeslow_tell', rain: 'rain_tell', dive: 'dive_up', tornado: 'tornado_tell', orbs: 'orbs_tell',
     };
     this.setState(map[pick] || 'dash_tell');
@@ -614,7 +655,8 @@ class Boss {
   computePose() {
     switch (this.state) {
       case 'dash_tell': case 'slash_tell': case 'quake_tell': case 'clones_tell': case 'summon_tell': case 'final_tell':
-      case 'pillars_tell': case 'rain_tell': case 'orbs_tell': case 'timeslow_tell': return POSES.swordRaise();
+      case 'pillars_tell': case 'rain_tell': case 'orbs_tell': case 'timeslow_tell': case 'darkness_tell': case 'sunburst_tell': return POSES.swordRaise();
+      case 'tidal_tell': return POSES.swordSlash();
       case 'lasers_tell': case 'gears_tell': return POSES.punch1();
       case 'tornado_tell': return POSES.swordSlash();
       case 'dive_up': case 'dive_aim': return POSES.jump();

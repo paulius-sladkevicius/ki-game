@@ -73,7 +73,7 @@ function drawHUD(ctx) {
   text(ctx, 'SCORE ' + Game.score, W - 20, 30, 18, '#ffffff', 'right');
   text(ctx, diff().name.toUpperCase() + ' · BEST ' + Math.max(Game.highScore, Game.score), W - 20, 50, 12, diff().color, 'right', '600');
   const act = actOf(Game.levelIndex);
-  const coll = act === 3 ? `◇ ${Game.crystals}/5 shards` : act === 2 ? `◆ ${Game.crystals}/5 seals` : `★ ${Game.crystals}/5`;
+  const coll = `${ACTS[act].mark} ${Game.crystals}/5${ACTS[act].hud}`;
   text(ctx, `LEVEL ${Game.levelIndex + 1} · ${coll}`, W - 20, 66, 12, '#ffd34a', 'right', '600');
   text(ctx, `${Game.money} coins`, W - 20, 82, Game.moneyFlash > 0 ? 15 : 13, '#ffe680', 'right', '700');
   if (Game.combo >= 3) {
@@ -123,6 +123,10 @@ function drawHUD(ctx) {
   }
 }
 
+// Who has a portrait in dialogs (style name; null = Ren, drawn in his current form) and the color of each speaker's name.
+const PORTRAITS = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'raxas', 'Sable': 'sable', 'Gale': 'gale', 'Quartzus': 'quartz', 'Volta': 'volta', 'Hollow King': 'hollow', 'Glitch': 'glitch', 'Thornmother': 'thorn', 'Tick-Tock': 'ticktock', 'Dark Ren': 'darkRen', 'Kaldra': 'kaldra', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
+const SPEAKER_COLORS = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff', 'Sable': '#b08aff', 'Gale': '#7ff0d8', 'Quartzus': '#9ff0ff', 'Volta': '#fff27a', 'Hollow King': '#ff80c8', 'Glitch': '#40f0ff', 'Thornmother': '#a0e060', 'Tick-Tock': '#e0c070', 'Dark Ren': '#ff6080', 'Kaldra': '#c0d8ff' };
+
 function drawDialog(ctx) {
   const d = Game.dialog;
   if (!d) return;
@@ -138,7 +142,7 @@ function drawDialog(ctx) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
   ctx.fill(); ctx.stroke();
-  const portraits = { 'Ren': null, 'Master Oro': 'master', 'Vorg': 'vorg', 'Raxas': 'raxas', 'Sable': 'sable', 'Gale': 'gale', 'Quartzus': 'quartz', 'Volta': 'volta', 'Hollow King': 'hollow', 'Glitch': 'glitch', 'Thornmother': 'thorn', 'Tick-Tock': 'ticktock', 'Dark Ren': 'darkRen', 'Kaldra': 'kaldra', 'Zul': 'twinRed', 'Zel': 'twinBlue', 'General Krag': 'krag', 'Nyx': 'nyx', 'Villager': 'villager' };
+  const portraits = PORTRAITS;
   let tx = x + 20;
   if (line.who in portraits) {
     let st = portraits[line.who];
@@ -155,7 +159,7 @@ function drawDialog(ctx) {
     tx = x + 122;
   }
   if (line.who) {
-    const colors = { 'Ren': '#8ab4ff', 'Vorg': '#ff8a8a', 'Raxas': '#c9a0ff', 'Master Oro': '#9fe6a0', 'UNLOCKED': '#ffe14d', 'Tip': '#9fffb0', 'Controls': '#9fffb0', 'Guard': '#7fe8ff', 'Zul': '#ff7a6a', 'Zel': '#7ac8ff', 'General Krag': '#c8d0d8', 'Nyx': '#ff9ae0', 'Villager': '#ffffff', 'Sable': '#b08aff', 'Gale': '#7ff0d8', 'Quartzus': '#9ff0ff', 'Volta': '#fff27a', 'Hollow King': '#ff80c8', 'Glitch': '#40f0ff', 'Thornmother': '#a0e060', 'Tick-Tock': '#e0c070', 'Dark Ren': '#ff6080', 'Kaldra': '#c0d8ff' };
+    const colors = SPEAKER_COLORS;
     text(ctx, line.who, tx, y + 30, 18, colors[line.who] || '#ffffff');
   }
   ctx.font = '600 19px system-ui, -apple-system, Segoe UI, sans-serif';
@@ -335,10 +339,11 @@ function drawLevelSelect(ctx) {
   text(ctx, `Difficulty: ${d.name} - stars are saved for each difficulty`, W / 2, 100, 15, d.color, 'center', '600');
   const prog = loadProgress();
   const rowsN = Math.ceil(LEVELS.length / 5);
-  const cw = 160, gapX = 18, gapY = rowsN > 2 ? 10 : 22;
-  const ch = rowsN > 2 ? 108 : 150;
-  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = rowsN > 2 ? 116 : 130;
-  const sc = ch / 150;   // smaller cards when there are three rows
+  const compact = rowsN > 3;                       // 4-5 rows: small cards, one row per act
+  const cw = 160, gapX = 18, gapY = compact ? 8 : rowsN > 2 ? 10 : 22;
+  const ch = compact ? 68 : rowsN > 2 ? 108 : 150;
+  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = compact ? 112 : rowsN > 2 ? 116 : 130;
+  const sc = ch / 150;
   LEVELS.forEach((lvl, i) => {
     const x = x0 + (i % 5) * (cw + gapX);
     const y = yTop + Math.floor(i / 5) * (ch + gapY);
@@ -349,18 +354,29 @@ function drawLevelSelect(ctx) {
     ctx.strokeStyle = on ? '#ffe14d' : 'rgba(255,255,255,0.2)';
     ctx.lineWidth = on ? 3 : 1;
     ctx.strokeRect(x, y, cw, ch);
-    text(ctx, `${i + 1}`, x + cw / 2, y + 42 * sc, 34 * Math.max(0.75, sc), locked ? '#666677' : '#ffffff', 'center', '900');
     const words = lvl.name.replace("Vorg's Ship in Orbit", "Vorg's Ship");
+    const best = locked ? null : bestResult(i);
+    if (compact) {
+      text(ctx, `${i + 1}`, x + 8, y + 26, 21, locked ? '#666677' : '#ffffff', 'left', '900');
+      text(ctx, words, x + cw / 2 + 14, y + 22, words.length > 16 ? 10.5 : 12, locked ? '#666677' : '#cfd8ff', 'center', '700');
+      if (locked) text(ctx, 'LOCKED', x + cw / 2 + 12, y + 52, 13, '#666677', 'center', '800');
+      else {
+        drawStars(ctx, x + cw / 2 + 4, y + 54, best ? best.stars : 0, 20);
+        if (best) text(ctx, best.rank, x + cw - 10, y + 56, 18, RANK_COLORS[best.rank], 'right', '900');
+      }
+      return;
+    }
+    text(ctx, `${i + 1}`, x + cw / 2, y + 42 * sc, 34 * Math.max(0.75, sc), locked ? '#666677' : '#ffffff', 'center', '900');
     text(ctx, words, x + cw / 2, y + 68 * sc, 13, locked ? '#666677' : '#cfd8ff', 'center', '700');
     text(ctx, 'Act ' + (lvl.act || 1), x + cw / 2, y + 86 * sc, 11, locked ? '#555566' : '#8a8fb0', 'center', '600');
     if (locked) {
       text(ctx, 'LOCKED', x + cw / 2, y + 124 * sc, 15, '#666677', 'center', '800');
     } else {
-      const best = bestResult(i);
       drawStars(ctx, x + cw / 2, y + 122 * sc, best ? best.stars : 0, 24 * Math.max(0.8, sc));
       if (best) text(ctx, best.rank, x + cw - 14, y + 26, 20, RANK_COLORS[best.rank], 'right', '900');
     }
   });
+  if (compact) for (let r = 0; r < rowsN; r++) text(ctx, 'ACT ' + (r + 1), x0 - 8, yTop + r * (ch + gapY) + ch / 2 + 4, 11, '#8a8fb0', 'right', '700');
   text(ctx, '← → ↑ ↓ choose · ENTER / J play · P / Esc back', W / 2, 508, 14, '#9fe6ff', 'center', '600');
   text(ctx, '★ complete   ★ no defeat   ★ little damage   ·   S = 3 stars + fast', W / 2, 529, 12, '#cfd8ff', 'center', '600');
 }
@@ -507,8 +523,8 @@ function drawUI(ctx) {
       const recLine = 'Score: ' + Game.score + (newRecord ? '  - NEW BEST!' : '  (best ' + Game.highScore + ')');
       const go = Game.stateT > 1.5;
       if (last) {
-        drawOverlay(ctx, 'THE END', 'Kaldra is defeated - the stolen worlds are free!', [
-          '◇ All 5 Mirror Shards broken',
+        drawOverlay(ctx, 'THE END', ACTS[actOf(Game.levelIndex)].end + '!', [
+          '✹ All 25 levels complete',
           'Ren, Raxas and Nyx - legends of light, shadow and illusion',
           recLine,
           'Thanks for playing!',
@@ -518,7 +534,7 @@ function drawUI(ctx) {
       } else {
         const act = actOf(Game.levelIndex);
         const actEnd = actOf(Game.levelIndex + 1) !== act;
-        const lines = [act === 3 ? `◇ Mirror Shard broken  (${Game.crystals}/5)` : act === 2 ? `◆ Hollow Seal broken  (${Game.crystals}/5)` : `★ Star Crystal recovered  (${Game.crystals}/5)`];
+        const lines = [`${ACTS[act].mark} ${ACTS[act].got}  (${Game.crystals}/5)`];
         if (lvl.unlockText) lines.push('✦ Unlocked: ' + lvl.unlockText);
         if (Game.result && Game.result.newTech) {
           const nt = Game.result.newTech;
@@ -529,7 +545,7 @@ function drawUI(ctx) {
         lines.push(`Coins: ${Game.money} - spend them on training!`);
         lines.push(recLine);
         lines.push(go ? 'ENTER - go to training' : '');
-        const actSub = act === 2 ? 'The Hollow King is gone - light returns to the world' : 'Vorg is defeated - the Star Crystals are safe';
+        const actSub = ACTS[act].end;
         drawOverlay(ctx, actEnd ? `ACT ${act} COMPLETE!` : `LEVEL ${Game.levelIndex + 1} COMPLETE!`, actEnd ? actSub : lvl.name + ' is safe', lines, '#ffe14d', 300);
         drawResult(ctx, 205);
       }
