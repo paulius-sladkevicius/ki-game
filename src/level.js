@@ -534,8 +534,9 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.crystals = crystalsBefore(levelIndex);
   // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
   const actHp = { 1: 1, 2: 1.7, 3: 2.2, 4: 2.4, 5: 2.6, 6: 2.75 }, actDmg = { 1: 1, 2: 1.6, 3: 1.8, 4: 1.9, 5: 2.0, 6: 2.05 };
-  Game.enemyHpMul = (actHp[lvl.act || 1] || 1) * diff().hp;
-  Game.dangerMul = (actDmg[lvl.act || 1] || 1) * diff().dmg;
+  // a level can be a bit tougher than the rest of its act (hpMul / dmgMul)
+  Game.enemyHpMul = (actHp[lvl.act || 1] || 1) * diff().hp * (lvl.hpMul || 1);
+  Game.dangerMul = (actDmg[lvl.act || 1] || 1) * diff().dmg * (lvl.dmgMul || 1);
   // heroes: Ren always; from level 6 on one or two helper friends can join (see the Helper friends setting)
   const friendIds = friendsFor(lvl);
   // a team of three makes the enemies and bosses a bit tougher
@@ -545,6 +546,8 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.switchCd = 0;
   Game.script = lvl.script;
   // level statistics for the star rating (kept when retrying after a defeat)
+  // a fresh start forgets the second-form checkpoint of a final boss
+  if (fromStep === 0 || !Game.phaseSave || Game.phaseSave.level !== levelIndex) Game.phaseSave = null;
   if (fromStep === 0 || !Game.stats || Game.stats.level !== levelIndex) {
     Game.stats = { level: levelIndex, time: 0, dmgTaken: 0, defeats: 0 };
   } else {
@@ -614,6 +617,13 @@ function nextStep() {
       // before the boss: full HP on Easy/Normal, only part of it on Hard and Very Hard
       for (const h of allHeroes()) { h.revive(diff().bossHeal); h.hp = Math.min(h.maxHp, h.hp + h.maxHp * diff().bossHeal); }
       Game.bosses = s.bosses.map(([id, x]) => new Boss(id, x));
+      // retry after reaching a final boss' second form: the fight starts again from the second form
+      const fb = Game.bosses.length === 1 && Game.bosses[0].def.phases ? Game.bosses[0] : null;
+      if (fb && Game.phaseSave && Game.phaseSave.level === Game.levelIndex) {
+        fb.hp = fb.maxHp * 0.66;
+        fb.checkPhase();
+        showHint('Checkpoint: the fight continues from the second form', 3);
+      }
       const own = Game.bosses.map((b) => b.def.music).find(Boolean);    // final bosses of the later acts name their track
       Sfx.music(own || (Game.bosses.some((b) => b.id === 'kaldra') ? 'final3' : Game.bosses.some((b) => b.id === 'hollow') ? 'final2' : Game.bosses.some((b) => b.id === 'vorg') ? 'final' : 'boss'));
       const names = Game.bosses.map((b) => b.name).join(' & ');
@@ -643,9 +653,10 @@ function updateScript(dt) {
   c.t += dt;
   if (s.type === 'wave') {
     if (!c.list) {
-      // harder difficulties add extra enemies picked from the same wave
+      // harder difficulties add extra enemies picked from the same wave (big waves of the later acts get one less)
       c.list = s.enemies.slice();
-      for (let i = 0; i < diff().extra; i++) {
+      const extra = Math.max(0, diff().extra - (s.enemies.length >= 5 ? 1 : 0));
+      for (let i = 0; i < extra; i++) {
         const [type] = s.enemies[Math.floor(Math.random() * s.enemies.length)];
         c.list.push([type, Math.random() < 0.5 ? 'L' : 'R']);
       }

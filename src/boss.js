@@ -371,6 +371,7 @@ class Boss {
         if (this.stateT >= 0.5) {
           const n = this.enraged ? 11 : 7;
           const hs = liveHeroes();
+          if (!hs.length) { this.recover(0.4); break; }   // every hero is down: nothing to aim at
           for (let i = 0; i < n; i++) {
             const h = hs[i % hs.length];
             Game.projectiles.push({ x: clamp(h.x + rand(-260, 260), 20, W - 20), y: -30 - i * 55, vx: 0, vy: 430, r: 11, dmg: 10, owner: 'enemy', type: 'shard', look: this.def.rainLook, life: 4 });
@@ -646,6 +647,7 @@ class Boss {
     if (!this.def.phases) return false;
     if (this.phase === 1 && this.hp <= this.maxHp * 0.66) {
       this.phase = 2;
+      Game.phaseSave = { level: Game.levelIndex };   // a defeat from now on retries from the second form
       this.hp = this.maxHp * 0.66;
       Game.beams = Game.beams.filter((b) => b.src !== this);
       this.setState('phase');

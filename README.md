@@ -61,7 +61,7 @@ Open `index.html` in a browser – no server or build step needed. On phones and
 - **Music:** every level has its own tune, bosses and the finale have separate tracks – all generated with the Web Audio API.
 - Dialogs with speaker portraits. **Dialogs: On / Off** in the menu skips all story dialogs (unlocks still happen and are announced with a banner); P / Esc (or II on touch) skips a single dialog.
 - **Mobile:** labelled touch buttons that never fall off the screen (beside the game when there is room, otherwise semi-transparent over its corners), fullscreen button, a rotate-your-phone hint, vibration when hit.
-- 5 Star Crystals, score, combos, best score, saved progress ("Continue" in the menu), a checkpoint before every boss.
+- 5 Star Crystals, score, combos, best score, saved progress ("Continue" in the menu), a checkpoint before every boss, and a second checkpoint when a final boss reaches its second form.
 - All graphics are drawn with the Canvas API and all sounds are generated in code – no external assets.
 
 ## Project structure

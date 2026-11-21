@@ -279,13 +279,13 @@ function drawFog(ctx, z) {
 
 // ---------- bosses ----------
 Object.assign(BOSS_DEFS, {
-  lullaby: { name: 'LULLABY', title: 'The sleep singer', style: 'lullaby', hp: 3000, scale: 1.1, score: 12000, coins: 520, want: 300,
+  lullaby: { name: 'LULLABY', title: 'The sleep singer', style: 'lullaby', hp: 3150, scale: 1.1, score: 12000, coins: 520, want: 300,
     attacks: ['sleep', 'orbs', 'teleport'], rage: ['beam', 'sleep', 'dive', 'fingers'], beamColor: 'dream', aura: 'rgba(220,170,255,A)' },
-  marionette: { name: 'MARIONETTE', title: 'The puppet master', style: 'marionette', hp: 3200, scale: 1.25, score: 12500, coins: 540, want: 280,
+  marionette: { name: 'MARIONETTE', title: 'The puppet master', style: 'marionette', hp: 3500, scale: 1.25, score: 12500, coins: 540, want: 280,
     attacks: ['totems', 'gears', 'dash'], rage: ['beam', 'totems', 'lasers', 'gears'], beamColor: 'toy', aura: 'rgba(255,90,90,A)' },
-  reverso: { name: 'REVERSO', title: 'Knight of the upside-down castle', style: 'reverso', hp: 4300, scale: 1.2, score: 13000, coins: 560, speed: 170,
+  reverso: { name: 'REVERSO', title: 'Knight of the upside-down castle', style: 'reverso', hp: 4600, scale: 1.2, score: 13000, coins: 560, speed: 170,
     attacks: ['mirror', 'mirror', 'slash', 'dash', 'charge'], rage: ['beam', 'mirror', 'leap', 'lasers', 'slash'], beamColor: 'mirror', aura: 'rgba(180,210,255,A)' },
-  grimfang: { name: 'GRIMFANG', title: 'The beast of the nightmare marsh', style: 'grimfang', hp: 3450, scale: 1.6, score: 14000, coins: 580, speed: 110, summonType: 'bat',
+  grimfang: { name: 'GRIMFANG', title: 'The beast of the nightmare marsh', style: 'grimfang', hp: 3700, scale: 1.6, score: 14000, coins: 580, speed: 110, summonType: 'bat',
     attacks: ['fog', 'quake', 'charge'], rage: ['beam', 'fog', 'rain', 'summon'], beamColor: 'vine', aura: 'rgba(150,255,90,A)' },
   somnus: { name: 'SOMNUS', title: 'The dream-thief', style: 'somnus', hp: 5000, scale: 1.35, score: 30000, phases: true, alwaysAura: true, music: 'final6',
     phase2Style: 'somnus2', phase2Scale: 1.6, phase2Text: 'The nightmare wakes!', phaseColor: '#ff60ff', summonType: 'imp', pillarKind: 'shadow',
@@ -472,7 +472,7 @@ LEVELS.push(
 
   // ---------- 26. Dream Meadow ----------
   {
-    name: 'Dream Meadow', theme: 'dreammeadow', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
+    name: 'Dream Meadow', hpMul: 1.08, dmgMul: 1.12, theme: 'dreammeadow', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
     script: [
       { type: 'dialog', lines: [
         L('', 'The First Light shines again. But one morning, nobody in the valley wakes up.'),
@@ -500,7 +500,7 @@ LEVELS.push(
 
   // ---------- 27. Toy Fortress ----------
   {
-    name: 'Toy Fortress', theme: 'toyfortress', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
+    name: 'Toy Fortress', hpMul: 1.08, dmgMul: 1.12, theme: 'toyfortress', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
     script: [
       { type: 'dialog', lines: [
         L('', "A child's dream: a fortress of wooden blocks. But the toys are not playing any more."),
@@ -525,7 +525,7 @@ LEVELS.push(
 
   // ---------- 28. Upside-Down Castle ----------
   {
-    name: 'Upside-Down Castle', theme: 'upsidecastle', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
+    name: 'Upside-Down Castle', hpMul: 1.1, dmgMul: 1.25, theme: 'upsidecastle', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
     script: [
       { type: 'dialog', lines: [
         L('', 'Here the towers hang from the sky and the stars fall upwards.'),
@@ -549,7 +549,7 @@ LEVELS.push(
 
   // ---------- 29. Nightmare Marsh ----------
   {
-    name: 'Nightmare Marsh', theme: 'fogmarsh', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
+    name: 'Nightmare Marsh', hpMul: 1.05, dmgMul: 1.1, theme: 'fogmarsh', act: 6, crystals: 1, unlockStart: 3, ally: true, friend: 'gale', allyUnlockStart: ACT6_FRIENDS,
     script: [
       { type: 'dialog', lines: [
         L('', 'A swamp of bad dreams. Green fog crawls over the mud.'),

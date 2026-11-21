@@ -215,13 +215,19 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 
 | | Easy | Normal | Hard | Very Hard |
 |---|---|---|---|---|
-| Enemy / boss HP | ×0.7 | ×1 | ×1.3 | ×1.7 |
-| Enemy damage | ×0.6 | ×1 | ×1.25 | ×1.55 |
-| Boss attack rate / warnings | slower / longer | normal | faster / shorter | much faster / much shorter |
-| Heal after a wave / before a boss | +25 / full | +15 / full | +5 / +60% | 0 / +40% |
-| Guard and Ki Wave cost | cheaper | normal | +15% | +30–35% |
-| Extra enemies per wave / champions | 0 / – | 0 / 5% | +1 / 10% | +2 / 20% |
+| Enemy / boss HP | ×0.7 | ×1 | ×1.08 | ×1.1 |
+| Enemy damage | ×0.6 | ×1 | ×1.05 | ×1.08 |
+| Boss attack rate / warnings | slower / longer | normal | a bit faster / shorter | faster / much shorter |
+| Heal after a wave / before a boss | +25 / full | +15 / full | +10 / +75% | +10 / +70% |
+| Guard and Ki Wave cost | cheaper | normal | +15% | +20–25% |
+| Extra enemies per wave / champions | 0 / – | 0 / 5% | +1 / 10% (waves of 5+: none) | +1 / 15% (waves of 5+: none) |
 | Smart enemies (dodge beams, block, interrupt, anti-air) | no | a little | often | very often |
+
+Hard and Very Hard used to multiply enemy HP and damage much more (×1.3 / ×1.25 on Hard). On top of the act multipliers (up to ×2.75 HP in act 6) that made acts 3–6 unbeatable for the test bot even with ten retries, so Hard now gets its difficulty mostly from smarter and extra enemies, champions, costlier guard and Ki Wave and less healing.
+
+**Second-form checkpoint:** once a final boss (with phases) reaches its second form, a defeat retries the fight from the second form instead of from the start of the boss.
+
+**Balance checks** are done with a simulation bot (the AI friend playing the hero, all upgrades): on Normal, act 6 needs a retry now and then and is a bit harder than act 5; Hard levels are beatable with a few retries; Very Hard is an expert mode (the bot wins only some act 6 levels); Easy rarely needs a retry.
 
 **Stars per level:** ★ complete, ★ no defeat in the level, ★ little damage (≤ 50 in act 1, ≤ 70 in act 2). **Rank:** S = 3 stars and under the par time (2:00 in act 1, 2:30 in act 2), A = 3 stars, B = 2, C = 1. Saved per difficulty; levels can be replayed from **Select level**.
 

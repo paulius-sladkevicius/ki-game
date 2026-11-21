@@ -164,8 +164,8 @@ function nearestHero(x) {
 const DIFFICULTIES = [
   { id: 'easy', name: 'Easy', color: '#9fffb0', hp: 0.7, dmg: 0.6, bossAtk: 0.75, tell: 1.25, heal: 25, bossHeal: 1, guardCost: 0.8, beamCost: 0.9, extra: 0, champion: 0, dodge: 0, block: 0, interrupt: 0, antiAir: false, coins: 1, specialCd: 1 },
   { id: 'normal', name: 'Normal', color: '#9fe6ff', hp: 1, dmg: 1, bossAtk: 1, tell: 1, heal: 15, bossHeal: 1, guardCost: 1, beamCost: 1, extra: 0, champion: 0.05, dodge: 0.2, block: 0.1, interrupt: 0.2, antiAir: true, coins: 1, specialCd: 1 },
-  { id: 'hard', name: 'Hard', color: '#ffb060', hp: 1.3, dmg: 1.25, bossAtk: 1.2, tell: 0.9, heal: 5, bossHeal: 0.6, guardCost: 1.15, beamCost: 1.15, extra: 1, champion: 0.1, dodge: 0.45, block: 0.25, interrupt: 0.45, antiAir: true, coins: 1.25, specialCd: 1.2 },
-  { id: 'veryhard', name: 'Very Hard', color: '#ff6060', hp: 1.7, dmg: 1.55, bossAtk: 1.4, tell: 0.8, heal: 0, bossHeal: 0.4, guardCost: 1.35, beamCost: 1.3, extra: 2, champion: 0.2, dodge: 0.9, block: 0.4, interrupt: 0.9, antiAir: true, coins: 1.5, specialCd: 1.4 },
+  { id: 'hard', name: 'Hard', color: '#ffb060', hp: 1.08, dmg: 1.05, bossAtk: 1.05, tell: 0.9, heal: 10, bossHeal: 0.75, guardCost: 1.15, beamCost: 1.15, extra: 1, champion: 0.1, dodge: 0.45, block: 0.25, interrupt: 0.45, antiAir: true, coins: 1.25, specialCd: 1.2 },
+  { id: 'veryhard', name: 'Very Hard', color: '#ff6060', hp: 1.1, dmg: 1.08, bossAtk: 1.1, tell: 0.85, heal: 10, bossHeal: 0.7, guardCost: 1.25, beamCost: 1.2, extra: 1, champion: 0.15, dodge: 0.6, block: 0.3, interrupt: 0.6, antiAir: true, coins: 1.5, specialCd: 1.4 },
 ];
 function loadDifficulty() {
   try { return clamp(parseInt(localStorage.getItem('kiwave_diff') || '1', 10), 0, DIFFICULTIES.length - 1); } catch (e) { return 1; }
