@@ -150,6 +150,7 @@ function addLaser(y, src, delay) {
 
 function updateHazards(dt) {
   for (const z of Game.hazards) {
+    if (z.kind === 'fog') { updateFog(z, dt); continue; }   // act6.js
     const before = z.t;
     z.t += dt;
     if (before < z.tell && z.t >= z.tell) {
@@ -185,6 +186,7 @@ function drawHazards(ctx) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (const z of Game.hazards) {
+    if (z.kind === 'fog') { drawFog(ctx, z); continue; }
     if (z.kind === 'laser') {
       if (z.t < 0) continue;
       if (z.t < z.tell) {
@@ -293,7 +295,11 @@ function updateProjectiles(dt) {
         if (rectsOverlap(pb, boxOf(h))) {
           const dir = pr.vx ? sign(pr.vx) : sign(h.x - pr.x);
           const big = pr.type === 'tornado' || pr.type === 'tidal';
-          if (h.takeHit(pr.dmg, dir, big ? 420 : 200)) { if (!big) pr.life = 0; break; }
+          if (h.takeHit(pr.dmg, dir, big ? 420 : 200)) {
+            if (pr.sleep) putToSleep(h, pr.sleep);   // Lullaby's sleep notes (act6.js)
+            if (!big) pr.life = 0;
+            break;
+          }
         }
       }
     }

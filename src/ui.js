@@ -340,10 +340,11 @@ function drawLevelSelect(ctx) {
   text(ctx, `Difficulty: ${d.name} - stars are saved for each difficulty`, W / 2, 100, 15, d.color, 'center', '600');
   const prog = loadProgress();
   const rowsN = Math.ceil(LEVELS.length / 5);
-  const compact = rowsN > 3;                       // 4-5 rows: small cards, one row per act
-  const cw = 160, gapX = 18, gapY = compact ? 8 : rowsN > 2 ? 10 : 22;
-  const ch = compact ? 68 : rowsN > 2 ? 108 : 150;
-  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = compact ? 112 : rowsN > 2 ? 116 : 130;
+  const compact = rowsN > 3;                       // 4+ rows: small cards, one row per act
+  const tiny = rowsN > 5;                          // 6 acts: even smaller cards
+  const cw = 160, gapX = 18, gapY = tiny ? 5 : compact ? 8 : rowsN > 2 ? 10 : 22;
+  const ch = tiny ? 59 : compact ? 68 : rowsN > 2 ? 108 : 150;
+  const x0 = W / 2 - (5 * cw + 4 * gapX) / 2, yTop = tiny ? 110 : compact ? 112 : rowsN > 2 ? 116 : 130;
   const sc = ch / 150;
   LEVELS.forEach((lvl, i) => {
     const x = x0 + (i % 5) * (cw + gapX);
@@ -359,11 +360,12 @@ function drawLevelSelect(ctx) {
     const best = locked ? null : bestResult(i);
     if (compact) {
       text(ctx, `${i + 1}`, x + 8, y + 26, 21, locked ? '#666677' : '#ffffff', 'left', '900');
-      text(ctx, words, x + cw / 2 + 14, y + 22, words.length > 16 ? 10.5 : 12, locked ? '#666677' : '#cfd8ff', 'center', '700');
-      if (locked) text(ctx, 'LOCKED', x + cw / 2 + 12, y + 52, 13, '#666677', 'center', '800');
+      text(ctx, words, x + cw / 2 + 14, y + 22, words.length > 15 ? 10.5 : 12, locked ? '#666677' : '#cfd8ff', 'center', '700');
+      const sy = tiny ? 46 : 54;
+      if (locked) text(ctx, 'LOCKED', x + cw / 2 + 12, y + sy - 2, 13, '#666677', 'center', '800');
       else {
-        drawStars(ctx, x + cw / 2 + 4, y + 54, best ? best.stars : 0, 20);
-        if (best) text(ctx, best.rank, x + cw - 10, y + 56, 18, RANK_COLORS[best.rank], 'right', '900');
+        drawStars(ctx, x + cw / 2 + 4, y + sy, best ? best.stars : 0, tiny ? 17 : 20);
+        if (best) text(ctx, best.rank, x + cw - 10, y + sy + 2, 18, RANK_COLORS[best.rank], 'right', '900');
       }
       return;
     }
@@ -529,8 +531,8 @@ function drawUI(ctx) {
       const go = Game.stateT > 1.5;
       if (last) {
         drawOverlay(ctx, 'THE END', ACTS[actOf(Game.levelIndex)].end + '!', [
-          '✹ All 25 levels complete',
-          'Ren, Raxas and Nyx - legends of light, shadow and illusion',
+          `${ACTS[actOf(Game.levelIndex)].mark} All ${LEVELS.length} levels complete`,
+          'Ren, Raxas, Nyx and Gale - legends of light, shadow, illusion and wind',
           recLine,
           'Thanks for playing!',
           go ? 'ENTER - back to menu' : '',

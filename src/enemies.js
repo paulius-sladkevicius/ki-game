@@ -22,6 +22,9 @@ const ENEMY_DEFS = {
   mirrorclone: { hp: 1, speed: 150, windup: 0.4, dmg: 8, style: 'darkRen', score: 60, ai: 'elite', cd: [1.2, 2.0], life: 9 },
 };
 
+// Extra enemy kinds from later acts (see act6.js): ai name -> think(enemy, hero, dx, dist), look name -> draw(ctx, enemy, flash).
+const ENEMY_AI = {}, ENEMY_LOOKS = {};
+
 class Enemy {
   constructor(type, side) {
     const d = ENEMY_DEFS[type];
@@ -192,6 +195,7 @@ class Enemy {
     } else {
       this.x = clamp(this.x, 20, W - 20);
     }
+    if (this.fixX !== undefined) { this.x = this.fixX; this.vx = 0; }   // totems never move
 
     this.pose = this.computePose();
   }
@@ -216,6 +220,7 @@ class Enemy {
       this.setState('jumpstrike');
       return;
     }
+    if (ENEMY_AI[this.ai]) { ENEMY_AI[this.ai](this, p, dx, dist); return; }
     switch (this.ai) {
       case 'melee':
         if (dist > 48) this.vx = this.facing * this.speed;
@@ -318,6 +323,15 @@ class Enemy {
       Game.bolts.push({ x1: a.x1, y1: a.y1, x2: a.x1 + ux * far, y2: a.y1 + uy * far, color: '#ff4060', life: 0.2, max: 0.2, seed: 0, straight: true });
       Sfx.zap();
       this.aim = null;
+      return;
+    }
+    if (this.shootMode && this.def.arc) {
+      // archers lob a shot in an arc that comes down where the hero stands
+      const h0 = handOf({ x: this.x, y: this.y, facing: this.facing, pose: POSES.punch1() });
+      const T = 0.95, g = 900;
+      const tx = p.x + p.vx * 0.3, ty = p.y - 30;
+      Game.projectiles.push({ x: h0.x, y: h0.y, vx: (tx - h0.x) / T, vy: (ty - h0.y - 0.5 * g * T * T) / T, gravity: g, r: 8, dmg: this.dmg, owner: 'enemy', life: 3, inner: '#f0d0ff', outer: 'rgba(160,60,255,0.7)', trail: '#c090ff' });
+      Sfx.blast();
       return;
     }
     if (this.shootMode && this.def.shot === 'orb') {
@@ -432,7 +446,8 @@ class Enemy {
     drawShadow(ctx, this.x, this.y, 20 * this.scale);
     ctx.globalAlpha *= this.alpha;
     if (this.champion && !this.dead) drawAura(ctx, this.x, this.y, this.h * this.scale + 30, 'rgba(255,210,60,A)', 0.9, this.animT);
-    if (this.def.look === 'jelly') drawJelly(ctx, this.x, this.y, this.animT, fl, this.state === 'divebomb');
+    if (ENEMY_LOOKS[this.def.look]) ENEMY_LOOKS[this.def.look](ctx, this, fl);
+    else if (this.def.look === 'jelly') drawJelly(ctx, this.x, this.y, this.animT, fl, this.state === 'divebomb');
     else if (this.type === 'wisp') drawWisp(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'drone') drawDrone(ctx, this.x, this.y, this.facing, this.animT, fl);
     else if (this.ai === 'bomber') drawBomber(ctx, this.x, this.y, this.facing, this.animT, fl, this.state === 'windup');

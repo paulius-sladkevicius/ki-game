@@ -533,7 +533,7 @@ function startLevel(levelIndex = 0, fromStep = 0) {
   Game.hitstop = 0;
   Game.crystals = crystalsBefore(levelIndex);
   // difficulty: act 2 has two heroes and stronger forms, so enemies are tougher
-  const actHp = { 1: 1, 2: 1.7, 3: 2.2, 4: 2.4, 5: 2.6 }, actDmg = { 1: 1, 2: 1.6, 3: 1.8, 4: 1.9, 5: 2.0 };
+  const actHp = { 1: 1, 2: 1.7, 3: 2.2, 4: 2.4, 5: 2.6, 6: 2.75 }, actDmg = { 1: 1, 2: 1.6, 3: 1.8, 4: 1.9, 5: 2.0, 6: 2.05 };
   Game.enemyHpMul = (actHp[lvl.act || 1] || 1) * diff().hp;
   Game.dangerMul = (actDmg[lvl.act || 1] || 1) * diff().dmg;
   // heroes: Ren always; from level 6 on one or two helper friends can join (see the Helper friends setting)

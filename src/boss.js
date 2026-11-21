@@ -42,6 +42,9 @@ const BOSS_DEFS = {
     attacks: ['lasers', 'orbs', 'teleport'], rage: ['beam', 'summon', 'lasers', 'clones', 'dive'], beamColor: 'mirror', aura: 'rgba(170,200,255,A)' },
 };
 
+// Extra boss attacks from later acts (see act6.js): state handlers, attack name -> first state, poses, hit hooks, drawing.
+const BOSS_STATES = {}, BOSS_ATTACKS = {}, BOSS_POSES = {}, BOSS_HIT_HOOKS = {}, BOSS_DRAW = {};
+
 class Boss {
   constructor(id, x) {
     const d = BOSS_DEFS[id];
@@ -100,6 +103,7 @@ class Boss {
     const dist = Math.abs(dx);
     const speed = this.def.speed || 160;
 
+    if (BOSS_STATES[this.state]) { BOSS_STATES[this.state].call(this, dt, p, dx, dist); this.afterMove(dt); return; }
     switch (this.state) {
       case 'intro':
         this.facing = sign(dx);
@@ -534,6 +538,11 @@ class Boss {
       this.pose = this.computePose();
       return;
     }
+    this.afterMove(dt);
+  }
+
+  // gravity, movement and the new pose after the state logic
+  afterMove(dt) {
     if (!this.onGround) this.vy += GRAVITY * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -599,7 +608,7 @@ class Boss {
       tidal: 'tidal_tell', darkness: 'darkness_tell', sunburst: 'sunburst_tell',
       pillars: 'pillars_tell', lightning: 'pillars_tell', lasers: 'lasers_tell', gears: 'gears_tell', timeslow: 'timeslow_tell', rain: 'rain_tell', dive: 'dive_up', tornado: 'tornado_tell', orbs: 'orbs_tell',
     };
-    this.setState(map[pick] || 'dash_tell');
+    this.setState(map[pick] || BOSS_ATTACKS[pick] || 'dash_tell');
   }
 
   fireCrescent(y, speedMul = 1) {
@@ -653,6 +662,7 @@ class Boss {
   }
 
   computePose() {
+    if (BOSS_POSES[this.state]) return BOSS_POSES[this.state](this);
     switch (this.state) {
       case 'dash_tell': case 'slash_tell': case 'quake_tell': case 'clones_tell': case 'summon_tell': case 'final_tell':
       case 'pillars_tell': case 'rain_tell': case 'orbs_tell': case 'timeslow_tell': case 'darkness_tell': case 'sunburst_tell': return POSES.swordRaise();
@@ -681,6 +691,7 @@ class Boss {
       if (this.phase >= 3 && Math.random() < 0.3) floater(this.x, this.y - this.h - 20, 'Invulnerable!', '#ff9090', 15);
       return false;
     }
+    if (BOSS_HIT_HOOKS[this.state] && BOSS_HIT_HOOKS[this.state].call(this, dmg, dir, knock, kind) === false) return false;
     if (this.def.shield && (kind === 'blast' || kind === 'beam') && this.facing === -dir && !['stunned', 'recover', 'quake'].includes(this.state)) {
       dmg *= 0.12;
       floater(this.x, this.y - this.h - 30, 'SHIELD', '#9fe6ff', 15);
@@ -736,6 +747,7 @@ class Boss {
     const tell = ['dash_tell', 'slash_tell', 'charge_tell', 'quake_tell'].includes(this.state) && Math.floor(this.stateT * 18) % 2 === 0;
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style: STYLES[this.style], scale: this.scale, flash: this.flash > 0 || tell, t: this.animT });
     ctx.globalAlpha = 1;
+    if (BOSS_DRAW[this.state]) BOSS_DRAW[this.state].call(this, ctx);
     const col = BEAM_COLORS[this.def.beamColor];
     if (this.state === 'beam_tell') {
       const h = this.hand();

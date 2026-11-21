@@ -61,6 +61,15 @@ class AllyAI {
       return I;
     }
 
+    // 0d) poison fog (act 6): walk out of it, away from the middle of the cloud
+    const fog = Game.hazards.find((z) => z.kind === 'fog' && z.t > z.tell - 0.35 && Math.abs(h.x - z.x) < z.w / 2 + 12);
+    if (fog && h.y > GROUND - 70) {
+      let dir = h.x < fog.x ? -1 : 1;
+      if ((dir < 0 && fog.x - fog.w / 2 < 40) || (dir > 0 && fog.x + fog.w / 2 > W - 40)) dir = -dir;
+      go(dir);
+      return I;
+    }
+
     // 1) danger: a boss beam is coming -> fly over it or guard
     const bossBeam = Game.bosses.find((b) => !b.dead && (b.state === 'beam_tell' || b.state === 'beam'));
     if (bossBeam) {
@@ -110,12 +119,15 @@ class AllyAI {
     }
 
     // 5) fight the nearest enemy
-    targets.sort((a, b) => Math.abs(a.x - h.x) - Math.abs(b.x - h.x));
+    // healing totems (act 6) are broken first; otherwise the nearest enemy
+    targets.sort((a, b) => (a.type === 'totem' ? -400 : 0) + Math.abs(a.x - h.x) - (b.type === 'totem' ? -400 : 0) - Math.abs(b.x - h.x));
     const t = targets[0];
     const dx = t.x - h.x, dist = Math.abs(dx), dir = sign(dx);
     const flying = t.ai === 'drone';
     const reach = h.char.sword ? 78 : 62;
     const wind = h.char.wind;
+    // a boss in mirror stance sends Ki back: only punch it (that also breaks the mirror)
+    const mirror = t.state === 'mirror' || t.state === 'mirror_tell';
 
     if (flying) {
       // fly up to the drone and shoot it
@@ -127,7 +139,7 @@ class AllyAI {
     }
 
     // charge a beam from a distance now and then
-    if (dist > 200 && dist < 650 && this.beamT <= 0 && h.ki > 40 && h.onGround && h.state === 'normal') {
+    if (!mirror && dist > 200 && dist < 650 && this.beamT <= 0 && h.ki > 40 && h.onGround && h.state === 'normal') {
       if (h.facing !== dir) { go(dx); return I; }
       I.pressed.beam = true; I.down.beam = true;
       this.beamHold = h.ki > 70 ? 1.0 : 0.6;
@@ -135,7 +147,7 @@ class AllyAI {
       return I;
     }
     // Gale's gust only reaches close enemies
-    if (wind ? dist < 200 && this.blastT <= 0 && h.ki > 15 : dist > 160 && dist < 520 && this.blastT <= 0 && h.ki > 25) {
+    if (!mirror && (wind ? dist < 200 && this.blastT <= 0 && h.ki > 15 : dist > 160 && dist < 520 && this.blastT <= 0 && h.ki > 25)) {
       if (h.facing !== dir) go(dx);
       else { I.pressed.blast = true; this.blastT = rand(0.7, 1.3); }
       return I;

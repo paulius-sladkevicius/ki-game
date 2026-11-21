@@ -125,6 +125,7 @@ class Player {
     for (const g of this.ghosts) g.life -= dt;
     this.ghosts = this.ghosts.filter((g) => g.life > 0);
     if (this.instinctT > 0) this.instinctT -= dt;
+    if (this.sleepT > 0) this.sleepT -= dt;
     if (this.surgeT > 0) {
       // Crimson Surge burns a little HP while it lasts
       this.surgeT -= dt;
@@ -614,6 +615,13 @@ class Player {
     drawHumanoid(ctx, { x: this.x, y: this.y, facing: this.facing, pose: this.pose, style, scale: this.scale, flash: this.flash > 0, t: this.animT });
     ctx.globalAlpha = 1;
     if (this.guarding) this.drawGuard(ctx);
+    if (this.sleepT > 0 && this.alive) {
+      // asleep: little z's float up
+      for (let i = 0; i < 3; i++) {
+        const k = (this.animT * 0.8 + i / 3) % 1;
+        text(ctx, 'z', this.x + 14 + k * 22, this.y - this.h * this.scale - 6 - k * 34, 12 + k * 10, `rgba(220,210,255,${1 - k})`, 'center', '900');
+      }
+    }
     if (this.state === 'sphere') {
       // the World Sphere grows above the hero's head
       const r = 10 + Math.min(1, this.stateT / 2) * 60;

@@ -572,6 +572,18 @@ function drawProjectile(ctx, p) {
     ctx.restore();
     return;
   }
+  if (p.look === 'note') {
+    // Lullaby's sleep note: a glowing music note
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    drawEnergyBall(ctx, p.x, p.y, p.r * 0.9, p.inner, p.outer, Game.time);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#5a2a8a'; ctx.strokeStyle = '#5a2a8a'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(p.x - 2, p.y + 4, 5, 3.5, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(p.x + 2.5, p.y + 3); ctx.lineTo(p.x + 2.5, p.y - 9); ctx.lineTo(p.x + 8, p.y - 6); ctx.stroke();
+    ctx.restore();
+    return;
+  }
   if (p.look === 'moth') {
     // Nyx' illusion moth: a glowing body with flapping wings
     ctx.save();

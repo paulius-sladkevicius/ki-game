@@ -1,6 +1,6 @@
 # Ki Wave
 
-A simple 2D action game that runs in the browser. Ren, a young martial artist, fires charged **Ki Waves**, unlocks powerful **transformations** and fights through 25 levels in five acts: against the space tyrant Vorg, then – together with his former enemy Raxas – against the Hollow King, with the illusionist Nyx against Empress Kaldra of the Mirror Realm, down into the drowned world of the Tide King Maelor, and finally out among the stars to face Zenith, the first warrior.
+A simple 2D action game that runs in the browser. Ren, a young martial artist, fires charged **Ki Waves**, unlocks powerful **transformations** and fights through 30 levels in six acts: against the space tyrant Vorg, then – together with his former enemy Raxas – against the Hollow King, with the illusionist Nyx against Empress Kaldra of the Mirror Realm, down into the drowned world of the Tide King Maelor, out among the stars to face Zenith, the first warrior, and finally into the Dream Realm against Somnus, the dream-thief.
 
 The game design document is in [DESIGN.md](DESIGN.md).
 
@@ -25,12 +25,13 @@ Open `index.html` in a browser – no server or build step needed. On phones and
 
 ## Features
 
-- **25 levels in five acts**, each with its own background and music:
+- **30 levels in six acts**, each with its own background and music:
   - Act 1 (Ren alone, recover 5 Star Crystals): Mountain Monastery, Desert Canyon, Ice City, Volcano Island, Vorg's Ship in Orbit.
   - Act 2 (Ren and Raxas, break 5 Hollow Seals): Sunken Ruins, Sky Temple, Crystal Caverns, Storm Coast, The Hollow Throne.
   - Act 3 (Ren and Nyx, break 5 Mirror Shards): Neon City, Enchanted Forest, Clockwork Tower, Frozen Mirror Lake, Mirror Palace.
   - Act 4 (Ren and Raxas, recover 5 Tide Pearls): Coral Shore, Shipwreck Graveyard, Abyssal Trench, Sunken City, Leviathan Throne.
   - Act 5 (Ren and Nyx, light 5 Star Sparks): Asteroid Belt, Comet Station, Sun Temple, Black Star Citadel, The Origin.
+  - Act 6 – the hardest (Ren and Gale, free 5 Dream Moons): Dream Meadow, Toy Fortress, Upside-Down Castle, Nightmare Marsh, Nightmare Throne.
 - **Helper friends** (menu and training): **Auto** (the story friend – Raxas in acts 2 and 4, Nyx in acts 3 and 5), one friend (**Raxas**, **Gale** after level 7, **Nyx** once act 3 is reached), a **team of two friends** (e.g. Raxas + Gale – three heroes on screen; enemies and bosses are a bit tougher then) or **None** to fight alone.
 - **Friends fight without Ki** – each has their own energy and powers on K and L (L is held and released like the Ki Wave):
   - **Raxas – SHADOW:** K sword wave, L **Shadow Rush** (dashes through every enemy in the way, also through shields, and cuts through shots).
@@ -41,8 +42,9 @@ Open `index.html` in a browser – no server or build step needed. On phones and
 - **Nyx**, the illusionist from level 4, joins in act 3: palm strikes, illusion orbs that home in on enemies, Phantom Swarm instead of a Ki Wave, Mirage and Phantom forms.
 - **An ally:** Raxas, the swordsman you fought in level 1, joins you in act 2. He has his own moves (sword combo, sword wave instead of a Ki blast, Shadow Rush instead of a Ki Wave) and forms (Shadow Form, Eclipse Form).
 - **Choose who you control:** press C (or tap ⇄) to switch between the heroes of your team at any time; the others are controlled by the computer – it attacks, guards, dodges boss beams and transforms. In training you can choose who starts as the lead fighter. If your hero falls, control passes to the other one, and the fallen hero gets back up after the wave.
-- **Enemies:** scouts, gunners, flying drones, armored soldiers (block Ki from the front), exploding robots, lava brutes, elite guards; in act 2 also shades (vanish and reappear behind you), stone golems and wisps (homing orbs); in act 3 dark mirror copies and laser snipers (they show an aiming line before they shoot); in act 4 ghost pirates, armored crabs and diving jellyfish; in act 5 sentinels (a fan of three shots), star knights and fast comet bombers.
+- **Enemies:** scouts, gunners, flying drones, armored soldiers (block Ki from the front), exploding robots, lava brutes, elite guards; in act 2 also shades (vanish and reappear behind you), stone golems and wisps (homing orbs); in act 3 dark mirror copies and laser snipers (they show an aiming line before they shoot); in act 4 ghost pirates, armored crabs and diving jellyfish; in act 5 sentinels (a fan of three shots), star knights and fast comet bombers; in act 6 fast imps, diving bats and archers whose shots fall from above.
 - **New boss tricks in acts 4–5:** bouncing cannonballs, tentacles, darkness (you only see around the heroes), shark twins, tidal waves you must jump over, meteor rain, sunbursts and fire pillars.
+- **Act 6 boss tricks:** sleep notes (a hit puts you to sleep – guard or shoot them down), healing totems (break them first!), a mirror stance that sends Ki blasts and Ki Waves back (punch it or use a friend's power) and poison fog on the ground (get out or fly above it).
 - **Bosses:** Raxas (swordsman), the twins Zul and Zel, General Krag (shield, charge, earthquake), Nyx (teleport, clones), Vorg (3 phases and a final beam clash); in act 2 Sable (shadow pillars), Gale (tornadoes, dive attacks), Quartzus (crystal rain, shield), Volta (lightning strikes) and the Hollow King (3 phases and a final **Twin Wave** clash fought by both heroes); in act 3 Glitch (lasers you jump over or stay under), Thornmother (vines, spore orbs), Tick-Tock (bouncing gears, slows time, shield), Dark Ren (your mirror copy) and Empress Kaldra (3 phases and a final Twin Wave).
 - **Ki Wave** with 3 charge levels and **beam clashes** against bosses (mash L).
 - **Special techniques:** every completed level teaches a new technique (10 in total): Afterimage Dash, Flash Burst, Battle Cry, Ki Disc, Blink Strike (slot ①, quick, 8–18 s recharge) and Crimson Surge, Meteor Rush, Phoenix Fist, World Sphere, Silent Instinct (slot ②, ultimate, 40–60 s recharge). Choose which ones to equip on the **Techniques** screen (menu, pause menu with I, or training): any learned technique fits either slot, and the recharge time belongs to the technique.

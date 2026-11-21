@@ -171,6 +171,21 @@ The pearls wake something far older: **Zenith**, the first warrior, who gathered
 - Ren starts acts 4 and 5 with all his forms, the friend with the second form (the friend's final form appears in the last battle of the act). The helper friend setting works as before (Auto = Raxas in act 4, Nyx in act 5).
 - Acts 4 and 5 live in `src/acts45.js`: it only adds data (styles, enemies, bosses, backgrounds, levels) on top of the shared engine.
 
+## 4f. Act 6: the Dream Realm
+
+The First Light shines again – but one morning nobody wakes up, not even Master Oro. **Somnus**, the dream-thief, sings every world to sleep and feeds on their dreams. Ren and **Gale** go into the dreams to free the **5 Dream Moons**. This is the hardest act: enemies ×2.75 HP and ×2.05 damage, more enemies per wave, and bosses with new tricks.
+
+| # | Location | New enemies | Boss |
+|---|---|---|---|
+| 26 | **Dream Meadow** | imps (fast), bats (dive), archers (shots fall from above) | **Lullaby** – sleep notes: a hit (not guarded) puts the hero to sleep for 1.1 s (nothing can hit a sleeping hero) |
+| 27 | **Toy Fortress** | golems, imps, archers | **Marionette** – healing totems (each heals 1.2% of his HP per second until broken; the AI friends break them first), gears, lasers |
+| 28 | **Upside-Down Castle** | shades, knights | **Reverso** – mirror stance: Ki blasts and Ki Waves bounce back; a punch or a friend's power breaks the mirror |
+| 29 | **Nightmare Marsh** | golems, bats | **Grimfang** – poison fog on the ground (hurts every 0.6 s, fly above it), quake, charge, calls bats |
+| 30 | **Nightmare Throne** | everything | **Somnus** – 3 phases, all the tricks of the act, final Triple/Twin Wave clash |
+
+- Act 6 lives in `src/act6.js`. Its new boss attacks plug into the engine through the `BOSS_STATES` / `BOSS_ATTACKS` / `BOSS_POSES` / `BOSS_HIT_HOOKS` / `BOSS_DRAW` tables (boss.js) and `ENEMY_AI` / `ENEMY_LOOKS` (enemies.js).
+- The AI friends walk out of the fog and only punch a boss in mirror stance.
+
 ## 5. Score and progress
 - Points for enemies, combos and bosses.
 - **Combo counter:** every 10 hits in a row gives +10% Power.
@@ -221,7 +236,7 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 
 **Technology:** plain HTML5 + JavaScript (Canvas 2D), no server. Open `index.html` and play. Can be hosted on GitHub Pages.
 
-**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`). 25 levels in five acts.
+**Game states:** `MENU → DIALOG → PLAY → (BOSS) → VICTORY → TRAINING → ... → THE END` (plus `PAUSE`, `GAMEOVER`). 30 levels in six acts.
 
 ---
 
@@ -235,3 +250,4 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 6. ✅ **Act 3:** 5 more levels, the new friend Nyx, helper friend setting.
 7. ✅ **Acts 4 and 5:** 10 more levels – the Drowned World and the First Light.
 8. ✅ **Friend teams:** up to two helper friends at once, the new friend Gale, friends fight with their own energies and powers instead of Ki.
+9. ✅ **Act 6:** 5 more levels in the Dream Realm – the hardest act, with sleep, healing totems, a reflecting mirror and poison fog.

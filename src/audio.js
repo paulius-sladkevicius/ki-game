@@ -226,6 +226,7 @@ const Sfx = (() => {
 
   return {
     unlock, chargeStart, chargeSet, chargeStop, music,
+    tracks: TRACKS,   // later acts add their own music here
     coin() { tone(1320, 0.05, 'square', 0.05); tone(1760, 0.07, 'square', 0.05, null, 0.05); },
     buy() { [660, 880, 1320].forEach((f, i) => tone(f, 0.1, 'square', 0.1, null, i * 0.07)); },
     deny() { tone(200, 0.15, 'square', 0.1, 150); },
@@ -240,6 +241,7 @@ const Sfx = (() => {
     jump() { tone(300, 0.1, 'square', 0.05, 600); },
     slash() { noise(0.2, 0.3, 6000, 'highpass'); tone(900, 0.15, 'sawtooth', 0.05, 300); },
     wind() { noise(0.4, 0.28, 500, 'bandpass', 2600); tone(260, 0.3, 'sine', 0.05, 520); },
+    note(f, d = 0) { tone(f, 0.2, 'triangle', 0.08, null, d); },
     teleport() { tone(1200, 0.12, 'sine', 0.12, 300); },
     zap() { noise(0.12, 0.3, 5000, 'highpass'); tone(1800, 0.08, 'square', 0.05, 600); },
     boom() { noise(0.25, 0.45, 800, 'lowpass', 100); tone(60, 0.3, 'sine', 0.3, 25); },
