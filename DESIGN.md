@@ -225,6 +225,8 @@ Two slots: **①** (key I) and **②** (key O). One technique is learned after e
 
 Hard and Very Hard used to multiply enemy HP and damage much more (×1.3 / ×1.25 on Hard). On top of the act multipliers (up to ×2.75 HP in act 6) that made acts 3–6 unbeatable for the test bot even with ten retries, so Hard now gets its difficulty mostly from smarter and extra enemies, champions, costlier guard and Ki Wave and less healing.
 
+**Last-wave checkpoint:** the last wave of a level is a checkpoint (except on Very Hard), so a defeat there does not restart the whole level.
+
 **Second-form checkpoint:** once a final boss (with phases) reaches its second form, a defeat retries the fight from the second form instead of from the start of the boss.
 
 **Balance checks** are done with a simulation bot (the AI friend playing the hero, all upgrades): on Normal, act 6 needs a retry now and then and is a bit harder than act 5; Hard levels are beatable with a few retries; Very Hard is an expert mode (the bot wins only some act 6 levels); Easy rarely needs a retry.

@@ -595,6 +595,9 @@ function nextStep() {
   if (!s) return;
   Game.cur = { s, t: 0, spawned: 0, spawnT: 0, clearT: 0 };
   if (s.checkpoint) { Game.checkpoint = Game.step; Game.checkpointScore = Game.score; }
+  // the last wave of a level is a checkpoint too (except on Very Hard): a defeat there does not restart the whole level
+  const lastWave = s.type === 'wave' && !Game.script.slice(Game.step + 1).some((x) => x.type === 'wave');
+  if (lastWave && Game.step > 0 && diff().id !== 'veryhard' && Game.step > Game.checkpoint) { Game.checkpoint = Game.step; Game.checkpointScore = Game.score; }
   const waves = Game.script.filter((x) => x.type === 'wave');
   switch (s.type) {
     case 'dialog':

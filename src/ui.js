@@ -519,7 +519,7 @@ function drawUI(ctx) {
       const cp = Game.checkpoint > 0;
       drawOverlay(ctx, 'DEFEATED', "Vorg's army was stronger this time...", [
         'Score: ' + Game.score,
-        Game.stateT > 1 ? (cp ? 'ENTER - retry from the boss' : 'ENTER - try again') : '',
+        Game.stateT > 1 ? (cp ? (LEVELS[Game.levelIndex].script[Game.checkpoint].type === 'wave' ? 'ENTER - retry from the last wave' : 'ENTER - retry from the boss') : 'ENTER - try again') : '',
       ], '#ff5a4a');
       break;
     }
